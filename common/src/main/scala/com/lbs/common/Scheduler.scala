@@ -27,7 +27,7 @@ import java.util.concurrent.{Executors, ScheduledFuture}
 
 import scala.concurrent.duration.FiniteDuration
 
-class Scheduler(poolSize: Int) {
+class Scheduler(poolSize: Int) extends Logger {
   private val scheduledThreadPool = Executors.newScheduledThreadPool(poolSize)
 
   def schedule(fn: => Unit, period: FiniteDuration): ScheduledFuture[_] = {
@@ -36,6 +36,16 @@ class Scheduler(poolSize: Int) {
 
   def schedule(fn: => Unit, delay: FiniteDuration, period: FiniteDuration): ScheduledFuture[_] = {
     require(delay.unit == period.unit, s"Delay units must be the same as for period ${period.unit}")
-    scheduledThreadPool.scheduleAtFixedRate(() => fn, delay.length, period.length, period.unit)
+    scheduledThreadPool.scheduleAtFixedRate(silentFn(fn), delay.length, period.length, period.unit)
+  }
+
+  private def silentFn(fn: => Unit): Runnable = {
+    () =>
+      try {
+        fn
+      } catch {
+        case ex: Exception =>
+          LOG.error(s"Unable to execute scheduler task", ex)
+      }
   }
 }
