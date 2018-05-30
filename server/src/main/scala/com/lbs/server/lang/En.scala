@@ -186,6 +186,7 @@ object En extends Lang {
   override def help: String =
     s"""ℹ This is non official bot for Portal Pacienta LUX MED.
        |With its help you can book a visit to the doctor, create term monitorings, view upcoming visits and visit history
+       |Ping me if you have any questions @dyrkin_me
        |
        |<b>➡</b> Supported commands
        |/login - enter Luxmed credentials
