@@ -1,0 +1,47 @@
+group = 'com.lbs'
+version = '0.0.1-SNAPSHOT'
+
+ext {
+    scalaVersion = "2.12.6"
+}
+
+apply plugin: 'idea'
+
+subprojects {
+
+    idea {
+        module {
+            downloadSources = true
+        }
+    }
+
+    repositories {
+        mavenCentral()
+        jcenter()
+        maven { url 'https://repo.spring.io/libs-milestone' }
+    }
+
+    apply plugin: 'java'
+    apply plugin: 'scala'
+
+    dependencies {
+        compile group: 'org.scala-lang', name: "scala-library", version: scalaVersion
+        compile('org.scalaz:scalaz-core_2.12:7.2.23')
+
+        testCompile('org.scalatest:scalatest_2.12:3.0.4')
+        testCompile('org.mockito:mockito-core:2.13.0')
+        testCompile('org.pegdown:pegdown:1.6.0')
+    }
+
+    task scalaTest(dependsOn: ['testClasses'], type: JavaExec) {
+        main = 'org.scalatest.tools.Runner'
+        args = ['-R', "build/classes/test",
+                '-u', "build/test-results/$name",
+                '-h', "build/resports/scalaTests/$name",
+                '-o'
+        ]
+        classpath = sourceSets.test.runtimeClasspath
+    }
+
+    test.dependsOn scalaTest
+}

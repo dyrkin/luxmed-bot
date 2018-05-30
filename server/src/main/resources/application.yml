@@ -1,0 +1,31 @@
+spring:
+  datasource:
+    url: "jdbc:postgresql://127.0.0.1:5432/lbs"
+    username: "lbs"
+    password: "lsb123"
+  jpa:
+    properties:
+      hibernate:
+        temp:
+          use_jdbc_metadata_defaults: "false"
+    database-platform: "org.hibernate.dialect.PostgreSQL9Dialect"
+    generate-ddl: "true"
+#    hibernate:
+#      ddl-auto: "create-update"
+#      ddl-auto: "create-drop"
+
+banner:
+  location: "classpath:/banner.txt"
+
+logging:
+  file: logs/app.log
+  level:
+    com.lbs: DEBUG
+#    org.hibernate.SQL: DEBUG
+#    org.hibernate.type.descriptor.sql.BasicBinder: TRACE
+  pattern:
+    file: "%d{yyyy-MM-dd HH:mm:ss} %logger{25} - %msg%n"
+    console: "%d{yyyy-MM-dd HH:mm:ss} %logger{25} - %msg%n"
+
+security.secret: ${SECURITY_SECRET:random_secret_hfjdsk72euhdsbcgg6}
+telegram.token: ${TELEGRAM_TOKEN}

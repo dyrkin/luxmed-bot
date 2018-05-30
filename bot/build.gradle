@@ -1,0 +1,5 @@
+dependencies {
+    compile project(':common')
+
+    compile group: "info.mukel", name: "telegrambot4s_2.12", version: "3.0.14"
+}

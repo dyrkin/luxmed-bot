@@ -1,0 +1,6 @@
+dependencies {
+    compile project(':common')
+
+    compile group: "org.scalaj", name: "scalaj-http_2.12", version: "2.3.0"
+    compile group: "org.json4s", name: "json4s-jackson_2.12", version: "3.6.0-M3"
+}
