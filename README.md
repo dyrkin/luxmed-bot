@@ -1,6 +1,6 @@
 # Luxmed Booking Service
 
-Non official bot for **Portal Pacienta LUX MED**.
+Non official Telegram bot for **Portal Pacienta LUX MED**.
 
 With its help user can book a visit to a doctor, create term monitoring, view upcoming visits and visit history.
 
