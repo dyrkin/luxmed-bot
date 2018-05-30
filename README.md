@@ -6,7 +6,7 @@ With its help user can book a visit to a doctor, create term monitoring, view up
 
 It is available by [@luxmedbot](https://telegram.me/luxmedbot)
 
-####To setup your own
+#### To setup your own
 
 1. create your own telegram bot using [@BotFather](https://telegram.me/botfather)
 2. add to .bash_profile 
