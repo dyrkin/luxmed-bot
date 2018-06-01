@@ -136,7 +136,6 @@ class BootConfig {
   def monitoringsPagerActorFactory: (UserId, ActorRef) => ActorRef = (userId, originator) =>
     actorSystem.actorOf(Pagers(userId, bot, localization).monitoringsPagerProps(originator))
 
-
   @Bean
   def router: ActorRef = actorSystem.actorOf(Router.props(authActorFactory))
 

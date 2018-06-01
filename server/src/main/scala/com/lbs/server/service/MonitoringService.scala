@@ -94,7 +94,7 @@ class MonitoringService extends Logger {
     termsEither match {
       case Right(terms) =>
         if (terms.nonEmpty) {
-          LOG.debug(s"Found ${terms.length} terms by monitoring [${monitoring.recordId}]")
+          LOG.debug(s"Found ${terms.length} terms by monitoring [#${monitoring.recordId}]")
           if (monitoring.autobook) {
             val term = terms.head
             bookAppointment(term, monitoring)
@@ -209,8 +209,8 @@ class MonitoringService extends Logger {
     dataService.saveMonitoring(monitoring)
   }
 
-  def getActiveMonitorings(chatId: Long): Seq[Monitoring] = {
-    dataService.getActiveMonitorings(chatId)
+  def getActiveMonitorings(userId: Long): Seq[Monitoring] = {
+    dataService.getActiveMonitorings(userId)
   }
 
   def bookAppointmentByScheduleId(userId: Long, monitoringId: Long, scheduleId: Long, time: Long): Unit = {
@@ -245,7 +245,7 @@ class MonitoringService extends Logger {
   }
 
 
-  private def lang(chatId: Long) = localization.lang(chatId)
+  private def lang(userId: Long) = localization.lang(userId)
 
   @PostConstruct
   private def initialize(): Unit = {

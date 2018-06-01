@@ -74,7 +74,7 @@ trait SessionSupport {
         case Right(s) =>
           fn(s) match {
             case Left(ex) if ex.getMessage.contains("session has expired") =>
-              Log.debug(s"The session for user with user [#$userId] has expired. Try to relogin")
+              Log.debug(s"The session for user [#$userId] has expired. Try to relogin")
               sessions.remove(userId)
               session.flatMap(fn)
             case another =>
