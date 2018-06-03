@@ -1,29 +1,29 @@
 /**
- * MIT License
- *
- * Copyright (c) 2018 Yevhen Zadyra
- *
- * Permission is hereby granted, free of charge, to any person obtaining a copy
- * of this software and associated documentation files (the "Software"), to deal
- * in the Software without restriction, including without limitation the rights
- * to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
- * copies of the Software, and to permit persons to whom the Software is
- * furnished to do so, subject to the following conditions:
- *
- * The above copyright notice and this permission notice shall be included in all
- * copies or substantial portions of the Software.
- *
- * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
- * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
- * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
- * AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
- * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
- * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
- * SOFTWARE.
- */
+  * MIT License
+  *
+  * Copyright (c) 2018 Yevhen Zadyra
+  *
+  * Permission is hereby granted, free of charge, to any person obtaining a copy
+  * of this software and associated documentation files (the "Software"), to deal
+  * in the Software without restriction, including without limitation the rights
+  * to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+  * copies of the Software, and to permit persons to whom the Software is
+  * furnished to do so, subject to the following conditions:
+  *
+  * The above copyright notice and this permission notice shall be included in all
+  * copies or substantial portions of the Software.
+  *
+  * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+  * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+  * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+  * AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+  * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+  * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+  * SOFTWARE.
+  */
 package com.lbs.api
 
-import com.lbs.api.exception.LuxmedException
+import com.lbs.api.exception.{ApiException, GenericException, InvalidLoginOrPasswordException, ServiceIsAlreadyBookedException}
 import com.lbs.api.json.JsonSerializer.extensions._
 import com.lbs.api.json.model.{LuxmedBaseError, LuxmedCompositeError, LuxmedError, SerializableJsonObject}
 import com.lbs.common.Logger
@@ -77,18 +77,24 @@ package object http extends Logger {
       value.map(v => httpRequest.param(key, v)).getOrElse(httpRequest)
     }
 
-    private def luxmedErrorToException[T <: LuxmedBaseError](ler: HttpResponse[T]) = {
+    private def luxmedErrorToApiException[T <: LuxmedBaseError](ler: HttpResponse[T]): ApiException = {
       ler.body match {
         case e: LuxmedCompositeError =>
-          LuxmedException(ler.code, ler.statusLine, e.errors.map(_.message).mkString("; "))
+          new GenericException(ler.code, ler.statusLine, e.errors.map(_.message).mkString("; "))
         case e: LuxmedError =>
-          LuxmedException(ler.code, ler.statusLine, e.message)
+          val errorMessage = e.message.toLowerCase
+          if (errorMessage.contains("invalid login or password"))
+            new InvalidLoginOrPasswordException
+          else if (errorMessage.contains("have already booked this service"))
+            new ServiceIsAlreadyBookedException
+          else
+            new GenericException(ler.code, ler.statusLine, e.message)
       }
     }
 
     private def extractLuxmedError(httpResponse: Try[HttpResponse[String]]) = {
-      httpResponse.flatMap(response => Try(response.asEntity[LuxmedCompositeError]).map(luxmedErrorToException).
-        orElse(Try(response.asEntity[LuxmedError]).map(luxmedErrorToException))).toOption
+      httpResponse.flatMap(response => Try(response.asEntity[LuxmedCompositeError]).map(luxmedErrorToApiException).
+        orElse(Try(response.asEntity[LuxmedError]).map(luxmedErrorToApiException))).toOption
     }
 
     private def hidePasswords(httpRequest: HttpRequest) = {

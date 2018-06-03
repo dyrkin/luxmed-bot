@@ -26,6 +26,7 @@ package com.lbs.server.service
 import java.time.ZonedDateTime
 import java.util.concurrent.ScheduledFuture
 
+import com.lbs.api.exception.InvalidLoginOrPasswordException
 import com.lbs.api.json.model.{AvailableVisitsTermPresentation, ReservationRequest, TemporaryReservationRequest, ValuationsRequest}
 import com.lbs.bot.Bot
 import com.lbs.bot.model.{MessageSource, MessageSourceSystem}
@@ -104,7 +105,7 @@ class MonitoringService extends Logger {
         } else {
           LOG.debug(s"No new terms found for monitoring [#${monitoring.recordId}]")
         }
-      case Left(ex) if ex.getMessage.toLowerCase.contains("invalid login or password") =>
+      case Left(ex: InvalidLoginOrPasswordException) =>
         LOG.error(s"User entered invalid name or password. Monitoring will be disabled", ex)
         bot.sendMessage(monitoring.source, lang(monitoring.userId).invalidLoginOrPassword)
         val activeUserMonitorings = dataService.getActiveMonitorings(monitoring.userId)
@@ -228,7 +229,7 @@ class MonitoringService extends Logger {
               case None =>
                 bot.sendMessage(monitoring.source, lang(monitoring.userId).termIsOutdated)
             }
-          case Left(ex) if ex.getMessage.toLowerCase.contains("invalid login or password") =>
+          case Left(ex: InvalidLoginOrPasswordException) =>
             LOG.error(s"User entered invalid name or password. Monitoring will be disabled", ex)
             bot.sendMessage(monitoring.source, lang(monitoring.userId).loginHasChangedOrWrong)
           case Left(ex) => LOG.error(s"Error occurred during receiving terms for monitoring [#${monitoring.recordId}]", ex)
