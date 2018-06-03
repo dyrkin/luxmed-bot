@@ -35,7 +35,7 @@ subprojects {
 
     task scalaTest(dependsOn: ['testClasses'], type: JavaExec) {
         main = 'org.scalatest.tools.Runner'
-        args = ['-R', "build/classes/test",
+        args = ['-R', "build/classes/scala/test",
                 '-u', "build/test-results/$name",
                 '-h', "build/resports/scalaTests/$name",
                 '-o'
