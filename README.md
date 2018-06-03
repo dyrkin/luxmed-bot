@@ -1,6 +1,8 @@
 # Luxmed Booking Service
 
-Non official Telegram bot for **Portal Pacienta LUX MED**.
+[![Build Status](https://travis-ci.org/dyrkin/luxmed-booking-service.svg?branch=master)](https://travis-ci.org/dyrkin/luxmed-booking-service)
+
+Non official Telegram bot for **Portal Pacjenta LUX MED**.
 
 With its help user can book a visit to a doctor, create term monitoring, view upcoming visits and visit history.
 
