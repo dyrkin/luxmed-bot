@@ -1,30 +1,18 @@
 package com.lbs.server.actor
 
-import akka.actor.{ActorRef, ActorSystem}
-import akka.testkit.{ImplicitSender, TestKit, TestProbe}
 import com.lbs.bot.model.{Command, Message, MessageSource, TelegramMessageSourceSystem}
 import com.lbs.server.actor.Chat.Init
 import com.lbs.server.actor.Login.{ForwardCommand, LoggedIn, UserId}
 import com.lbs.server.service.DataService
 import org.mockito.Mockito._
-import org.scalatest.{BeforeAndAfterAll, WordSpecLike}
 
-class AuthSpec extends TestKit(ActorSystem()) with ImplicitSender with WordSpecLike with BeforeAndAfterAll {
-  override def afterAll(): Unit = {
-    TestKit.shutdownActorSystem(system)
-  }
+class AuthSpec extends AkkaTestKit with Mocks {
 
   "An Auth actor " when {
     val source = MessageSource(TelegramMessageSourceSystem, "1")
     val userId = UserId(1L, source)
 
     "user is unauthorized" must {
-      val unauthorizedHelpActor = TestProbe()
-      val loginActor = TestProbe()
-      val chatActor = TestProbe()
-      val unauthorizedHelpFactory: MessageSource => ActorRef = _ => unauthorizedHelpActor.ref
-      val loginActorFactory: (MessageSource, ActorRef) => ActorRef = (_, _) => loginActor.ref
-      val chatActorFactory: UserId => ActorRef = _ => chatActor.ref
       val dataService = mock(classOf[DataService])
       val auth = system.actorOf(Auth.props(source, dataService, unauthorizedHelpFactory, loginActorFactory, chatActorFactory))
 
@@ -75,12 +63,6 @@ class AuthSpec extends TestKit(ActorSystem()) with ImplicitSender with WordSpecL
     }
 
     "user is authorized" must {
-      val unauthorizedHelpActor = TestProbe()
-      val loginActor = TestProbe()
-      val chatActor = TestProbe()
-      val unauthorizedHelpFactory: MessageSource => ActorRef = _ => unauthorizedHelpActor.ref
-      val loginActorFactory: (MessageSource, ActorRef) => ActorRef = (_, _) => loginActor.ref
-      val chatActorFactory: UserId => ActorRef = _ => chatActor.ref
       val dataService = mock(classOf[DataService])
       val auth = system.actorOf(Auth.props(source, dataService, unauthorizedHelpFactory, loginActorFactory, chatActorFactory))
 
