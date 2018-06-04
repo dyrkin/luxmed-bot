@@ -5,6 +5,11 @@ ext {
     scalaVersion = "2.12.6"
 }
 
+allprojects {
+    group = 'com.lbs'
+    version = '1.0.0-SNAPSHOT'
+}
+
 apply plugin: 'idea'
 
 subprojects {

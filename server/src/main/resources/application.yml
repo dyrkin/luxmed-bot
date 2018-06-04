@@ -1,6 +1,6 @@
 spring:
   datasource:
-    url: "jdbc:postgresql://127.0.0.1:5432/lbs"
+    url: "jdbc:postgresql://database:5432/lbs"
     username: "lbs"
     password: "lsb123"
   jpa:
@@ -18,7 +18,7 @@ banner:
   location: "classpath:/banner.txt"
 
 logging:
-  file: logs/app.log
+  file: log/app.log
   level:
     com.lbs: DEBUG
 #    org.hibernate.SQL: DEBUG
