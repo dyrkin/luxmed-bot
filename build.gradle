@@ -26,7 +26,6 @@ subprojects {
 
     dependencies {
         compile group: 'org.scala-lang', name: "scala-library", version: scalaVersion
-        compile('org.scalaz:scalaz-core_2.12:7.2.23')
 
         testCompile('org.scalatest:scalatest_2.12:3.0.4')
         testCompile('org.mockito:mockito-core:2.13.0')

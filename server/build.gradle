@@ -26,6 +26,8 @@ dependencies {
 
     compile('org.jasypt:jasypt:1.9.2')
     compile('org.postgresql:postgresql:42.2.1.jre7')
+
+    testCompile('com.typesafe.akka:akka-testkit_2.12:2.4.19')
 }
 
 
