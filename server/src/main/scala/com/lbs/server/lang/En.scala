@@ -316,7 +316,7 @@ object En extends Lang {
 
   override def settingsHeader: String = "<b>➡</b> Please choose an action"
 
-  override def language: String = "Change language"
+  override def language: String = "🌐 Change language"
 
   override def chooseLanguage: String = "<b>➡</b> Please choose a language"
 

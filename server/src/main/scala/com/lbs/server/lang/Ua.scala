@@ -315,7 +315,7 @@ object Ua extends Lang {
 
   override def settingsHeader: String = "<b>➡</b> Оберіть дію"
 
-  override def language: String = "Змінтини мову"
+  override def language: String = "🌐 Змінтини мову"
 
   override def chooseLanguage: String = "<b>➡</b> Будь ласка, оберіть мову"
 
