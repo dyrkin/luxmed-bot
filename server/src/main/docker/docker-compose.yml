@@ -5,6 +5,7 @@ services:
      environment:
        TELEGRAM_TOKEN: ${TELEGRAM_TOKEN}
        SECURITY_SECRET: ${SECURITY_SECRET}
+       DB_HOST: "database"
      volumes:
         - ./log:/usr/local/luxmedbookingservice/log
   database:
