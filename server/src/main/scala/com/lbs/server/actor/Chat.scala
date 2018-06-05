@@ -70,7 +70,7 @@ class Chat(val userId: UserId, dataService: DataService, monitoringService: Moni
   }
 
   when(VisitsChat, visitsActor) {
-    case Event(Command(_, Text("/visits"), _), _) =>
+    case Event(Command(_, Text("/reserved"), _), _) =>
       visitsActor ! Init
       stay()
   }
@@ -124,7 +124,7 @@ class Chat(val userId: UserId, dataService: DataService, monitoringService: Moni
     case Event(cmd@Command(_, Text("/history"), _), _) =>
       self ! cmd
       goto(HistoryChat)
-    case Event(cmd@Command(_, Text("/visits"), _), _) =>
+    case Event(cmd@Command(_, Text("/reserved"), _), _) =>
       self ! cmd
       goto(VisitsChat)
     case Event(cmd@Command(_, Text("/settings"), _), _) =>

@@ -190,11 +190,11 @@ object En extends Lang {
        |
        |<b>➡</b> Supported commands
        |/login - enter Luxmed credentials
-       |/book - make an appointment
+       |/book - reserve a visit or create monitoring
        |/monitorings - available terms monitoring
        |/history - visits history
-       |/visits - upcoming visits
-       |/settings - change language
+       |/reserved - upcoming visits
+       |/settings - settings, e.g. lang
        |/bug - submit an issue""".stripMargin
 
   override def dateFromIs(dateFrom: ZonedDateTime): String = s"📅 Date from is ${formatDate(dateFrom, locale)}"
