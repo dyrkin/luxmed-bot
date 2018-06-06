@@ -23,7 +23,7 @@
   */
 package com.lbs.server.actor
 
-import akka.actor.{ActorRef, PoisonPill, Props}
+import akka.actor.{PoisonPill, Props}
 import com.lbs.api.json.model.HistoricVisit
 import com.lbs.bot.Bot
 import com.lbs.bot.model.Command
@@ -33,7 +33,7 @@ import com.lbs.server.actor.Login.UserId
 import com.lbs.server.lang.{Localizable, Localization}
 import com.lbs.server.service.ApiService
 
-class History(val userId: UserId, bot: Bot, apiService: ApiService, val localization: Localization, historyPagerActorFactory: (UserId, ActorRef) => ActorRef) extends SafeFSM[FSMState, FSMData] with Localizable {
+class History(val userId: UserId, bot: Bot, apiService: ApiService, val localization: Localization, historyPagerActorFactory: ByUserIdWithOriginatorActorFactory) extends SafeFSM[FSMState, FSMData] with Localizable {
 
   private val historyPager = historyPagerActorFactory(userId, self)
 
@@ -73,7 +73,7 @@ class History(val userId: UserId, bot: Bot, apiService: ApiService, val localiza
 }
 
 object History {
-  def props(userId: UserId, bot: Bot, apiService: ApiService, localization: Localization, historyPagerActorFactory: (UserId, ActorRef) => ActorRef): Props =
+  def props(userId: UserId, bot: Bot, apiService: ApiService, localization: Localization, historyPagerActorFactory: ByUserIdWithOriginatorActorFactory): Props =
     Props(new History(userId, bot, apiService, localization, historyPagerActorFactory))
 
   object RequestData extends FSMState

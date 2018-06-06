@@ -32,7 +32,7 @@ import scala.collection.mutable
 import scala.concurrent.ExecutionContextExecutor
 import scala.concurrent.duration.DurationLong
 
-class Router(authActorFactory: MessageSource => ActorRef) extends Actor with Logger {
+class Router(authActorFactory: ByMessageSourceActorFactory) extends Actor with Logger {
 
   private val chats = mutable.Map.empty[MessageSource, ActorRef]
 

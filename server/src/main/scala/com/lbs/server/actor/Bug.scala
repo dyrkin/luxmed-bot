@@ -23,7 +23,7 @@
   */
 package com.lbs.server.actor
 
-import akka.actor.{ActorRef, PoisonPill, Props}
+import akka.actor.{PoisonPill, Props}
 import com.lbs.bot.model.{Button, Command}
 import com.lbs.bot.{Bot, _}
 import com.lbs.server.actor.Bug._
@@ -34,7 +34,7 @@ import com.lbs.server.repository.model
 import com.lbs.server.service.DataService
 import com.lbs.server.util.MessageExtractors
 
-class Bug(val userId: UserId, bot: Bot, dataService: DataService, bugPagerActorFactory: (UserId, ActorRef) => ActorRef,
+class Bug(val userId: UserId, bot: Bot, dataService: DataService, bugPagerActorFactory: ByUserIdWithOriginatorActorFactory,
           val localization: Localization) extends SafeFSM[FSMState, FSMData] with Localizable {
 
   private val bugPager = bugPagerActorFactory(userId, self)
@@ -97,7 +97,7 @@ class Bug(val userId: UserId, bot: Bot, dataService: DataService, bugPagerActorF
 }
 
 object Bug {
-  def props(userId: UserId, bot: Bot, dataService: DataService, bugPagerActorFactory: (UserId, ActorRef) => ActorRef, localization: Localization): Props =
+  def props(userId: UserId, bot: Bot, dataService: DataService, bugPagerActorFactory: ByUserIdWithOriginatorActorFactory, localization: Localization): Props =
     Props(new Bug(userId, bot, dataService, bugPagerActorFactory, localization))
 
   object RequestBugDetails extends FSMState

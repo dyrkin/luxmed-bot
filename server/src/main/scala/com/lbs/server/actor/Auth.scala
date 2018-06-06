@@ -31,8 +31,8 @@ import com.lbs.server.actor.Login.{LoggedIn, UserId}
 import com.lbs.server.service.DataService
 import com.lbs.server.util.MessageExtractors._
 
-class Auth(val source: MessageSource, dataService: DataService, unauthorizedHelpActorFactory: MessageSource => ActorRef,
-           loginActorFactory: (MessageSource, ActorRef) => ActorRef, chatActorFactory: UserId => ActorRef) extends Actor with Logger {
+class Auth(val source: MessageSource, dataService: DataService, unauthorizedHelpActorFactory: ByMessageSourceActorFactory,
+           loginActorFactory: ByMessageSourceWithOriginatorActorFactory, chatActorFactory: ByUserIdActorFactory) extends Actor with Logger {
 
   private val loginActor = loginActorFactory(source, self)
   private val unauthorizedHelpActor: ActorRef = unauthorizedHelpActorFactory(source)
@@ -89,8 +89,8 @@ class Auth(val source: MessageSource, dataService: DataService, unauthorizedHelp
 }
 
 object Auth {
-  def props(source: MessageSource, dataService: DataService, unauthorizedHelpActorFactory: MessageSource => ActorRef,
-            loginActorFactory: (MessageSource, ActorRef) => ActorRef, chatActorFactory: UserId => ActorRef): Props =
+  def props(source: MessageSource, dataService: DataService, unauthorizedHelpActorFactory: ByMessageSourceActorFactory,
+            loginActorFactory: ByMessageSourceWithOriginatorActorFactory, chatActorFactory: ByUserIdActorFactory): Props =
     Props(new Auth(source, dataService, unauthorizedHelpActorFactory, loginActorFactory, chatActorFactory))
 }
 

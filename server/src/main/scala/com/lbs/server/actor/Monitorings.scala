@@ -23,7 +23,7 @@
   */
 package com.lbs.server.actor
 
-import akka.actor.{ActorRef, PoisonPill, Props}
+import akka.actor.{PoisonPill, Props}
 import com.lbs.bot._
 import com.lbs.bot.model.{Button, Command}
 import com.lbs.server.actor.Chat.Init
@@ -33,7 +33,7 @@ import com.lbs.server.lang.{Localizable, Localization}
 import com.lbs.server.repository.model.Monitoring
 import com.lbs.server.service.MonitoringService
 
-class Monitorings(val userId: UserId, bot: Bot, monitoringService: MonitoringService, val localization: Localization, monitoringsPagerActorFactory: (UserId, ActorRef) => ActorRef) extends SafeFSM[FSMState, Monitoring] with Localizable {
+class Monitorings(val userId: UserId, bot: Bot, monitoringService: MonitoringService, val localization: Localization, monitoringsPagerActorFactory: ByUserIdWithOriginatorActorFactory) extends SafeFSM[FSMState, Monitoring] with Localizable {
 
   private val monitoringsPager = monitoringsPagerActorFactory(userId, self)
 
@@ -85,7 +85,7 @@ class Monitorings(val userId: UserId, bot: Bot, monitoringService: MonitoringSer
 }
 
 object Monitorings {
-  def props(userId: UserId, bot: Bot, monitoringService: MonitoringService, localization: Localization, monitoringsPagerActorFactory: (UserId, ActorRef) => ActorRef): Props =
+  def props(userId: UserId, bot: Bot, monitoringService: MonitoringService, localization: Localization, monitoringsPagerActorFactory: ByUserIdWithOriginatorActorFactory): Props =
     Props(new Monitorings(userId, bot, monitoringService, localization, monitoringsPagerActorFactory))
 
   object RequestData extends FSMState

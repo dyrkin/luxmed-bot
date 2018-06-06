@@ -25,13 +25,11 @@ package com.lbs.server
 
 import akka.actor.{ActorRef, ActorSystem}
 import com.lbs.bot.Bot
-import com.lbs.bot.model.MessageSource
 import com.lbs.bot.telegram.TelegramBot
 import com.lbs.server.actor.Login.UserId
 import com.lbs.server.actor._
 import com.lbs.server.lang.Localization
 import com.lbs.server.service.{ApiService, DataService, MonitoringService}
-import javax.annotation.PostConstruct
 import org.jasypt.util.text.{StrongTextEncryptor, TextEncryptor}
 import org.springframework.beans.factory.annotation.{Autowired, Value}
 import org.springframework.context.annotation.{Bean, Configuration}
@@ -67,58 +65,58 @@ class BootConfig {
   }
 
   @Bean
-  def authActorFactory: MessageSource => ActorRef = source => actorSystem.actorOf(Auth.props(source,
+  def authActorFactory: ByMessageSourceActorFactory = source => actorSystem.actorOf(Auth.props(source,
     dataService, unauthorizedHelpActorFactory, loginActorFactory, chatActorFactory))
 
   @Bean
-  def loginActorFactory: (MessageSource, ActorRef) => ActorRef = (source, originator) => actorSystem.actorOf(Login.props(source, bot,
+  def loginActorFactory: ByMessageSourceWithOriginatorActorFactory = (source, originator) => actorSystem.actorOf(Login.props(source, bot,
     dataService, apiService, textEncryptor, localization, originator))
 
   @Bean
-  def bookingActorFactory: UserId => ActorRef = userId => actorSystem.actorOf(Book.props(userId, bot, apiService, dataService,
+  def bookingActorFactory: ByUserIdActorFactory = userId => actorSystem.actorOf(Book.props(userId, bot, apiService, dataService,
     monitoringService, localization, datePickerFactory, staticDataActorFactory, termsPagerActorFactory))
 
   @Bean
-  def unauthorizedHelpActorFactory: MessageSource => ActorRef = source => actorSystem.actorOf(UnauthorizedHelp.props(source, bot))
+  def unauthorizedHelpActorFactory: ByMessageSourceActorFactory = source => actorSystem.actorOf(UnauthorizedHelp.props(source, bot))
 
   @Bean
-  def helpActorFactory: UserId => ActorRef = userId => actorSystem.actorOf(Help.props(userId, bot, localization))
+  def helpActorFactory: ByUserIdActorFactory = userId => actorSystem.actorOf(Help.props(userId, bot, localization))
 
   @Bean
-  def monitoringsActorFactory: UserId => ActorRef =
+  def monitoringsActorFactory: ByUserIdActorFactory =
     userId => actorSystem.actorOf(Monitorings.props(userId, bot, monitoringService, localization, monitoringsPagerActorFactory))
 
   @Bean
-  def historyActorFactory: UserId => ActorRef =
+  def historyActorFactory: ByUserIdActorFactory =
     userId => actorSystem.actorOf(History.props(userId, bot, apiService, localization, historyPagerActorFactory))
 
   @Bean
-  def visitsActorFactory: UserId => ActorRef =
+  def visitsActorFactory: ByUserIdActorFactory =
     userId => actorSystem.actorOf(Visits.props(userId, bot, apiService, localization, visitsPagerActorFactory))
 
   @Bean
-  def bugActorFactory: UserId => ActorRef =
+  def bugActorFactory: ByUserIdActorFactory =
     userId => actorSystem.actorOf(Bug.props(userId, bot, dataService, bugPagerActorFactory, localization))
 
   @Bean
-  def settingsActorFactory: UserId => ActorRef =
+  def settingsActorFactory: ByUserIdActorFactory =
     userId => actorSystem.actorOf(Settings.props(userId, bot, dataService, localization))
 
   @Bean
-  def chatActorFactory: UserId => ActorRef =
+  def chatActorFactory: ByUserIdActorFactory =
     userId => actorSystem.actorOf(Chat.props(userId, dataService, monitoringService, bookingActorFactory, helpActorFactory,
       monitoringsActorFactory, historyActorFactory, visitsActorFactory, settingsActorFactory, bugActorFactory))
 
   @Bean
-  def datePickerFactory: (UserId, ActorRef) => ActorRef = (userId, originator) =>
+  def datePickerFactory: ByUserIdWithOriginatorActorFactory = (userId, originator) =>
     actorSystem.actorOf(DatePicker.props(userId, bot, localization, originator))
 
   @Bean
-  def staticDataActorFactory: (UserId, ActorRef) => ActorRef = (userId, originator) =>
+  def staticDataActorFactory: ByUserIdWithOriginatorActorFactory = (userId, originator) =>
     actorSystem.actorOf(StaticData.props(userId, bot, localization, originator))
 
   @Bean
-  def termsPagerActorFactory: (UserId, ActorRef) => ActorRef = (userId, originator) =>
+  def termsPagerActorFactory: ByUserIdWithOriginatorActorFactory = (userId, originator) =>
     actorSystem.actorOf(Pagers(userId, bot, localization).termsPagerProps(originator))
 
   @Bean
@@ -126,15 +124,15 @@ class BootConfig {
     actorSystem.actorOf(Pagers(userId, bot, localization).visitsPagerProps(originator))
 
   @Bean
-  def bugPagerActorFactory: (UserId, ActorRef) => ActorRef = (userId, originator) =>
+  def bugPagerActorFactory: ByUserIdWithOriginatorActorFactory = (userId, originator) =>
     actorSystem.actorOf(Pagers(userId, bot, localization).bugPagerProps(originator))
 
   @Bean
-  def historyPagerActorFactory: (UserId, ActorRef) => ActorRef = (userId, originator) =>
+  def historyPagerActorFactory: ByUserIdWithOriginatorActorFactory = (userId, originator) =>
     actorSystem.actorOf(Pagers(userId, bot, localization).historyPagerProps(originator))
 
   @Bean
-  def monitoringsPagerActorFactory: (UserId, ActorRef) => ActorRef = (userId, originator) =>
+  def monitoringsPagerActorFactory: ByUserIdWithOriginatorActorFactory = (userId, originator) =>
     actorSystem.actorOf(Pagers(userId, bot, localization).monitoringsPagerProps(originator))
 
   @Bean

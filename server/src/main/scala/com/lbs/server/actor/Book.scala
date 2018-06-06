@@ -25,7 +25,7 @@ package com.lbs.server.actor
 
 import java.time.ZonedDateTime
 
-import akka.actor.{ActorRef, PoisonPill, Props}
+import akka.actor.{PoisonPill, Props}
 import com.lbs.api.json.model._
 import com.lbs.bot._
 import com.lbs.bot.model.{Button, Command}
@@ -42,8 +42,8 @@ import com.lbs.server.util.ServerModelConverters._
 import scala.util.{Failure, Success, Try}
 
 class Book(val userId: UserId, bot: Bot, apiService: ApiService, dataService: DataService, monitoringService: MonitoringService,
-           val localization: Localization, datePickerActorFactory: (UserId, ActorRef) => ActorRef, staticDataActorFactory: (UserId, ActorRef) => ActorRef,
-           termsPagerActorFactory: (UserId, ActorRef) => ActorRef) extends SafeFSM[FSMState, FSMData] with StaticDataForBooking with Localizable {
+           val localization: Localization, datePickerActorFactory: ByUserIdWithOriginatorActorFactory, staticDataActorFactory: ByUserIdWithOriginatorActorFactory,
+           termsPagerActorFactory: ByUserIdWithOriginatorActorFactory) extends SafeFSM[FSMState, FSMData] with StaticDataForBooking with Localizable {
 
   private val datePicker = datePickerActorFactory(userId, self)
   protected val staticData = staticDataActorFactory(userId, self)
@@ -275,8 +275,8 @@ class Book(val userId: UserId, bot: Bot, apiService: ApiService, dataService: Da
 object Book {
 
   def props(userId: UserId, bot: Bot, apiService: ApiService, dataService: DataService, monitoringService: MonitoringService,
-            localization: Localization, datePickerActorFactory: (UserId, ActorRef) => ActorRef,
-            staticDataActorFactory: (UserId, ActorRef) => ActorRef, termsPagerActorFactory: (UserId, ActorRef) => ActorRef): Props =
+            localization: Localization, datePickerActorFactory: ByUserIdWithOriginatorActorFactory,
+            staticDataActorFactory: ByUserIdWithOriginatorActorFactory, termsPagerActorFactory: ByUserIdWithOriginatorActorFactory): Props =
     Props(new Book(userId, bot, apiService, dataService, monitoringService, localization, datePickerActorFactory,
       staticDataActorFactory, termsPagerActorFactory))
 

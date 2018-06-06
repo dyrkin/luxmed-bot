@@ -33,10 +33,10 @@ import com.lbs.server.util.MessageExtractors._
 
 import scala.util.matching.Regex
 
-class Chat(val userId: UserId, dataService: DataService, monitoringService: MonitoringService, bookingActorFactory: UserId => ActorRef, helpActorFactory: UserId => ActorRef,
-           monitoringsActorFactory: UserId => ActorRef, historyActorFactory: UserId => ActorRef,
-           visitsActorFactory: UserId => ActorRef, settingsActorFactory: UserId => ActorRef,
-           bugActorFactory: UserId => ActorRef) extends SafeFSM[FSMState, FSMData] with Logger {
+class Chat(val userId: UserId, dataService: DataService, monitoringService: MonitoringService, bookingActorFactory: ByUserIdActorFactory, helpActorFactory: ByUserIdActorFactory,
+           monitoringsActorFactory: ByUserIdActorFactory, historyActorFactory: ByUserIdActorFactory,
+           visitsActorFactory: ByUserIdActorFactory, settingsActorFactory: ByUserIdActorFactory,
+           bugActorFactory: ByUserIdActorFactory) extends SafeFSM[FSMState, FSMData] with Logger {
 
   private val bookingActor = bookingActorFactory(userId)
   private val helpActor = helpActorFactory(userId)
@@ -162,9 +162,9 @@ class Chat(val userId: UserId, dataService: DataService, monitoringService: Moni
 }
 
 object Chat {
-  def props(userId: UserId, dataService: DataService, monitoringService: MonitoringService, bookingActorFactory: UserId => ActorRef, helpActorFactory: UserId => ActorRef,
-            monitoringsActorFactory: UserId => ActorRef, historyActorFactory: UserId => ActorRef,
-            visitsActorFactory: UserId => ActorRef, settingsActorFactory: UserId => ActorRef, bugActorFactory: UserId => ActorRef): Props =
+  def props(userId: UserId, dataService: DataService, monitoringService: MonitoringService, bookingActorFactory: ByUserIdActorFactory, helpActorFactory: ByUserIdActorFactory,
+            monitoringsActorFactory: ByUserIdActorFactory, historyActorFactory: ByUserIdActorFactory,
+            visitsActorFactory: ByUserIdActorFactory, settingsActorFactory: ByUserIdActorFactory, bugActorFactory: ByUserIdActorFactory): Props =
     Props(new Chat(userId, dataService, monitoringService, bookingActorFactory, helpActorFactory, monitoringsActorFactory,
       historyActorFactory, visitsActorFactory, settingsActorFactory, bugActorFactory))
 

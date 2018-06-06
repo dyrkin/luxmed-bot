@@ -23,7 +23,7 @@
   */
 package com.lbs.server.actor
 
-import akka.actor.{ActorRef, PoisonPill, Props}
+import akka.actor.{PoisonPill, Props}
 import com.lbs.api.json.model.ReservedVisit
 import com.lbs.bot.model.{Button, Command}
 import com.lbs.bot.{Bot, _}
@@ -34,7 +34,7 @@ import com.lbs.server.lang.{Localizable, Localization}
 import com.lbs.server.service.ApiService
 
 class Visits(val userId: UserId, bot: Bot, apiService: ApiService, val localization: Localization,
-             visitsPagerActorFactory: (UserId, ActorRef) => ActorRef) extends SafeFSM[FSMState, ReservedVisit] with Localizable {
+             visitsPagerActorFactory: ByUserIdWithOriginatorActorFactory) extends SafeFSM[FSMState, ReservedVisit] with Localizable {
 
   private val reservedVisitsPager = visitsPagerActorFactory(userId, self)
 
@@ -89,7 +89,7 @@ class Visits(val userId: UserId, bot: Bot, apiService: ApiService, val localizat
 
 object Visits {
   def props(userId: UserId, bot: Bot, apiService: ApiService, localization: Localization,
-            visitsPagerActorFactory: (UserId, ActorRef) => ActorRef): Props =
+            visitsPagerActorFactory: ByUserIdWithOriginatorActorFactory): Props =
     Props(new Visits(userId, bot, apiService, localization, visitsPagerActorFactory))
 
   object RequestData extends FSMState
