@@ -278,7 +278,8 @@ object Ua extends Lang {
 
   override def availableTermsHeader(size: Int): String =
     s"""✅ <b>$size</b> термінів було знайдено за допомогою моніторінгу. Ми показали вам найближчі 5.
-       |<b>➡</b> Будь ласка, оберіть один щоб заререзвувати""".stripMargin
+       |
+       |<b>➡</b> Будь ласка, оберіть один щоб зарезервувати""".stripMargin
 
   override def nothingWasFoundByMonitoring(monitoring: Monitoring): String =
     s"""❗ Нічого не знайдено за вашим моніторингом. Моніторинг був <b>вимкнений</b> як застарілий.
@@ -307,10 +308,12 @@ object Ua extends Lang {
 
   override def termIsOutdated: String =
     s"""❗️ Схоже, що термін вже не є доступним
+       |
        |Будь ласка, спробуйте інший або створіть новий моніторинг /book""".stripMargin
 
   override def loginHasChangedOrWrong: String =
     """❗ Ви ввели невірний і <b>логін</b> або <b>пароль</b> або змінили його через сайт.
+      |
       |Будь ласка, /login знову і створіть новий моніторинг/book.
     """.stripMargin
 

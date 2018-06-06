@@ -279,6 +279,7 @@ object En extends Lang {
 
   override def availableTermsHeader(size: Int): String =
     s"""✅ <b>$size</b> terms were found by monitoring. We showed you the closest 5.
+       |
        |<b>➡</b> Please choose one to reserve""".stripMargin
 
   override def nothingWasFoundByMonitoring(monitoring: Monitoring): String =
@@ -308,10 +309,12 @@ object En extends Lang {
 
   override def termIsOutdated: String =
     s"""❗️ Looks like the term is already booked by someone else
+       |
        |Please try another one or create a new monitoring /book""".stripMargin
 
   override def loginHasChangedOrWrong: String =
     """❗ You have entered invalid <b>login</b> or <b>password</b> or changed it via site.
+      |
       |Please /login again and create a new monitoring /book.
     """.stripMargin
 
