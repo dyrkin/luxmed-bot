@@ -126,8 +126,3 @@ object StaticData {
   case class FoundOptions(option: Either[Throwable, List[IdName]])
 
 }
-
-
-
-
-

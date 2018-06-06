@@ -128,5 +128,3 @@ object Pager {
   }
 
 }
-
-

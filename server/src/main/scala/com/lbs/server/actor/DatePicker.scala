@@ -98,12 +98,12 @@ class DatePicker(val userId: UserId, val bot: Bot, val localization: Localizatio
 
   private def modifyDate(date: ZonedDateTime, tag: String) = {
     val dateModifier = tag match {
-      case Tags.DayUp => date.plusDays _
-      case Tags.MonthUp => date.plusMonths _
-      case Tags.YearUp => date.plusYears _
-      case Tags.DayDown => date.minusDays _
-      case Tags.MonthDown => date.minusMonths _
-      case Tags.YearDown => date.minusYears _
+      case Tags.DayInc => date.plusDays _
+      case Tags.MonthInc => date.plusMonths _
+      case Tags.YearInc => date.plusYears _
+      case Tags.DayDec => date.minusDays _
+      case Tags.MonthDec => date.minusMonths _
+      case Tags.YearDec => date.minusYears _
     }
     dateModifier(1)
   }
@@ -115,9 +115,9 @@ class DatePicker(val userId: UserId, val bot: Bot, val localization: Localizatio
     val year = date.getYear.toString
 
     createInlineKeyboard(Seq(
-      Seq(Button("⬆", Tags.DayUp), Button("⬆", Tags.MonthUp), Button("⬆", Tags.YearUp)),
+      Seq(Button("⬆", Tags.DayInc), Button("⬆", Tags.MonthInc), Button("⬆", Tags.YearInc)),
       Seq(Button(s"$day ($dayOfWeek)"), Button(month), Button(year)),
-      Seq(Button("⬇", Tags.DayDown), Button("⬇", Tags.MonthDown), Button("⬇", Tags.YearDown)),
+      Seq(Button("⬇", Tags.DayDec), Button("⬇", Tags.MonthDec), Button("⬇", Tags.YearDec)),
       Seq(Button("Done", Tags.Done))
     ))
   }
@@ -140,16 +140,13 @@ object DatePicker {
   object DateToMode extends Mode
 
   object Tags {
-    val DayUp = "day_up"
-    val MonthUp = "month_up"
-    val YearUp = "year_up"
-    val DayDown = "day_down"
-    val MonthDown = "month_down"
-    val YearDown = "year_down"
+    val DayInc = "day_inc"
+    val MonthInc = "month_inc"
+    val YearInc = "year_inc"
+    val DayDec = "day_dec"
+    val MonthDec = "month_dec"
+    val YearDec = "year_dec"
     val Done = "done"
   }
 
 }
-
-
-

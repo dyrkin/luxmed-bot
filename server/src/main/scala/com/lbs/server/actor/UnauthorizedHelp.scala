@@ -38,13 +38,3 @@ class UnauthorizedHelp(source: MessageSource, bot: Bot) extends Actor {
 object UnauthorizedHelp {
   def props(source: MessageSource, bot: Bot): Props = Props(new UnauthorizedHelp(source, bot))
 }
-
-
-
-
-
-
-
-
-
-

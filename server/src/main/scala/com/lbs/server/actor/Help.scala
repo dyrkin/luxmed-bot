@@ -39,12 +39,3 @@ class Help(val userId: UserId, bot: Bot, val localization: Localization) extends
 object Help {
   def props(userId: UserId, bot: Bot, localization: Localization): Props = Props(new Help(userId, bot, localization))
 }
-
-
-
-
-
-
-
-
-

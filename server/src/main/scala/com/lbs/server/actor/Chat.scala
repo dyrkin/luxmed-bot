@@ -187,10 +187,3 @@ object Chat {
   val MonitoringId: Regex = s"/reserve_(\\d+)_(\\d+)_(\\d+)".r
 
 }
-
-
-
-
-
-
-

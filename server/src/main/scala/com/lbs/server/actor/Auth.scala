@@ -93,12 +93,3 @@ object Auth {
             loginActorFactory: ByMessageSourceWithOriginatorActorFactory, chatActorFactory: ByUserIdActorFactory): Props =
     Props(new Auth(source, dataService, unauthorizedHelpActorFactory, loginActorFactory, chatActorFactory))
 }
-
-
-
-
-
-
-
-
-
