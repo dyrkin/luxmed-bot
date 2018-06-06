@@ -19,13 +19,13 @@ class AuthSpec extends AkkaTestKit {
       val unauthorizedHelpActor = TestProbe()
       val loginActor = TestProbe()
       val chatActor = TestProbe()
-      val unauthorizedHelpFactory: MessageSource => ActorRef = _ => unauthorizedHelpActor.ref
-      val loginActorFactory: (MessageSource, ActorRef) => ActorRef = (_, _) => loginActor.ref
+      val unauthorizedHelpFactory: ByMessageSourceActorFactory = _ => unauthorizedHelpActor.ref
+      val loginActorFactory: ByMessageSourceWithOriginatorActorFactory = (_, _) => loginActor.ref
       val chatActorFactory: UserId => ActorRef = _ => chatActor.ref
       val dataService = mock(classOf[DataService])
+      when(dataService.findUserIdBySource(source)).thenReturn(None)
       val auth = system.actorOf(Auth.props(source, dataService, unauthorizedHelpFactory, loginActorFactory, chatActorFactory))
 
-      when(dataService.findUserIdBySource(source)).thenReturn(None)
 
       "send english help on /start command" in {
         val cmd = Command(source, Message("1", Some("/start")))
@@ -75,13 +75,14 @@ class AuthSpec extends AkkaTestKit {
       val unauthorizedHelpActor = TestProbe()
       val loginActor = TestProbe()
       val chatActor = TestProbe()
-      val unauthorizedHelpFactory: MessageSource => ActorRef = _ => unauthorizedHelpActor.ref
-      val loginActorFactory: (MessageSource, ActorRef) => ActorRef = (_, _) => loginActor.ref
+      val unauthorizedHelpFactory: ByMessageSourceActorFactory = _ => unauthorizedHelpActor.ref
+      val loginActorFactory: ByMessageSourceWithOriginatorActorFactory = (_, _) => loginActor.ref
       val chatActorFactory: UserId => ActorRef = _ => chatActor.ref
       val dataService = mock(classOf[DataService])
+      when(dataService.findUserIdBySource(source)).thenReturn(Some(userId.userId))
+
       val auth = system.actorOf(Auth.props(source, dataService, unauthorizedHelpFactory, loginActorFactory, chatActorFactory))
 
-      when(dataService.findUserIdBySource(source)).thenReturn(Some(userId.userId))
 
       "forward all commands to chat actor" in {
         val cmd = Command(source, Message("1", Some("any")))

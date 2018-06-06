@@ -75,11 +75,13 @@ class ApiService extends SessionSupport {
   def getAvailableTerms(userId: Long, cityId: Long, clinicId: Option[Long], serviceId: Long, doctorId: Option[Long],
                         fromDate: ZonedDateTime = ZonedDateTime.now(), toDate: Option[ZonedDateTime] = None, timeOfDay: Int = 0,
                         languageId: Long = 10, findFirstFreeTerm: Boolean = false): Either[Throwable, List[AvailableVisitsTermPresentation]] =
-    getDefaultPayer(userId, cityId, clinicId, serviceId).flatMap { case Some(payerId) =>
-      withSession(userId) { session =>
-        LuxmedApi.availableTerms(session.accessToken, session.tokenType, payerId.id, cityId, clinicId, serviceId, doctorId,
-          fromDate, toDate, timeOfDay, languageId, findFirstFreeTerm).map(_.availableVisitsTermPresentation)
-      }
+    getDefaultPayer(userId, cityId, clinicId, serviceId).flatMap {
+      case Some(payerId) =>
+        withSession(userId) { session =>
+          LuxmedApi.availableTerms(session.accessToken, session.tokenType, payerId.id, cityId, clinicId, serviceId, doctorId,
+            fromDate, toDate, timeOfDay, languageId, findFirstFreeTerm).map(_.availableVisitsTermPresentation)
+        }
+      case None => sys.error(s"Can't determine payer id by user: $userId, city: $cityId, clinic: $clinicId, service: $serviceId")
     }
 
 

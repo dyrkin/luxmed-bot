@@ -211,6 +211,7 @@ class Book(val userId: UserId, bot: Bot, apiService: ApiService, dataService: Da
               bot.sendMessage(userId.source, lang.appointmentIsConfirmed)
               stay()
           }
+        case _ => sys.error(s"Can not prepare reservation request using booking data $bookingData")
       }
 
   }
