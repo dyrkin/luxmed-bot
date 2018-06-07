@@ -41,7 +41,7 @@ class Monitorings(val userId: UserId, bot: Bot, monitoringService: MonitoringSer
 
   whenSafe(RequestData) {
     case Event(Next, _) =>
-      val monitorings = monitoringService.getActiveMonitorings(userId.userId)
+      val monitorings = monitoringService.getActiveMonitorings(userId.accountId)
       monitoringsPager ! Right[Throwable, Seq[Monitoring]](monitorings)
       goto(AwaitPage)
   }

@@ -54,22 +54,22 @@ class Auth(val source: MessageSource, dataService: DataService, unauthorizedHelp
     case cmd: Command if userId.nonEmpty =>
       chatActor = getChatActor(userId.get)
       chatActor ! cmd
-    case LoggedIn(forwardCommand, id) =>
-      val uId = UserId(id, source)
+    case LoggedIn(forwardCommand, uId, aId) =>
+      val id = UserId(uId, aId, source)
       val cmd = forwardCommand.cmd
-      userId = Some(uId)
-      chatActor = getChatActor(uId, reinit = true)
+      userId = Some(id)
+      chatActor = getChatActor(id, reInit = true)
       if (!cmd.message.text.contains("/login"))
         chatActor ! cmd
     case cmd: Command =>
       chatActor ! cmd
   }
 
-  private def getChatActor(userId: UserId, reinit: Boolean = false): ActorRef = {
+  private def getChatActor(userId: UserId, reInit: Boolean = false): ActorRef = {
     if (chatActor == null) {
       chatActorFactory(userId)
     } else {
-      if (reinit) {
+      if (reInit) {
         chatActor ! PoisonPill
         chatActorFactory(userId)
       } else chatActor
@@ -77,8 +77,8 @@ class Auth(val source: MessageSource, dataService: DataService, unauthorizedHelp
   }
 
   def getUserId: Option[UserId] = {
-    val userIdMaybe = dataService.findUserIdBySource(source)
-    userIdMaybe.map(id => UserId(id, source))
+    val userIdMaybe = dataService.findUserAndAccountIdBySource(source)
+    userIdMaybe.map { case (uId, aId) => UserId(uId, aId, source) }
   }
 
   override def postStop(): Unit = {

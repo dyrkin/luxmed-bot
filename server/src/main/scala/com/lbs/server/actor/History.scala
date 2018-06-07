@@ -41,7 +41,7 @@ class History(val userId: UserId, bot: Bot, apiService: ApiService, val localiza
 
   whenSafe(RequestData) {
     case Event(Next, _) =>
-      val visits = apiService.visitsHistory(userId.userId)
+      val visits = apiService.visitsHistory(userId.accountId)
       historyPager ! visits
       goto(AwaitPage)
   }

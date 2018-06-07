@@ -44,26 +44,26 @@ trait SessionSupport {
 
   private val lock = new ParametrizedLock[Long]
 
-  protected def withSession[T](userId: Long)(fn: Session => Either[Throwable, T]): Either[Throwable, T] =
-    lock.obtainLock(userId).synchronized {
+  protected def withSession[T](accountId: Long)(fn: Session => Either[Throwable, T]): Either[Throwable, T] =
+    lock.obtainLock(accountId).synchronized {
 
       def auth: Either[Throwable, Session] = {
-        val credentialsMaybe = dataService.getCredentials(userId)
+        val credentialsMaybe = dataService.getCredentials(accountId)
         credentialsMaybe match {
           case Some(credentials) =>
             val loginResponse = login(credentials.username, credentials.password)
             loginResponse.map(r => Session(r.accessToken, r.tokenType))
-          case None => Left(UserNotFoundException(userId))
+          case None => Left(UserNotFoundException(accountId))
         }
       }
 
       def session: Either[Throwable, Session] = {
-        sessions.get(userId) match {
+        sessions.get(accountId) match {
           case Some(sess) => Right(sess)
           case None =>
             auth match {
               case Right(sess) =>
-                sessions.put(userId, sess)
+                sessions.put(accountId, sess)
                 Right(sess)
               case left => left
             }
@@ -74,8 +74,8 @@ trait SessionSupport {
         case Right(s) =>
           fn(s) match {
             case Left(ex) if ex.getMessage.contains("session has expired") =>
-              Log.debug(s"The session for user [#$userId] has expired. Try to relogin")
-              sessions.remove(userId)
+              Log.debug(s"The session for account [#$accountId] has expired. Try to relogin")
+              sessions.remove(accountId)
               session.flatMap(fn)
             case another =>
               Log.debug(s"Call to remote api function has completed with result:\n$another")
@@ -85,8 +85,8 @@ trait SessionSupport {
       }
     }
 
-  def addSession(userId: Long, accessToken: String, tokenType: String): Unit =
-    lock.obtainLock(userId).synchronized {
-      sessions.put(userId, Session(accessToken, tokenType))
+  def addSession(accountId: Long, accessToken: String, tokenType: String): Unit =
+    lock.obtainLock(accountId).synchronized {
+      sessions.put(accountId, Session(accessToken, tokenType))
     }
 }

@@ -26,6 +26,7 @@ package com.lbs.server.actor
 import akka.actor.{Actor, ActorRef, Cancellable, PoisonPill, Props}
 import com.lbs.bot.model.{Command, MessageSource}
 import com.lbs.common.Logger
+import com.lbs.server.actor.Account.SwitchUser
 import com.lbs.server.actor.Router.DestroyChat
 
 import scala.collection.mutable
@@ -47,20 +48,34 @@ class Router(authActorFactory: ByMessageSourceActorFactory) extends Actor with L
       scheduleIdleChatDestroyer(source)
       val chat = chats.get(source) match {
         case Some(actor) => actor
-        case None =>
-          val actor = authActorFactory(source)
-          chats += source -> actor
-          actor
+        case None => addNewChatActor(source)
       }
       chat ! cmd
     case DestroyChat(source) =>
       destroyChat(source)
+    case SwitchUser(userId) =>
+      switchUser(userId)
     case what => LOG.info(s"Unknown message: $what")
+  }
+
+  private def addNewChatActor(source: MessageSource): ActorRef = {
+    val actor = authActorFactory(source)
+    chats += source -> actor
+    actor
   }
 
   private def destroyChat(source: MessageSource): Unit = {
     LOG.info(s"Destroying chat for $source due to $idleTimeout inactivity")
     timers.remove(source)
+    removeChat(source)
+  }
+
+  private def switchUser(userId: Login.UserId): Unit = {
+    removeChat(userId.source)
+    addNewChatActor(userId.source)
+  }
+
+  private def removeChat(source: MessageSource): Unit = {
     chats.remove(source).foreach(_ ! PoisonPill)
   }
 

@@ -53,29 +53,29 @@ class Book(val userId: UserId, bot: Bot, apiService: ApiService, dataService: Da
 
   requestStaticData(RequestCity, AwaitCity, cityConfig) { bd: BookingData =>
     withFunctions(
-      latestOptions = dataService.getLatestCities(userId.userId),
-      staticOptions = apiService.getAllCities(userId.userId),
+      latestOptions = dataService.getLatestCities(userId.accountId),
+      staticOptions = apiService.getAllCities(userId.accountId),
       applyId = id => bd.copy(cityId = id))
   }(requestNext = RequestClinic)
 
   requestStaticData(RequestClinic, AwaitClinic, clinicConfig) { bd: BookingData =>
     withFunctions(
-      latestOptions = dataService.getLatestClinicsByCityId(userId.userId, bd.cityId.id),
-      staticOptions = apiService.getAllClinics(userId.userId, bd.cityId.id),
+      latestOptions = dataService.getLatestClinicsByCityId(userId.accountId, bd.cityId.id),
+      staticOptions = apiService.getAllClinics(userId.accountId, bd.cityId.id),
       applyId = id => bd.copy(clinicId = id))
   }(requestNext = RequestService)
 
   requestStaticData(RequestService, AwaitService, serviceConfig) { bd: BookingData =>
     withFunctions(
-      latestOptions = dataService.getLatestServicesByCityIdAndClinicId(userId.userId, bd.cityId.id, bd.clinicId.optionalId),
-      staticOptions = apiService.getAllServices(userId.userId, bd.cityId.id, bd.clinicId.optionalId),
+      latestOptions = dataService.getLatestServicesByCityIdAndClinicId(userId.accountId, bd.cityId.id, bd.clinicId.optionalId),
+      staticOptions = apiService.getAllServices(userId.accountId, bd.cityId.id, bd.clinicId.optionalId),
       applyId = id => bd.copy(serviceId = id))
   }(requestNext = RequestDoctor)
 
   requestStaticData(RequestDoctor, AwaitDoctor, doctorConfig) { bd: BookingData =>
     withFunctions(
-      latestOptions = dataService.getLatestDoctorsByCityIdAndClinicIdAndServiceId(userId.userId, bd.cityId.id, bd.clinicId.optionalId, bd.serviceId.id),
-      staticOptions = apiService.getAllDoctors(userId.userId, bd.cityId.id, bd.clinicId.optionalId, bd.serviceId.id),
+      latestOptions = dataService.getLatestDoctorsByCityIdAndClinicIdAndServiceId(userId.accountId, bd.cityId.id, bd.clinicId.optionalId, bd.serviceId.id),
+      staticOptions = apiService.getAllDoctors(userId.accountId, bd.cityId.id, bd.clinicId.optionalId, bd.serviceId.id),
       applyId = id => bd.copy(doctorId = id))
   }(requestNext = RequestDateFrom)
 
@@ -128,7 +128,7 @@ class Book(val userId: UserId, bot: Bot, apiService: ApiService, dataService: Da
 
   whenSafe(RequestAction) {
     case Event(Next, bookingData: BookingData) =>
-      dataService.storeAppointment(userId.userId, bookingData)
+      dataService.storeAppointment(userId.accountId, bookingData)
       bot.sendMessage(userId.source,
         lang.bookingSummary(bookingData),
         inlineKeyboard = createInlineKeyboard(Seq(Button(lang.findTerms, Tags.FindTerms), Button(lang.modifyDate, Tags.ModifyDate))))
@@ -146,7 +146,7 @@ class Book(val userId: UserId, bot: Bot, apiService: ApiService, dataService: Da
 
   whenSafe(RequestTerm) {
     case Event(Next, bookingData: BookingData) =>
-      val availableTerms = apiService.getAvailableTerms(userId.userId, bookingData.cityId.id,
+      val availableTerms = apiService.getAvailableTerms(userId.accountId, bookingData.cityId.id,
         bookingData.clinicId.optionalId, bookingData.serviceId.id, bookingData.doctorId.optionalId,
         bookingData.dateFrom, Some(bookingData.dateTo), timeOfDay = bookingData.timeOfDay)
       termsPager ! availableTerms
@@ -174,7 +174,7 @@ class Book(val userId: UserId, bot: Bot, apiService: ApiService, dataService: Da
 
   whenSafe(RequestReservation) {
     case Event(term: AvailableVisitsTermPresentation, bookingData: BookingData) =>
-      val response = apiService.temporaryReservation(userId.userId, term.mapTo[TemporaryReservationRequest], term.mapTo[ValuationsRequest])
+      val response = apiService.temporaryReservation(userId.accountId, term.mapTo[TemporaryReservationRequest], term.mapTo[ValuationsRequest])
       response match {
         case Left(ex) =>
           bot.sendMessage(userId.source, ex.getMessage)
@@ -189,7 +189,7 @@ class Book(val userId: UserId, bot: Bot, apiService: ApiService, dataService: Da
 
   whenSafe(AwaitReservation) {
     case Event(Command(_, _, Some(Tags.Cancel)), bookingData: BookingData) =>
-      apiService.deleteTemporaryReservation(userId.userId, bookingData.temporaryReservationId.get)
+      apiService.deleteTemporaryReservation(userId.accountId, bookingData.temporaryReservationId.get)
       stay()
     case Event(Command(_, _, Some(Tags.Book)), bookingData: BookingData) =>
       val reservationRequestMaybe = for {
@@ -201,7 +201,7 @@ class Book(val userId: UserId, bot: Bot, apiService: ApiService, dataService: Da
 
       reservationRequestMaybe match {
         case Some(reservationRequest) =>
-          apiService.reservation(userId.userId, reservationRequest) match {
+          apiService.reservation(userId.accountId, reservationRequest) match {
             case Left(ex) =>
               bot.sendMessage(userId.source, ex.getMessage)
               invokeNext()

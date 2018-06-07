@@ -103,9 +103,13 @@ class BootConfig {
     userId => actorSystem.actorOf(Settings.props(userId, bot, dataService, localization))
 
   @Bean
+  def accountActorFactory: ByUserIdActorFactory =
+    userId => actorSystem.actorOf(Account.props(userId, bot, dataService, localization, router))
+
+  @Bean
   def chatActorFactory: ByUserIdActorFactory =
     userId => actorSystem.actorOf(Chat.props(userId, dataService, monitoringService, bookingActorFactory, helpActorFactory,
-      monitoringsActorFactory, historyActorFactory, visitsActorFactory, settingsActorFactory, bugActorFactory))
+      monitoringsActorFactory, historyActorFactory, visitsActorFactory, settingsActorFactory, bugActorFactory, accountActorFactory))
 
   @Bean
   def datePickerFactory: ByUserIdWithOriginatorActorFactory = (userId, originator) =>

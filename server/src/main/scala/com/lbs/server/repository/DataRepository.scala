@@ -1,31 +1,31 @@
 /**
- * MIT License
- *
- * Copyright (c) 2018 Yevhen Zadyra
- *
- * Permission is hereby granted, free of charge, to any person obtaining a copy
- * of this software and associated documentation files (the "Software"), to deal
- * in the Software without restriction, including without limitation the rights
- * to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
- * copies of the Software, and to permit persons to whom the Software is
- * furnished to do so, subject to the following conditions:
- *
- * The above copyright notice and this permission notice shall be included in all
- * copies or substantial portions of the Software.
- *
- * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
- * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
- * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
- * AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
- * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
- * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
- * SOFTWARE.
- */
+  * MIT License
+  *
+  * Copyright (c) 2018 Yevhen Zadyra
+  *
+  * Permission is hereby granted, free of charge, to any person obtaining a copy
+  * of this software and associated documentation files (the "Software"), to deal
+  * in the Software without restriction, including without limitation the rights
+  * to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+  * copies of the Software, and to permit persons to whom the Software is
+  * furnished to do so, subject to the following conditions:
+  *
+  * The above copyright notice and this permission notice shall be included in all
+  * copies or substantial portions of the Software.
+  *
+  * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+  * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+  * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+  * AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+  * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+  * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+  * SOFTWARE.
+  */
 package com.lbs.server.repository
 
 import java.time.ZonedDateTime
 
-import com.lbs.server.repository.model.{Bug, CityHistory, ClinicHistory, Credentials, DoctorHistory, JLong, Monitoring, ServiceHistory, Settings, Source}
+import com.lbs.server.repository.model.{Bug, CityHistory, ClinicHistory, Credentials, DoctorHistory, JLong, Monitoring, ServiceHistory, Settings, Source, SystemUser}
 import javax.persistence.EntityManager
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.stereotype.Repository
@@ -37,48 +37,48 @@ class DataRepository(@Autowired em: EntityManager) {
 
   private val maxHistory = 2
 
-  def getCityHistory(userId: Long): Seq[CityHistory] = {
+  def getCityHistory(accountId: Long): Seq[CityHistory] = {
     em.createQuery(
       """select city from CityHistory city where city.recordId in
-        | (select max(c.recordId) from CityHistory c where c.userId = :userId group by c.name order by MAX(c.time) desc)
+        | (select max(c.recordId) from CityHistory c where c.accountId = :accountId group by c.name order by MAX(c.time) desc)
         | order by city.time desc""".stripMargin, classOf[CityHistory])
-      .setParameter("userId", userId)
+      .setParameter("accountId", accountId)
       .setMaxResults(maxHistory)
       .getResultList.asScala
   }
 
-  def getClinicHistory(userId: Long, cityId: Long): Seq[ClinicHistory] = {
+  def getClinicHistory(accountId: Long, cityId: Long): Seq[ClinicHistory] = {
     em.createQuery(
       """select clinic from ClinicHistory clinic where clinic.recordId in
-        | (select max(c.recordId) from ClinicHistory c where c.userId = :userId and c.cityId = :cityId group by c.name order by MAX(c.time) desc)
+        | (select max(c.recordId) from ClinicHistory c where c.accountId = :accountId and c.cityId = :cityId group by c.name order by MAX(c.time) desc)
         | order by clinic.time desc""".stripMargin, classOf[ClinicHistory])
-      .setParameter("userId", userId)
+      .setParameter("accountId", accountId)
       .setParameter("cityId", cityId)
       .setMaxResults(maxHistory)
       .getResultList.asScala
   }
 
-  def getServiceHistory(userId: Long, cityId: Long, clinicId: Option[Long]): Seq[ServiceHistory] = {
+  def getServiceHistory(accountId: Long, cityId: Long, clinicId: Option[Long]): Seq[ServiceHistory] = {
     val query = em.createQuery(
       s"""select service from ServiceHistory service where service.recordId in
-         | (select max(s.recordId) from ServiceHistory s where s.userId = :userId and s.cityId = :cityId
+         | (select max(s.recordId) from ServiceHistory s where s.accountId = :accountId and s.cityId = :cityId
          | and s.clinicId ${clinicId.map(_ => "= :clinicId").getOrElse("IS NULL")} group by s.name order by MAX(s.time) desc)
          | order by service.time desc""".stripMargin, classOf[ServiceHistory])
-      .setParameter("userId", userId)
+      .setParameter("accountId", accountId)
       .setParameter("cityId", cityId)
       .setMaxResults(maxHistory)
 
     clinicId.map(id => query.setParameter("clinicId", id)).getOrElse(query).getResultList.asScala
   }
 
-  def getDoctorHistory(userId: Long, cityId: Long, clinicId: Option[Long], serviceId: Long): Seq[DoctorHistory] = {
+  def getDoctorHistory(accountId: Long, cityId: Long, clinicId: Option[Long], serviceId: Long): Seq[DoctorHistory] = {
     val query = em.createQuery(
       s"""select doctor from DoctorHistory doctor where doctor.recordId in
-         | (select max(d.recordId) from DoctorHistory d where d.userId = :userId
+         | (select max(d.recordId) from DoctorHistory d where d.accountId = :accountId
          | and d.cityId = :cityId and d.clinicId ${clinicId.map(_ => "= :clinicId").getOrElse("IS NULL")}
          | and d.serviceId = :serviceId group by d.name order by MAX(d.time) desc)
          | order by doctor.time desc""".stripMargin, classOf[DoctorHistory])
-      .setParameter("userId", userId)
+      .setParameter("accountId", accountId)
       .setParameter("cityId", cityId)
       .setParameter("serviceId", serviceId)
       .setMaxResults(maxHistory)
@@ -86,10 +86,10 @@ class DataRepository(@Autowired em: EntityManager) {
     clinicId.map(id => query.setParameter("clinicId", id)).getOrElse(query).getResultList.asScala
   }
 
-  def findCredentials(userId: Long): Option[Credentials] = {
+  def findCredentials(accountId: Long): Option[Credentials] = {
     em.createQuery(
-      "select credentials from Credentials credentials where credentials.userId = :userId", classOf[Credentials])
-      .setParameter("userId", userId)
+      "select credentials from Credentials credentials where credentials.accountId = :accountId", classOf[Credentials])
+      .setParameter("accountId", accountId)
       .getResultList.asScala.headOption
   }
 
@@ -107,29 +107,29 @@ class DataRepository(@Autowired em: EntityManager) {
       .getResultList.asScala
   }
 
-  def getActiveMonitoringsCount(userId: Long): JLong = {
+  def getActiveMonitoringsCount(accountId: Long): JLong = {
     em.createQuery(
       """select count(monitoring) from Monitoring monitoring where monitoring.active = true
-        | and monitoring.userId = :userId""".stripMargin, classOf[JLong])
-      .setParameter("userId", userId)
+        | and monitoring.accountId = :accountId""".stripMargin, classOf[JLong])
+      .setParameter("accountId", accountId)
       .getSingleResult
   }
 
-  def getActiveMonitorings(userId: Long): Seq[Monitoring] = {
+  def getActiveMonitorings(accountId: Long): Seq[Monitoring] = {
     em.createQuery(
       """select monitoring from Monitoring monitoring where monitoring.active = true
-        | and monitoring.userId = :userId order by monitoring.dateTo asc""".stripMargin, classOf[Monitoring])
-      .setParameter("userId", userId)
+        | and monitoring.accountId = :accountId order by monitoring.dateTo asc""".stripMargin, classOf[Monitoring])
+      .setParameter("accountId", accountId)
       .getResultList.asScala
   }
 
-  def findActiveMonitoring(userId: Long, cityId: Long, serviceId: Long): Option[Monitoring] = {
+  def findActiveMonitoring(accountId: Long, cityId: Long, serviceId: Long): Option[Monitoring] = {
     em.createQuery(
       """select monitoring from Monitoring monitoring where monitoring.active = true
-        | and monitoring.userId = :userId
+        | and monitoring.accountId = :accountId
         | and monitoring.cityId = :cityId
         | and monitoring.serviceId = :serviceId""".stripMargin, classOf[Monitoring])
-      .setParameter("userId", userId)
+      .setParameter("accountId", accountId)
       .setParameter("cityId", cityId)
       .setParameter("serviceId", serviceId)
       .getResultList.asScala.headOption
@@ -143,11 +143,11 @@ class DataRepository(@Autowired em: EntityManager) {
       .getResultList.asScala
   }
 
-  def findMonitoring(userId: Long, monitoringId: Long): Option[Monitoring] = {
+  def findMonitoring(accountId: Long, monitoringId: Long): Option[Monitoring] = {
     em.createQuery(
-      """select monitoring from Monitoring monitoring where monitoring.userId = :userId
+      """select monitoring from Monitoring monitoring where monitoring.accountId = :accountId
         | and monitoring.recordId = :monitoringId""".stripMargin, classOf[Monitoring])
-      .setParameter("userId", userId)
+      .setParameter("accountId", accountId)
       .setParameter("monitoringId", monitoringId)
       .getResultList.asScala.headOption
   }
@@ -183,6 +183,46 @@ class DataRepository(@Autowired em: EntityManager) {
       .setParameter("chatId", chatId)
       .setParameter("sourceSystemId", sourceSystemId)
       .setParameter("userId", userId)
+      .getResultList.asScala.headOption
+  }
+
+  def findUserIdBySource(chatId: String, sourceSystemId: Long): Option[JLong] = {
+    em.createQuery(
+      "select source.userId from Source source where source.chatId = :chatId" +
+        " and source.sourceSystemId = :sourceSystemId", classOf[JLong])
+      .setParameter("chatId", chatId)
+      .setParameter("sourceSystemId", sourceSystemId)
+      .getResultList.asScala.headOption
+  }
+
+  def findAccountId(userId: Long): Option[JLong] = {
+    em.createQuery(
+      "select systemUser.activeAccountId from SystemUser systemUser where systemUser.recordId = :recordId", classOf[JLong])
+      .setParameter("recordId", userId)
+      .getResultList.asScala.headOption
+  }
+
+  def findUser(userId: Long): Option[SystemUser] = {
+    em.createQuery(
+      "select systemUser from SystemUser systemUser where systemUser.recordId = :recordId", classOf[SystemUser])
+      .setParameter("recordId", userId)
+      .getResultList.asScala.headOption
+  }
+
+  def getUserCredentials(userId: Long): Seq[Credentials] = {
+    em.createQuery(
+      "select credentials from Credentials credentials where credentials.userId = :userId", classOf[Credentials])
+      .setParameter("userId", userId)
+      .getResultList.asScala
+  }
+
+  def findUserCredentialsByUserIdAndAccountId(userId: Long, accountId: Long): Option[Credentials] = {
+    em.createQuery(
+      """select credentials from Credentials credentials where credentials.userId = :userId
+        | and credentials.accountId = :accountId
+      """.stripMargin, classOf[Credentials])
+      .setParameter("userId", userId)
+      .setParameter("accountId", accountId)
       .getResultList.asScala.headOption
   }
 

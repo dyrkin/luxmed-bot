@@ -42,7 +42,7 @@ class Visits(val userId: UserId, bot: Bot, apiService: ApiService, val localizat
 
   whenSafe(RequestData) {
     case Event(Next, _) =>
-      val visits = apiService.reservedVisits(userId.userId)
+      val visits = apiService.reservedVisits(userId.accountId)
       reservedVisitsPager ! visits
       goto(AwaitPage)
   }
@@ -65,7 +65,7 @@ class Visits(val userId: UserId, bot: Bot, apiService: ApiService, val localizat
       bot.sendMessage(userId.source, lang.appointmentWasNotCancelled)
       goto(RequestData)
     case Event(Command(_, _, Some(Tags.Yes)), visit: ReservedVisit) =>
-      apiService.deleteReservation(userId.userId, visit.reservationId) match {
+      apiService.deleteReservation(userId.accountId, visit.reservationId) match {
         case Left(ex) => bot.sendMessage(userId.source, lang.unableToCancelUpcomingVisit(ex.getMessage))
         case Right(r) => bot.sendMessage(userId.source, lang.appointmentHasBeenCancelled)
       }

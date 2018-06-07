@@ -13,7 +13,7 @@ class AuthSpec extends AkkaTestKit {
   "An Auth actor " when {
 
     val source = MessageSource(TelegramMessageSourceSystem, "1")
-    val userId = UserId(1L, source)
+    val userId = UserId(1L, 1L, source)
 
     "user is unauthorized" must {
       val unauthorizedHelpActor = TestProbe()
@@ -23,7 +23,7 @@ class AuthSpec extends AkkaTestKit {
       val loginActorFactory: ByMessageSourceWithOriginatorActorFactory = (_, _) => loginActor.ref
       val chatActorFactory: UserId => ActorRef = _ => chatActor.ref
       val dataService = mock(classOf[DataService])
-      when(dataService.findUserIdBySource(source)).thenReturn(None)
+      when(dataService.findUserAndAccountIdBySource(source)).thenReturn(None)
       val auth = system.actorOf(Auth.props(source, dataService, unauthorizedHelpFactory, loginActorFactory, chatActorFactory))
 
 
@@ -57,7 +57,7 @@ class AuthSpec extends AkkaTestKit {
 
       "forward initial message to chat actor after the user has logged in" in {
         val cmd = Command(source, Message("1", Some("any")))
-        val msg = LoggedIn(ForwardCommand(cmd), 1L)
+        val msg = LoggedIn(ForwardCommand(cmd), 1L, 1L)
         auth ! msg
         chatActor.expectMsg(cmd)
       }
@@ -79,7 +79,7 @@ class AuthSpec extends AkkaTestKit {
       val loginActorFactory: ByMessageSourceWithOriginatorActorFactory = (_, _) => loginActor.ref
       val chatActorFactory: UserId => ActorRef = _ => chatActor.ref
       val dataService = mock(classOf[DataService])
-      when(dataService.findUserIdBySource(source)).thenReturn(Some(userId.userId))
+      when(dataService.findUserAndAccountIdBySource(source)).thenReturn(Some(userId.userId, userId.accountId))
 
       val auth = system.actorOf(Auth.props(source, dataService, unauthorizedHelpFactory, loginActorFactory, chatActorFactory))
 

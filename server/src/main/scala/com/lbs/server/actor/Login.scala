@@ -26,7 +26,6 @@ package com.lbs.server.actor
 import akka.actor.{ActorRef, Props}
 import com.lbs.bot.Bot
 import com.lbs.bot.model.{Command, MessageSource}
-import com.lbs.bot.telegram.TelegramBot
 import com.lbs.server.actor.Chat.Init
 import com.lbs.server.actor.Login._
 import com.lbs.server.lang.{Localizable, Localization}
@@ -56,10 +55,10 @@ class Login(source: MessageSource, bot: Bot, dataService: DataService, apiServic
           goto(RequestUsername) using LoginData()
         case Right(loggedIn) =>
           val credentials = dataService.saveCredentials(source, username, password)
-          userId = UserId(credentials.userId, source)
-          apiService.addSession(credentials.userId, loggedIn.accessToken, loggedIn.tokenType)
+          userId = UserId(credentials.userId, credentials.accountId, source)
+          apiService.addSession(credentials.accountId, loggedIn.accessToken, loggedIn.tokenType)
           bot.sendMessage(source, lang.loginAndPasswordAreOk)
-          originator ! LoggedIn(forwardCommand, credentials.userId)
+          originator ! LoggedIn(forwardCommand, credentials.userId, credentials.accountId)
           stay() using null
       }
   }
@@ -119,8 +118,8 @@ object Login {
 
   case class ForwardCommand(cmd: Command)
 
-  case class UserId(userId: Long, source: MessageSource)
+  case class UserId(userId: Long, accountId: Long, source: MessageSource)
 
-  case class LoggedIn(forwardCommand: ForwardCommand, userId: Long)
+  case class LoggedIn(forwardCommand: ForwardCommand, userId: Long, accountId: Long)
 
 }

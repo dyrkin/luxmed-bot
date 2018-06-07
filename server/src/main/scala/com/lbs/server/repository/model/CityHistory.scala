@@ -41,8 +41,8 @@ class CityHistory extends History with RecordId {
   var name: String = _
 
   @BeanProperty
-  @Column(name = "user_id", nullable = false)
-  var userId: JLong = _
+  @Column(name = "account_id", nullable = false)
+  var accountId: JLong = _
 
   @BeanProperty
   @Column(nullable = false)
@@ -50,9 +50,9 @@ class CityHistory extends History with RecordId {
 }
 
 object CityHistory {
-  def apply(userId: Long, id: Long, name: String, time: ZonedDateTime): CityHistory = {
+  def apply(accountId: Long, id: Long, name: String, time: ZonedDateTime): CityHistory = {
     val city = new CityHistory
-    city.userId = userId
+    city.accountId = accountId
     city.id = id
     city.name = name
     city.time = time

@@ -36,7 +36,7 @@ import scala.util.matching.Regex
 class Chat(val userId: UserId, dataService: DataService, monitoringService: MonitoringService, bookingActorFactory: ByUserIdActorFactory, helpActorFactory: ByUserIdActorFactory,
            monitoringsActorFactory: ByUserIdActorFactory, historyActorFactory: ByUserIdActorFactory,
            visitsActorFactory: ByUserIdActorFactory, settingsActorFactory: ByUserIdActorFactory,
-           bugActorFactory: ByUserIdActorFactory) extends SafeFSM[FSMState, FSMData] with Logger {
+           bugActorFactory: ByUserIdActorFactory, accountActorFactory: ByUserIdActorFactory) extends SafeFSM[FSMState, FSMData] with Logger {
 
   private val bookingActor = bookingActorFactory(userId)
   private val helpActor = helpActorFactory(userId)
@@ -45,6 +45,7 @@ class Chat(val userId: UserId, dataService: DataService, monitoringService: Moni
   private val visitsActor = visitsActorFactory(userId)
   private val settingsActor = settingsActorFactory(userId)
   private val bugActor = bugActorFactory(userId)
+  private val accountActor = accountActorFactory(userId)
 
   startWith(HelpChat, null)
 
@@ -93,6 +94,12 @@ class Chat(val userId: UserId, dataService: DataService, monitoringService: Moni
       stay()
   }
 
+  when(AccountChat, accountActor) {
+    case Event(Command(_, Text("/accounts"), _), _) =>
+      accountActor ! Init
+      stay()
+  }
+
   private def when(state: FSMState, actor: ActorRef)(mainStateFunction: StateFunction): Unit = {
     whenSafe(state) {
       case event: Event =>
@@ -130,11 +137,14 @@ class Chat(val userId: UserId, dataService: DataService, monitoringService: Moni
     case Event(cmd@Command(_, Text("/settings"), _), _) =>
       self ! cmd
       goto(SettingsChat)
+    case Event(cmd@Command(_, Text("/accounts"), _), _) =>
+      self ! cmd
+      goto(AccountChat)
     case Event(cmd@Command(_, Text(MonitoringId(monitoringIdStr, scheduleIdStr, timeStr)), _), _) =>
       val monitoringId = monitoringIdStr.toLong
       val scheduleId = scheduleIdStr.toLong
       val time = timeStr.toLong
-      monitoringService.bookAppointmentByScheduleId(userId.userId, monitoringId, scheduleId, time)
+      monitoringService.bookAppointmentByScheduleId(userId.accountId, monitoringId, scheduleId, time)
       stay()
     case Event(cmd: Command, _) =>
       actor ! cmd
@@ -157,6 +167,7 @@ class Chat(val userId: UserId, dataService: DataService, monitoringService: Moni
     visitsActor ! PoisonPill
     settingsActor ! PoisonPill
     bugActor ! PoisonPill
+    accountActor ! PoisonPill
     super.postStop()
   }
 }
@@ -164,9 +175,10 @@ class Chat(val userId: UserId, dataService: DataService, monitoringService: Moni
 object Chat {
   def props(userId: UserId, dataService: DataService, monitoringService: MonitoringService, bookingActorFactory: ByUserIdActorFactory, helpActorFactory: ByUserIdActorFactory,
             monitoringsActorFactory: ByUserIdActorFactory, historyActorFactory: ByUserIdActorFactory,
-            visitsActorFactory: ByUserIdActorFactory, settingsActorFactory: ByUserIdActorFactory, bugActorFactory: ByUserIdActorFactory): Props =
+            visitsActorFactory: ByUserIdActorFactory, settingsActorFactory: ByUserIdActorFactory, bugActorFactory: ByUserIdActorFactory,
+            accountActorFactory: ByUserIdActorFactory): Props =
     Props(new Chat(userId, dataService, monitoringService, bookingActorFactory, helpActorFactory, monitoringsActorFactory,
-      historyActorFactory, visitsActorFactory, settingsActorFactory, bugActorFactory))
+      historyActorFactory, visitsActorFactory, settingsActorFactory, bugActorFactory, accountActorFactory))
 
   object HelpChat extends FSMState
 
@@ -181,6 +193,8 @@ object Chat {
   object SettingsChat extends FSMState
 
   object BugChat extends FSMState
+
+  object AccountChat extends FSMState
 
   object Init
 

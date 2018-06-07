@@ -90,7 +90,7 @@ class MonitoringService extends Logger {
   private def monitor(monitoring: Monitoring): Unit = {
     LOG.debug(s"Looking for available terms. Monitoring [#${monitoring.recordId}]")
     val dateFrom = optimizeDateFrom(monitoring.dateFrom)
-    val termsEither = apiService.getAvailableTerms(monitoring.userId, monitoring.cityId, monitoring.clinicId, monitoring.serviceId,
+    val termsEither = apiService.getAvailableTerms(monitoring.accountId, monitoring.cityId, monitoring.clinicId, monitoring.serviceId,
       monitoring.doctorId, dateFrom, Some(monitoring.dateTo))
     termsEither match {
       case Right(terms) =>
@@ -108,7 +108,7 @@ class MonitoringService extends Logger {
       case Left(ex: InvalidLoginOrPasswordException) =>
         LOG.error(s"User entered invalid name or password. Monitoring will be disabled", ex)
         bot.sendMessage(monitoring.source, lang(monitoring.userId).invalidLoginOrPassword)
-        val activeUserMonitorings = dataService.getActiveMonitorings(monitoring.userId)
+        val activeUserMonitorings = dataService.getActiveMonitorings(monitoring.accountId)
         activeUserMonitorings.foreach { m =>
           deactivateMonitoring(m.recordId)
         }
@@ -172,12 +172,12 @@ class MonitoringService extends Logger {
     val temporaryReservationRequest = term.mapTo[TemporaryReservationRequest]
     val valuationsRequest = term.mapTo[ValuationsRequest]
     val reservationMaybe = for {
-      okResponse <- apiService.temporaryReservation(monitoring.userId, temporaryReservationRequest, valuationsRequest)
+      okResponse <- apiService.temporaryReservation(monitoring.accountId, temporaryReservationRequest, valuationsRequest)
       (temporaryReservation, valuations) = okResponse
       temporaryReservationId = temporaryReservation.id
       visitTermVariant = valuations.visitTermVariants.head
       reservationRequest = (temporaryReservationId, visitTermVariant, term).mapTo[ReservationRequest]
-      reservation <- apiService.reservation(monitoring.userId, reservationRequest)
+      reservation <- apiService.reservation(monitoring.accountId, reservationRequest)
     } yield reservation
 
     reservationMaybe match {
@@ -203,22 +203,22 @@ class MonitoringService extends Logger {
   }
 
   def createMonitoring(monitoring: Monitoring): Monitoring = {
-    val userMonitoringsCount = dataService.getActiveMonitoringsCount(monitoring.userId)
+    val userMonitoringsCount = dataService.getActiveMonitoringsCount(monitoring.accountId)
     require(userMonitoringsCount + 1 <= 5, lang(monitoring.userId).maximumMonitoringsLimitExceeded)
-    val activeMonitoring = dataService.findActiveMonitoring(monitoring.userId, monitoring.cityId, monitoring.serviceId)
+    val activeMonitoring = dataService.findActiveMonitoring(monitoring.accountId, monitoring.cityId, monitoring.serviceId)
     require(activeMonitoring.isEmpty, lang(monitoring.userId).monitoringOfTheSameTypeExists)
     dataService.saveMonitoring(monitoring)
   }
 
-  def getActiveMonitorings(userId: Long): Seq[Monitoring] = {
-    dataService.getActiveMonitorings(userId)
+  def getActiveMonitorings(accountId: Long): Seq[Monitoring] = {
+    dataService.getActiveMonitorings(accountId)
   }
 
-  def bookAppointmentByScheduleId(userId: Long, monitoringId: Long, scheduleId: Long, time: Long): Unit = {
-    val monitoringMaybe = dataService.findMonitoring(userId, monitoringId)
+  def bookAppointmentByScheduleId(accountId: Long, monitoringId: Long, scheduleId: Long, time: Long): Unit = {
+    val monitoringMaybe = dataService.findMonitoring(accountId, monitoringId)
     monitoringMaybe match {
       case Some(monitoring) =>
-        val termsEither = apiService.getAvailableTerms(monitoring.userId, monitoring.cityId, monitoring.clinicId, monitoring.serviceId,
+        val termsEither = apiService.getAvailableTerms(monitoring.accountId, monitoring.cityId, monitoring.clinicId, monitoring.serviceId,
           monitoring.doctorId, monitoring.dateFrom, Some(monitoring.dateTo))
         termsEither match {
           case Right(terms) =>
@@ -254,6 +254,7 @@ class MonitoringService extends Logger {
     val monitorings = dataService.getActiveMonitorings
     LOG.debug(s"Active monitorings found: ${monitorings.length}")
     initializeMonitorings(monitorings)
+    disableOutdated()
     initializeDbChecker()
   }
 }

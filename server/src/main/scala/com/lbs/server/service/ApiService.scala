@@ -40,53 +40,53 @@ class ApiService extends SessionSupport {
   @Autowired
   private var textEncryptor: TextEncryptor = _
 
-  def getAllCities(userId: Long): Either[Throwable, List[IdName]] =
-    withSession(userId) { session =>
+  def getAllCities(accountId: Long): Either[Throwable, List[IdName]] =
+    withSession(accountId) { session =>
       LuxmedApi.reservationFilter(session.accessToken, session.tokenType).map(_.cities)
     }
 
-  def getAllClinics(userId: Long, cityId: Long): Either[Throwable, List[IdName]] =
-    withSession(userId) { session =>
+  def getAllClinics(accountId: Long, cityId: Long): Either[Throwable, List[IdName]] =
+    withSession(accountId) { session =>
       LuxmedApi.reservationFilter(session.accessToken,
         session.tokenType, cityId = Some(cityId)).map(_.clinics)
     }
 
-  def getAllServices(userId: Long, cityId: Long, clinicId: Option[Long]): Either[Throwable, List[IdName]] =
-    withSession(userId) { session =>
+  def getAllServices(accountId: Long, cityId: Long, clinicId: Option[Long]): Either[Throwable, List[IdName]] =
+    withSession(accountId) { session =>
       LuxmedApi.reservationFilter(session.accessToken,
         session.tokenType, cityId = Some(cityId),
         clinicId = clinicId).map(_.services)
     }
 
-  def getAllDoctors(userId: Long, cityId: Long, clinicId: Option[Long], serviceId: Long): Either[Throwable, List[IdName]] =
-    withSession(userId) { session =>
+  def getAllDoctors(accountId: Long, cityId: Long, clinicId: Option[Long], serviceId: Long): Either[Throwable, List[IdName]] =
+    withSession(accountId) { session =>
       LuxmedApi.reservationFilter(session.accessToken,
         session.tokenType, cityId = Some(cityId),
         clinicId = clinicId, serviceId = Some(serviceId)).map(_.doctors)
     }
 
-  def getDefaultPayer(userId: Long, cityId: Long, clinicId: Option[Long], serviceId: Long): Either[Throwable, Option[IdName]] =
-    withSession(userId) { session =>
+  def getDefaultPayer(accountId: Long, cityId: Long, clinicId: Option[Long], serviceId: Long): Either[Throwable, Option[IdName]] =
+    withSession(accountId) { session =>
       LuxmedApi.reservationFilter(session.accessToken,
         session.tokenType, cityId = Some(cityId),
         clinicId = clinicId, serviceId = Some(serviceId)).map(_.defaultPayer)
     }
 
-  def getAvailableTerms(userId: Long, cityId: Long, clinicId: Option[Long], serviceId: Long, doctorId: Option[Long],
+  def getAvailableTerms(accountId: Long, cityId: Long, clinicId: Option[Long], serviceId: Long, doctorId: Option[Long],
                         fromDate: ZonedDateTime = ZonedDateTime.now(), toDate: Option[ZonedDateTime] = None, timeOfDay: Int = 0,
                         languageId: Long = 10, findFirstFreeTerm: Boolean = false): Either[Throwable, List[AvailableVisitsTermPresentation]] =
-    getDefaultPayer(userId, cityId, clinicId, serviceId).flatMap {
+    getDefaultPayer(accountId, cityId, clinicId, serviceId).flatMap {
       case Some(payerId) =>
-        withSession(userId) { session =>
+        withSession(accountId) { session =>
           LuxmedApi.availableTerms(session.accessToken, session.tokenType, payerId.id, cityId, clinicId, serviceId, doctorId,
             fromDate, toDate, timeOfDay, languageId, findFirstFreeTerm).map(_.availableVisitsTermPresentation)
         }
-      case None => sys.error(s"Can't determine payer id by user: $userId, city: $cityId, clinic: $clinicId, service: $serviceId")
+      case None => sys.error(s"Can't determine payer id by user: $accountId, city: $cityId, clinic: $clinicId, service: $serviceId")
     }
 
 
-  def temporaryReservation(userId: Long, temporaryReservationRequest: TemporaryReservationRequest, valuationsRequest: ValuationsRequest): Either[Throwable, (TemporaryReservationResponse, ValuationsResponse)] =
-    withSession(userId) { session =>
+  def temporaryReservation(accountId: Long, temporaryReservationRequest: TemporaryReservationRequest, valuationsRequest: ValuationsRequest): Either[Throwable, (TemporaryReservationResponse, ValuationsResponse)] =
+    withSession(accountId) { session =>
       LuxmedApi.temporaryReservation(session.accessToken, session.tokenType, temporaryReservationRequest) match {
         case Left(ex) => Left(ex)
         case Right(temporaryReservation) =>
@@ -97,30 +97,30 @@ class ApiService extends SessionSupport {
       }
     }
 
-  def deleteTemporaryReservation(userId: Long, temporaryReservationId: Long): Either[Throwable, HttpResponse[String]] =
-    withSession(userId) { session =>
+  def deleteTemporaryReservation(accountId: Long, temporaryReservationId: Long): Either[Throwable, HttpResponse[String]] =
+    withSession(accountId) { session =>
       LuxmedApi.deleteTemporaryReservation(session.accessToken, session.tokenType, temporaryReservationId)
     }
 
-  def reservation(userId: Long, reservationRequest: ReservationRequest): Either[Throwable, ReservationResponse] =
-    withSession(userId) { session =>
+  def reservation(accountId: Long, reservationRequest: ReservationRequest): Either[Throwable, ReservationResponse] =
+    withSession(accountId) { session =>
       LuxmedApi.reservation(session.accessToken, session.tokenType, reservationRequest)
     }
 
-  def visitsHistory(userId: Long, fromDate: ZonedDateTime = ZonedDateTime.now().minusYears(1),
+  def visitsHistory(accountId: Long, fromDate: ZonedDateTime = ZonedDateTime.now().minusYears(1),
                     toDate: ZonedDateTime = ZonedDateTime.now(), page: Int = 1, pageSize: Int = 100): Either[Throwable, List[HistoricVisit]] =
-    withSession(userId) { session =>
+    withSession(accountId) { session =>
       LuxmedApi.visitsHistory(session.accessToken, session.tokenType, fromDate, toDate, page, pageSize).map(_.historicVisits)
     }
 
-  def reservedVisits(userId: Long, fromDate: ZonedDateTime = ZonedDateTime.now(),
+  def reservedVisits(accountId: Long, fromDate: ZonedDateTime = ZonedDateTime.now(),
                      toDate: ZonedDateTime = ZonedDateTime.now().plusMonths(3)): Either[Throwable, List[ReservedVisit]] =
-    withSession(userId) { session =>
+    withSession(accountId) { session =>
       LuxmedApi.reservedVisits(session.accessToken, session.tokenType, fromDate, toDate).map(_.reservedVisits)
     }
 
-  def deleteReservation(userId: Long, reservationId: Long): Either[Throwable, HttpResponse[String]] =
-    withSession(userId) { session =>
+  def deleteReservation(accountId: Long, reservationId: Long): Either[Throwable, HttpResponse[String]] =
+    withSession(accountId) { session =>
       LuxmedApi.deleteReservation(session.accessToken, session.tokenType, reservationId)
     }
 
