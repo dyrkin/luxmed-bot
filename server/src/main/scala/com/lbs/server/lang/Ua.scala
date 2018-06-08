@@ -156,7 +156,7 @@ object Ua extends Lang {
     s"""<b>➡</b> Будь ласка, введіть ${config.name}
        |Наприклад: <b>${config.example}</b>
        |
-       |або виберіть ${config.name} з попередніх пошуків""".stripMargin
+       |або оберіть ${config.name} з попередніх пошуків""".stripMargin
 
   override def staticDataIs(config: StaticDataConfig, label: String): String =
     s"<b>✅</b> ${capitalizeFirstLetter(config.name)} <b>$label</b>"
@@ -189,11 +189,11 @@ object Ua extends Lang {
        |Пінгани @dyrkin_me у разі питань.
        |
        |<b>➡</b> Підтримувані команди
-       |/login - ввести облікові дані Luxmed
        |/book - зарезервувати візит або створити моніторинг
        |/monitorings - моніторінг доступних термінів
-       |/history - історія візитів
        |/reserved - зарезеровані візити
+       |/history - історія візитів
+       |/accounts - управління акаунтами Luxmed
        |/settings - налаштування
        |/bug - відправити баг""".stripMargin
 

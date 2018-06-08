@@ -190,11 +190,11 @@ object En extends Lang {
        |Ping @dyrkin_me if you have any questions.
        |
        |<b>➡</b> Supported commands
-       |/login - enter Luxmed credentials
        |/book - reserve a visit or create monitoring
        |/monitorings - available terms monitoring
-       |/history - visits history
        |/reserved - upcoming visits
+       |/history - visits history
+       |/accounts - manage Luxmed accounts
        |/settings - settings, e.g. lang
        |/bug - submit an issue""".stripMargin
 
