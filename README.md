@@ -17,8 +17,15 @@ It is available by [@luxmedbot](https://telegram.me/luxmedbot)
     export TELEGRAM_TOKEN="SOME TOKEN"
     export SECURITY_SECRET="SOME SECRET FOR ENCODING USER PASSWORDS"
     ```
-3. install **docker**
-4. run using `./docker.sh run`
+3. 
+    - install **docker**
+    - run using `./docker.sh run`
+
+    **or**
+
+    - install postgres and create db **lbs** with login **lbs** and password **lsb123**
+    - run using `./gradlew bootRun`
+
 5. send `/start` to your bot
 
 
