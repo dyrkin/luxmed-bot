@@ -360,5 +360,8 @@ object Ua extends Lang {
   override def accountSwitched(username: String): String =
     s"✅ Аккаунт було переключено на <b>$username</b>"
 
-  override def pleaseChooseAccount: String = "<b>➡</b> Будь ласка, оберіть <b>дію</b> або виберіть <b>акаунт</b>"
+  override def pleaseChooseAccount(currentAccountName: String): String =
+    s"""Поточний акаунт <b>$currentAccountName</b>
+       |
+       |<b>➡</b> Будь ласка, оберіть <b>дію</b> або виберіть <b>акаунт</b>""".stripMargin
 }

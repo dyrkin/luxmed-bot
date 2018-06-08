@@ -361,5 +361,8 @@ object En extends Lang {
   override def accountSwitched(username: String): String =
     s"✅ Account has been switched to <b>$username</b>"
 
-  override def pleaseChooseAccount: String = "<b>➡</b> Please choose an <b>action</b> or select <b>account</b>"
+  override def pleaseChooseAccount(currentAccountName: String): String =
+    s"""Current account is <b>$currentAccountName</b>
+       |
+       |<b>➡</b> Please choose an <b>action</b> or select <b>account</b>""".stripMargin
 }

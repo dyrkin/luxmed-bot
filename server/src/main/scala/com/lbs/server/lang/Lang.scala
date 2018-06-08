@@ -238,7 +238,7 @@ trait Lang {
 
   def addAccount: String
 
-  def pleaseChooseAccount: String
+  def pleaseChooseAccount(currentAccountName: String): String
 
   def accountSwitched(username: String): String
 }

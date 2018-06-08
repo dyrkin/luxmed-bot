@@ -39,8 +39,9 @@ class Account(val userId: UserId, bot: Bot, dataService: DataService, val locali
   whenSafe(AskAction) {
     case Event(Next, _) =>
       val credentials = dataService.getUserCredentials(userId.userId)
+      val currentAccount = credentials.find(c => c.accountId == userId.accountId).getOrElse(sys.error("Can't determine current account"))
       val buttons = Seq(Button(lang.addAccount, -1L), Button(lang.deleteAccount, -2L)) ++ credentials.map(c => Button(s"🔐️ ${c.username}", c.accountId))
-      bot.sendMessage(userId.source, lang.pleaseChooseAccount, inlineKeyboard = createInlineKeyboard(buttons, columns = 1))
+      bot.sendMessage(userId.source, lang.pleaseChooseAccount(currentAccount.username), inlineKeyboard = createInlineKeyboard(buttons, columns = 1))
       goto(AwaitAction)
   }
 
