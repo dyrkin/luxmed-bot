@@ -90,7 +90,7 @@ class DatePicker(val userId: UserId, val bot: Bot, val localization: Localizatio
     case Event(Init, _) =>
       goto(AwaitMode) using null
     case e: Event =>
-      LOG.error(s"Unhandled event in state:$stateName. Event: $e")
+      error(s"Unhandled event in state:$stateName. Event: $e")
       stay()
   }
 

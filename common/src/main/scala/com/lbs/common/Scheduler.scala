@@ -45,7 +45,7 @@ class Scheduler(poolSize: Int) extends Logger {
         fn
       } catch {
         case ex: Exception =>
-          LOG.error(s"Unable to execute scheduler task", ex)
+          error(s"Unable to execute scheduler task", ex)
       }
   }
 }

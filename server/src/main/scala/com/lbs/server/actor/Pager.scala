@@ -99,7 +99,7 @@ class Pager[Data](val userId: UserId, bot: Bot, makeMessage: (Data, Int, Int) =>
     case Event(Init, _) =>
       goto(PrepareData) using null
     case e: Event =>
-      LOG.error(s"Unhandled event in state:$stateName. Event: $e")
+      error(s"Unhandled event in state:$stateName. Event: $e")
       stay()
   }
 

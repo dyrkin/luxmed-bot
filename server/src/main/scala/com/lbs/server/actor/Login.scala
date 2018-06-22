@@ -91,7 +91,7 @@ class Login(source: MessageSource, bot: Bot, dataService: DataService, apiServic
     case Event(Init, _) =>
       goto(LogIn) using LoginData()
     case e: Event =>
-      LOG.error(s"Unhandled event in state:$stateName. Event: $e")
+      error(s"Unhandled event in state:$stateName. Event: $e")
       stay()
   }
 

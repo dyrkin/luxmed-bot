@@ -229,11 +229,11 @@ class Book(val userId: UserId, bot: Bot, apiService: ApiService, dataService: Da
 
   whenSafe(CreateMonitoring) {
     case Event(Next, bookingData: BookingData) =>
-      LOG.debug(s"Creating monitoring for $bookingData")
+      debug(s"Creating monitoring for $bookingData")
       Try(monitoringService.createMonitoring((userId -> bookingData).mapTo[Monitoring])) match {
         case Success(_) => bot.sendMessage(userId.source, lang.monitoringHasBeenCreated)
         case Failure(ex) =>
-          LOG.error("Unable to create monitoring", ex)
+          error("Unable to create monitoring", ex)
           bot.sendMessage(userId.source, lang.unableToCreateMonitoring)
       }
       goto(RequestCity) using BookingData()
@@ -243,7 +243,7 @@ class Book(val userId: UserId, bot: Bot, apiService: ApiService, dataService: Da
     case Event(Init, _) =>
       reinit()
     case e: Event =>
-      LOG.error(s"Unhandled event in state:$stateName. Event: $e")
+      error(s"Unhandled event in state:$stateName. Event: $e")
       stay()
   }
 

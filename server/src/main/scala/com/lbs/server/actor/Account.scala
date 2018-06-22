@@ -68,7 +68,7 @@ class Account(val userId: UserId, bot: Bot, dataService: DataService, val locali
               }
               goto(AskAction) using null
             case None =>
-              LOG.error(s"This is not user [#${userId.userId}] account [#$accountId]")
+              error(s"This is not user [#${userId.userId}] account [#$accountId]")
               goto(AskAction) using null
           }
       }
@@ -79,7 +79,7 @@ class Account(val userId: UserId, bot: Bot, dataService: DataService, val locali
       invokeNext()
       goto(AskAction) using null
     case e: Event =>
-      LOG.error(s"Unhandled event in state:$stateName. Event: $e")
+      error(s"Unhandled event in state:$stateName. Event: $e")
       stay()
   }
 

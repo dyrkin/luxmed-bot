@@ -49,12 +49,12 @@ class TelegramClient(onReceive: TelegramEvent => Unit, botToken: String) extends
 
 
   override def receiveMessage(msg: Message): Unit = {
-    LOG.debug(s"Received telegram message: $msg")
+    debug(s"Received telegram message: $msg")
     onReceive(TelegramEvent(msg, None))
   }
 
   onCallbackWithTag(TagPrefix) { implicit cbq =>
-    LOG.debug(s"Received telegram callback: $cbq")
+    debug(s"Received telegram callback: $cbq")
     ackCallback()
     for {
       data <- cbq.data.map(_.stripPrefix(TagPrefix))

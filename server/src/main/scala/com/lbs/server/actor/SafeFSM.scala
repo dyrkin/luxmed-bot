@@ -30,7 +30,7 @@ trait SafeFSM[S, D] extends FSM[S, D] with Logger {
 
   protected val defaultEventHandler: StateFunction = {
     case e: Event =>
-      LOG.warn(s"Unhandled event in state:$stateName. Event: $e")
+      warn(s"Unhandled event in state:$stateName. Event: $e")
       stay()
   }
 
@@ -44,7 +44,7 @@ trait SafeFSM[S, D] extends FSM[S, D] with Logger {
           else eventHandler(event)
         } catch {
           case e: Exception =>
-            LOG.error(s"Exception occurred while processing event $event", e)
+            error(s"Exception occurred while processing event $event", e)
             stay()
         }
     }

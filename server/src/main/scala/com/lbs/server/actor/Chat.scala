@@ -153,7 +153,7 @@ class Chat(val userId: UserId, dataService: DataService, monitoringService: Moni
 
   whenUnhandledSafe {
     case e: Event =>
-      LOG.debug(s"Unhandled event in state:$stateName. Event: $e")
+      debug(s"Unhandled event in state:$stateName. Event: $e")
       stay()
   }
 

@@ -55,7 +55,7 @@ class Router(authActorFactory: ByMessageSourceActorFactory) extends Actor with L
       destroyChat(source)
     case SwitchUser(userId) =>
       switchUser(userId)
-    case what => LOG.info(s"Unknown message: $what")
+    case what => info(s"Unknown message: $what")
   }
 
   private def addNewChatActor(source: MessageSource): ActorRef = {
@@ -65,7 +65,7 @@ class Router(authActorFactory: ByMessageSourceActorFactory) extends Actor with L
   }
 
   private def destroyChat(source: MessageSource): Unit = {
-    LOG.info(s"Destroying chat for $source due to $idleTimeout inactivity")
+    info(s"Destroying chat for $source due to $idleTimeout of inactivity")
     timers.remove(source)
     removeChat(source)
   }

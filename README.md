@@ -26,7 +26,7 @@ It is available by [@luxmedbot](https://telegram.me/luxmedbot)
     - install postgres and create db **lbs** with login **lbs** and password **lsb123**
     - run using `./gradlew bootRun`
 
-5. send `/start` to your bot
+5. send `/start` command to your bot
 
 
 

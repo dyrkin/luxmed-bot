@@ -24,15 +24,12 @@
 package com.lbs.server.service
 
 import com.lbs.api.json.model.LoginResponse
-import com.lbs.common.ParametrizedLock
+import com.lbs.common.{Logger, ParametrizedLock}
 import com.lbs.server.exception.UserNotFoundException
-import org.slf4j.LoggerFactory
 
 import scala.collection.mutable
 
-trait SessionSupport {
-
-  private val Log = LoggerFactory.getLogger(classOf[SessionSupport])
+trait SessionSupport extends Logger {
 
   case class Session(accessToken: String, tokenType: String)
 
@@ -74,11 +71,11 @@ trait SessionSupport {
         case Right(s) =>
           fn(s) match {
             case Left(ex) if ex.getMessage.contains("session has expired") =>
-              Log.debug(s"The session for account [#$accountId] has expired. Try to relogin")
+              debug(s"The session for account [#$accountId] has expired. Try to relogin")
               sessions.remove(accountId)
               session.flatMap(fn)
             case another =>
-              Log.debug(s"Call to remote api function has completed with result:\n$another")
+              debug(s"Call to remote api function has completed with result:\n$another")
               another
           }
         case Left(ex) => Left(ex)

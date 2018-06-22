@@ -88,14 +88,14 @@ class MonitoringService extends Logger {
   }
 
   private def monitor(monitoring: Monitoring): Unit = {
-    LOG.debug(s"Looking for available terms. Monitoring [#${monitoring.recordId}]")
+    debug(s"Looking for available terms. Monitoring [#${monitoring.recordId}]")
     val dateFrom = optimizeDateFrom(monitoring.dateFrom)
     val termsEither = apiService.getAvailableTerms(monitoring.accountId, monitoring.cityId, monitoring.clinicId, monitoring.serviceId,
       monitoring.doctorId, dateFrom, Some(monitoring.dateTo))
     termsEither match {
       case Right(terms) =>
         if (terms.nonEmpty) {
-          LOG.debug(s"Found ${terms.length} terms by monitoring [#${monitoring.recordId}]")
+          debug(s"Found ${terms.length} terms by monitoring [#${monitoring.recordId}]")
           if (monitoring.autobook) {
             val term = terms.head
             bookAppointment(term, monitoring)
@@ -103,16 +103,16 @@ class MonitoringService extends Logger {
             notifyUserAboutTerms(terms, monitoring)
           }
         } else {
-          LOG.debug(s"No new terms found for monitoring [#${monitoring.recordId}]")
+          debug(s"No new terms found for monitoring [#${monitoring.recordId}]")
         }
       case Left(ex: InvalidLoginOrPasswordException) =>
-        LOG.error(s"User entered invalid name or password. Monitoring will be disabled", ex)
+        error(s"User entered invalid name or password. Monitoring will be disabled", ex)
         bot.sendMessage(monitoring.source, lang(monitoring.userId).invalidLoginOrPassword)
         val activeUserMonitorings = dataService.getActiveMonitorings(monitoring.accountId)
         activeUserMonitorings.foreach { m =>
           deactivateMonitoring(m.recordId)
         }
-      case Left(ex) => LOG.error(s"Unable to receive terms by monitoring [#${monitoring.recordId}]", ex)
+      case Left(ex) => error(s"Unable to receive terms by monitoring [#${monitoring.recordId}]", ex)
     }
   }
 
@@ -127,17 +127,17 @@ class MonitoringService extends Logger {
         val delaySnapshot = delay
         val periodSnapshot = period
         val future = monitoringExecutor.schedule(monitor(monitoring), delaySnapshot, periodSnapshot)
-        LOG.debug(s"Scheduled monitoring: [#${monitoring.recordId}] with delay: $delaySnapshot and period: $periodSnapshot")
+        debug(s"Scheduled monitoring: [#${monitoring.recordId}] with delay: $delaySnapshot and period: $periodSnapshot")
         activeMonitorings += (monitoring.recordId -> (monitoring -> future))
       }
     }
   }
 
   private def initializeNewMonitorings(): Unit = {
-    LOG.debug(s"Looking for new monitorings created since $checkedOn")
+    debug(s"Looking for new monitorings created since $checkedOn")
     val currentTime = ZonedDateTime.now()
     val monitorings = dataService.getActiveMonitoringsSince(checkedOn)
-    LOG.debug(s"New active monitorings found: ${monitorings.length}")
+    debug(s"New active monitorings found: ${monitorings.length}")
     checkedOn = currentTime
     initializeMonitorings(monitorings)
   }
@@ -153,7 +153,7 @@ class MonitoringService extends Logger {
     }
 
     toDisable.foreach { case (id, monitoring) =>
-      LOG.debug(s"Monitoring [#$id] is going to be disable as outdated")
+      debug(s"Monitoring [#$id] is going to be disable as outdated")
       notifyChatAboutDisabledMonitoring(monitoring)
       deactivateMonitoring(id)
     }
@@ -185,7 +185,7 @@ class MonitoringService extends Logger {
         bot.sendMessage(monitoring.source, lang(monitoring.userId).appointmentIsBooked(term, monitoring))
         deactivateMonitoring(monitoring.recordId)
       case Left(ex) =>
-        LOG.error(s"Unable to book appointment by monitoring [${monitoring.recordId}]", ex)
+        error(s"Unable to book appointment by monitoring [${monitoring.recordId}]", ex)
     }
 
   }
@@ -193,7 +193,7 @@ class MonitoringService extends Logger {
   def deactivateMonitoring(monitoringId: JLong): Unit = {
     activeMonitorings.remove(monitoringId).foreach {
       case (monitoring, future) =>
-        LOG.debug(s"Deactivating monitoring [#$monitoringId]")
+        debug(s"Deactivating monitoring [#$monitoringId]")
         if (!future.isCancelled) {
           future.cancel(true)
           monitoring.active = false
@@ -230,12 +230,12 @@ class MonitoringService extends Logger {
                 bot.sendMessage(monitoring.source, lang(monitoring.userId).termIsOutdated)
             }
           case Left(ex: InvalidLoginOrPasswordException) =>
-            LOG.error(s"User entered invalid name or password. Monitoring will be disabled", ex)
+            error(s"User entered invalid name or password. Monitoring will be disabled", ex)
             bot.sendMessage(monitoring.source, lang(monitoring.userId).loginHasChangedOrWrong)
-          case Left(ex) => LOG.error(s"Error occurred during receiving terms for monitoring [#${monitoring.recordId}]", ex)
+          case Left(ex) => error(s"Error occurred during receiving terms for monitoring [#${monitoring.recordId}]", ex)
         }
       case None =>
-        LOG.debug(s"Monitoring [#$monitoringId] not found in db")
+        debug(s"Monitoring [#$monitoringId] not found in db")
     }
   }
 
@@ -252,7 +252,7 @@ class MonitoringService extends Logger {
   private def initialize(): Unit = {
     checkedOn = ZonedDateTime.now()
     val monitorings = dataService.getActiveMonitorings
-    LOG.debug(s"Active monitorings found: ${monitorings.length}")
+    debug(s"Active monitorings found: ${monitorings.length}")
     initializeMonitorings(monitorings)
     disableOutdated()
     initializeDbChecker()

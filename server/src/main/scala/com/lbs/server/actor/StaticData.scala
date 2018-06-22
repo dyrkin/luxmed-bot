@@ -98,7 +98,7 @@ class StaticData(val userId: UserId, bot: Bot, val localization: Localization, o
     case Event(Init, _) =>
       goto(AwaitConfig) using null
     case e: Event =>
-      LOG.error(s"Unhandled event in state:$stateName. Event: $e")
+      error(s"Unhandled event in state:$stateName. Event: $e")
       stay()
   }
 

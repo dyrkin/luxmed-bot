@@ -64,9 +64,9 @@ package object http extends Logger {
     }
 
     def toTry: Try[HttpResponse[String]] = {
-      LOG.debug(s"Sending request:\n${hidePasswords(httpRequest)}")
+      debug(s"Sending request:\n${hidePasswords(httpRequest)}")
       val httpResponse = Try(httpRequest.asString)
-      LOG.debug(s"Received response:\n$httpResponse")
+      debug(s"Received response:\n$httpResponse")
       extractLuxmedError(httpResponse) match {
         case Some(error) => Try(throw error)
         case None => httpResponse.map(_.throwError)
