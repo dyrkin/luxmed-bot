@@ -27,57 +27,49 @@ import akka.actor.{ActorRef, Props}
 import com.lbs.bot.model.{Button, Command}
 import com.lbs.bot.{Bot, _}
 import com.lbs.common.Logger
-import com.lbs.server.actor.Chat.Init
 import com.lbs.server.actor.Login.UserId
 import com.lbs.server.actor.Pager.{Tags, _}
+import com.lbs.server.actor.conversation.Conversation
 import com.lbs.server.lang.{Localizable, Localization}
 import com.lbs.server.util.MessageExtractors
 
 class Pager[Data](val userId: UserId, bot: Bot, makeMessage: (Data, Int, Int) => String,
                   makeHeader: (Int, Int) => String, selectionPrefix: Option[String],
                   val localization: Localization, originator: ActorRef)
-  extends SafeFSM[FSMState, FSMData] with Localizable with Logger {
-
-  private case class Page(page: Int, pages: Seq[Seq[Data]]) extends FSMData
+  extends Conversation[(Registry[Data], Option[String])] with Localizable with Logger {
 
   private val Selection = s"/${selectionPrefix.getOrElse("")}_(\\d+)_(\\d+)".r
 
-  startWith(PrepareData, null)
+  entryPoint(awaitForData)
 
-  whenSafe(PrepareData) {
-    case Event(Left(error: Throwable), _) =>
-      bot.sendMessage(userId.source, error.getMessage)
-      invokeNext()
-      goto(PrepareData)
-    case Event(Right(items: Seq[Data]), _) if items.isEmpty =>
-      originator ! NoItemsFound
-      goto(PrepareData) using null
-    case Event(Right(items: Seq[Data]), _) =>
-      invokeNext()
-      goto(RequestData) using Page(0, items.grouped(Pager.PageSize).toList)
-  }
+  private def awaitForData: EC =
+    externalConfig {
+      case Msg(Left(error: Throwable), _) =>
+        bot.sendMessage(userId.source, error.getMessage)
+        end()
+      case Msg(Right(items: Seq[Data]), _) if items.isEmpty =>
+        originator ! NoItemsFound
+        end()
+      case Msg(Right(items: Seq[Data]), _) =>
+        goto(displayPage) using Registry(0, items.grouped(Pager.PageSize).toList) -> None
+    }
 
-  whenSafe(RequestData) {
-    case Event(Next, page: Page) =>
-      sendPage(page.page, page.pages)
-      goto(AwaitData)
-  }
-
-  whenSafe(AwaitData) {
-    case Event(Command(_, msg, Some(Tags.Next)), termsData: Page) =>
-      val page = termsData.page + 1
-      sendPage(page, termsData.pages, Some(msg.messageId))
-      stay() using termsData.copy(page = page)
-    case Event(Command(_, msg, Some(Tags.Previous)), termsData: Page) =>
-      val page = termsData.page - 1
-      sendPage(page, termsData.pages, Some(msg.messageId))
-      stay() using termsData.copy(page = page)
-    case Event(Command(_, MessageExtractors.Text(Selection(pageStr, indexStr)), _), termsData: Page) if selectionPrefix.nonEmpty =>
-      val page = pageStr.toInt
-      val index = indexStr.toInt
-      originator ! termsData.pages(page)(index)
-      goto(PrepareData) using null
-  }
+  private def displayPage: QA =
+    question { case (registry, massageIdMaybe) =>
+      sendPage(registry.page, registry.pages, massageIdMaybe)
+    } answer {
+      case Msg(Command(_, msg, Some(Tags.Next)), (registry, _)) =>
+        val page = registry.page + 1
+        goto(displayPage) using registry.copy(page = page) -> Some(msg.messageId)
+      case Msg(Command(_, msg, Some(Tags.Previous)), (registry, _)) =>
+        val page = registry.page - 1
+        goto(displayPage) using registry.copy(page = page) -> Some(msg.messageId)
+      case Msg(Command(_, MessageExtractors.Text(Selection(pageStr, indexStr)), _), (registry, _)) if selectionPrefix.nonEmpty =>
+        val page = pageStr.toInt
+        val index = indexStr.toInt
+        originator ! registry.pages(page)(index)
+        end()
+    }
 
   private def sendPage(page: Int, data: Seq[Seq[Data]], messageId: Option[String] = None): Unit = {
     val pages = data.length
@@ -94,31 +86,16 @@ class Pager[Data](val userId: UserId, bot: Bot, makeMessage: (Data, Int, Int) =>
         bot.sendMessage(userId.source, message, inlineKeyboard = createInlineKeyboard(buttons))
     }
   }
-
-  whenUnhandledSafe {
-    case Event(Init, _) =>
-      goto(PrepareData) using null
-    case e: Event =>
-      error(s"Unhandled event in state:$stateName. Event: $e")
-      stay()
-  }
-
-  initialize()
 }
 
 object Pager {
-
   def props[Data](userId: UserId, bot: Bot,
                   makeMessage: (Data, Int, Int) => String, makeHeader: (Int, Int) => String, dataPrefix: Option[String], localization: Localization, originator: ActorRef): Props =
     Props(new Pager[Data](userId, bot, makeMessage, makeHeader, dataPrefix, localization, originator))
 
   val PageSize = 5
 
-  object PrepareData extends FSMState
-
-  object RequestData extends FSMState
-
-  object AwaitData extends FSMState
+  case class Registry[Data](page: Int, pages: Seq[Seq[Data]])
 
   object NoItemsFound
 

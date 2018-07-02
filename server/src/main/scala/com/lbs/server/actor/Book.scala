@@ -34,6 +34,7 @@ import com.lbs.server.actor.Chat.Init
 import com.lbs.server.actor.DatePicker.{DateFromMode, DateToMode}
 import com.lbs.server.actor.Login.UserId
 import com.lbs.server.actor.StaticData.StaticDataConfig
+import com.lbs.server.actor.conversation.Conversation.{InitConversation, StartConversation}
 import com.lbs.server.lang.{Localizable, Localization}
 import com.lbs.server.repository.model.Monitoring
 import com.lbs.server.service.{ApiService, DataService, MonitoringService}
@@ -81,6 +82,7 @@ class Book(val userId: UserId, bot: Bot, apiService: ApiService, dataService: Da
 
   whenSafe(RequestDateFrom) {
     case Event(_, bookingData: BookingData) =>
+      datePicker ! StartConversation
       datePicker ! DateFromMode
       datePicker ! bookingData.dateFrom
       goto(AwaitDateFrom)
@@ -257,8 +259,8 @@ class Book(val userId: UserId, bot: Bot, apiService: ApiService, dataService: Da
 
   private def reinit() = {
     invokeNext()
-    datePicker ! Init
-    staticData ! Init
+    datePicker ! InitConversation
+    staticData ! InitConversation
     termsPager ! Init
     goto(RequestCity) using BookingData()
   }

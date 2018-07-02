@@ -23,17 +23,23 @@
   */
 package com.lbs.server.actor
 
-import akka.actor.{Actor, Props}
+import akka.actor.Props
 import com.lbs.bot.Bot
 import com.lbs.bot.model.Command
 import com.lbs.server.actor.Login.UserId
+import com.lbs.server.actor.conversation.Conversation
 import com.lbs.server.lang.{Localizable, Localization}
 
-class Help(val userId: UserId, bot: Bot, val localization: Localization) extends Actor with Localizable {
-  override def receive: Receive = {
-    case _: Command =>
-      bot.sendMessage(userId.source, lang.help)
-  }
+class Help(val userId: UserId, bot: Bot, val localization: Localization) extends Conversation[Unit] with Localizable {
+
+  entryPoint(displayHelp)
+
+  def displayHelp: M =
+    monologue {
+      case Msg(_: Command, _) =>
+        bot.sendMessage(userId.source, lang.help)
+        stay()
+    }
 }
 
 object Help {

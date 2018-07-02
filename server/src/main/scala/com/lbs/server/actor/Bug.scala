@@ -23,94 +23,69 @@
   */
 package com.lbs.server.actor
 
-import akka.actor.{PoisonPill, Props}
+import akka.actor.Props
 import com.lbs.bot.model.{Button, Command}
 import com.lbs.bot.{Bot, _}
 import com.lbs.server.actor.Bug._
-import com.lbs.server.actor.Chat.Init
 import com.lbs.server.actor.Login.UserId
+import com.lbs.server.actor.conversation.Conversation
+import com.lbs.server.actor.conversation.Conversation.{InitConversation, StartConversation}
 import com.lbs.server.lang.{Localizable, Localization}
 import com.lbs.server.repository.model
 import com.lbs.server.service.DataService
 import com.lbs.server.util.MessageExtractors
 
 class Bug(val userId: UserId, bot: Bot, dataService: DataService, bugPagerActorFactory: ByUserIdWithOriginatorActorFactory,
-          val localization: Localization) extends SafeFSM[FSMState, FSMData] with Localizable {
+          val localization: Localization) extends Conversation[Unit] with Localizable {
 
   private val bugPager = bugPagerActorFactory(userId, self)
 
-  startWith(RequestAction, null)
-
-  whenSafe(RequestAction) {
-    case Event(Next, _) =>
+  def askAction: Step =
+    question { _ =>
       bot.sendMessage(userId.source, lang.bugAction, inlineKeyboard =
         createInlineKeyboard(Seq(Button(lang.createNewBug, Tags.SubmitNew), Button(lang.showSubmittedBugs, Tags.ListSubmitted))))
-      goto(AwaitAction)
-  }
+    } answer {
+      case Msg(Command(_, _, Some(Tags.SubmitNew)), _) =>
+        goto(askBugDescription)
+      case Msg(Command(_, _, Some(Tags.ListSubmitted)), _) =>
+        goto(displaySubmittedBugs)
+    }
 
-  whenSafe(AwaitAction) {
-    case Event(Command(_, _, Some(Tags.SubmitNew)), _) =>
-      bot.sendMessage(userId.source, lang.enterIssueDetails)
-      goto(AwaitBugDescription)
-    case Event(Command(_, _, Some(Tags.ListSubmitted)), _) =>
-      invokeNext()
-      goto(RequestData)
-  }
-
-  whenSafe(RequestData) {
-    case Event(Next, _) =>
+  def displaySubmittedBugs: IC =
+    internalConfig { _ =>
       val bugs = dataService.getBugs(userId.userId)
-      bugPager ! Init
+      bugPager ! InitConversation
+      bugPager ! StartConversation
       bugPager ! Right[Throwable, Seq[model.Bug]](bugs)
-      goto(AwaitPage)
-  }
+      goto(processResponseFromPager)
+    }
 
-  whenSafe(AwaitPage) {
-    case Event(cmd: Command, _) =>
-      bugPager ! cmd
-      stay()
-    case Event(Pager.NoItemsFound, _) =>
-      bot.sendMessage(userId.source, lang.noSubmittedIssuesFound)
-      goto(RequestData)
-  }
+  def processResponseFromPager: M =
+    monologue {
+      case Msg(cmd: Command, _) =>
+        bugPager ! cmd
+        stay()
+      case Msg(Pager.NoItemsFound, _) =>
+        bot.sendMessage(userId.source, lang.noSubmittedIssuesFound)
+        end()
+    }
 
-  whenSafe(AwaitBugDescription) {
-    case Event(Command(_, MessageExtractors.Text(details), _), _) =>
-      val bugId = dataService.submitBug(userId.userId, userId.source.sourceSystem.id, details)
-      bot.sendMessage(userId.source, lang.bugHasBeenCreated(bugId.getOrElse(-1L)))
-      goto(RequestAction) using null
-  }
+  def askBugDescription: Step =
+    question { _ =>
+      bot.sendMessage(userId.source, lang.enterIssueDetails)
+    } answer {
+      case Msg(Command(_, MessageExtractors.Text(details), _), _) =>
+        val bugId = dataService.submitBug(userId.userId, userId.source.sourceSystem.id, details)
+        bot.sendMessage(userId.source, lang.bugHasBeenCreated(bugId.getOrElse(-1L)))
+        end()
+    }
 
-  whenUnhandledSafe {
-    case Event(Init, _) =>
-      invokeNext()
-      bugPager ! Init
-      goto(RequestAction)
-  }
-
-  initialize()
-
-  override def postStop(): Unit = {
-    bugPager ! PoisonPill
-    super.postStop()
-  }
+  entryPoint(askAction)
 }
 
 object Bug {
   def props(userId: UserId, bot: Bot, dataService: DataService, bugPagerActorFactory: ByUserIdWithOriginatorActorFactory, localization: Localization): Props =
     Props(new Bug(userId, bot, dataService, bugPagerActorFactory, localization))
-
-  object RequestBugDetails extends FSMState
-
-  object AwaitBugDescription extends FSMState
-
-  object RequestAction extends FSMState
-
-  object AwaitAction extends FSMState
-
-  object RequestData extends FSMState
-
-  object AwaitPage extends FSMState
 
   object Tags {
     val SubmitNew = "submit"

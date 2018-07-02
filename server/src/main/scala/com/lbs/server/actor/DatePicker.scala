@@ -29,9 +29,9 @@ import java.time.{LocalTime, ZonedDateTime}
 import akka.actor.{ActorRef, Props}
 import com.lbs.bot.model.{Button, Command}
 import com.lbs.bot.{Bot, _}
-import com.lbs.server.actor.Chat.Init
 import com.lbs.server.actor.DatePicker._
 import com.lbs.server.actor.Login.UserId
+import com.lbs.server.actor.conversation.Conversation
 import com.lbs.server.lang.{Localizable, Localization}
 
 /**
@@ -42,59 +42,48 @@ import com.lbs.server.lang.{Localizable, Localization}
   * ⬇   ⬇    ⬇
   *
   */
-class DatePicker(val userId: UserId, val bot: Bot, val localization: Localization, originator: ActorRef) extends SafeFSM[FSMState, ZonedDateTime] with Localizable {
-
-  startWith(AwaitMode, null)
+class DatePicker(val userId: UserId, val bot: Bot, val localization: Localization, originator: ActorRef) extends Conversation[ZonedDateTime] with Localizable {
 
   private var mode: Mode = DateFromMode
 
-  whenSafe(AwaitMode) {
-    case Event(newMode: Mode, _) =>
-      mode = newMode
-      goto(RequestDate)
-  }
+  entryPoint(configure)
 
-  whenSafe(RequestDate) {
-    case Event(initialDate: ZonedDateTime, _) =>
+  def configure: EC =
+    externalConfig {
+      case Msg(newMode: Mode, _) =>
+        mode = newMode
+        stay()
+      case Msg(initialDate: ZonedDateTime, _) =>
+        goto(requestDate) using initialDate
+    }
+
+  def requestDate: QA =
+    question { initialDate =>
       val message = mode match {
         case DateFromMode => lang.chooseDateFrom
         case DateToMode => lang.chooseDateTo
       }
       bot.sendMessage(userId.source, message, inlineKeyboard = dateButtons(initialDate))
-      goto(AwaitDate) using initialDate
-  }
+    } answer {
+      case Msg(Command(_, msg, Some(Tags.Done)), finalDate) =>
+        val (message, updatedDate) = mode match {
+          case DateFromMode =>
+            val startOfTheDay = finalDate.`with`(LocalTime.MIN)
+            val dateFrom = if (startOfTheDay.isBefore(ZonedDateTime.now())) finalDate else startOfTheDay
+            lang.dateFromIs(dateFrom) -> dateFrom
+          case DateToMode =>
+            val dateTo = finalDate.`with`(LocalTime.MAX).minusHours(2)
+            lang.dateToIs(dateTo) -> dateTo
+        }
+        bot.sendEditMessage(userId.source, msg.messageId, message)
+        originator ! updatedDate
+        goto(configure) using null
 
-  whenSafe(AwaitDate) {
-    case Event(Command(_, msg, Some(Tags.Done)), finalDate: ZonedDateTime) =>
-
-      val (message, updatedDate) = mode match {
-        case DateFromMode =>
-          val startOfTheDay = finalDate.`with`(LocalTime.MIN)
-          val dateFrom = if (startOfTheDay.isBefore(ZonedDateTime.now())) finalDate else startOfTheDay
-          lang.dateFromIs(dateFrom) -> dateFrom
-        case DateToMode =>
-          val dateTo = finalDate.`with`(LocalTime.MAX).minusHours(2)
-          lang.dateToIs(dateTo) -> dateTo
-      }
-      bot.sendEditMessage(userId.source, msg.messageId, message)
-      originator ! updatedDate
-      goto(AwaitMode) using null
-
-    case Event(Command(_, msg, Some(tag)), date: ZonedDateTime) =>
-      val modifiedDate = modifyDate(date, tag)
-      bot.sendEditMessage(userId.source, msg.messageId, inlineKeyboard = dateButtons(modifiedDate))
-      stay() using modifiedDate
-  }
-
-  whenUnhandledSafe {
-    case Event(Init, _) =>
-      goto(AwaitMode) using null
-    case e: Event =>
-      error(s"Unhandled event in state:$stateName. Event: $e")
-      stay()
-  }
-
-  initialize()
+      case Msg(Command(_, msg, Some(tag)), date) =>
+        val modifiedDate = modifyDate(date, tag)
+        bot.sendEditMessage(userId.source, msg.messageId, inlineKeyboard = dateButtons(modifiedDate))
+        stay() using modifiedDate
+    }
 
   private def modifyDate(date: ZonedDateTime, tag: String) = {
     val dateModifier = tag match {
@@ -126,12 +115,6 @@ class DatePicker(val userId: UserId, val bot: Bot, val localization: Localizatio
 object DatePicker {
   def props(userId: UserId, bot: Bot, localization: Localization, originator: ActorRef): Props =
     Props(new DatePicker(userId, bot, localization, originator))
-
-  object RequestDate extends FSMState
-
-  object AwaitDate extends FSMState
-
-  object AwaitMode extends FSMState
 
   trait Mode
 

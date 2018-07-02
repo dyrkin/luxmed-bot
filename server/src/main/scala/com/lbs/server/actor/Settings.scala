@@ -26,56 +26,41 @@ package com.lbs.server.actor
 import akka.actor.Props
 import com.lbs.bot.model.{Button, Command}
 import com.lbs.bot.{Bot, _}
-import com.lbs.server.actor.Chat.Init
 import com.lbs.server.actor.Login.UserId
 import com.lbs.server.actor.Settings._
+import com.lbs.server.actor.conversation.Conversation
 import com.lbs.server.lang.{Lang, Localizable, Localization}
 import com.lbs.server.service.DataService
 
-class Settings(val userId: UserId, bot: Bot, dataService: DataService, val localization: Localization) extends SafeFSM[FSMState, FSMData] with Localizable {
+class Settings(val userId: UserId, bot: Bot, dataService: DataService, val localization: Localization) extends Conversation[Unit] with Localizable {
 
-  startWith(RequestAction, null)
+  entryPoint(askForAction)
 
-  whenSafe(RequestAction) {
-    case Event(Next, _) =>
+  def askForAction: QA =
+    question { _ =>
       bot.sendMessage(userId.source, lang.settingsHeader, inlineKeyboard =
         createInlineKeyboard(Seq(Button(lang.language, Tags.Language))))
-      goto(AwaitAction)
-  }
+    } answer {
+      case Msg(Command(_, _, Some(Tags.Language)), _) =>
+        goto(askLanguage)
+    }
 
-  whenSafe(AwaitAction) {
-    case Event(Command(_, _, Some(Tags.Language)), _) =>
+  def askLanguage: QA =
+    question { _ =>
       bot.sendMessage(userId.source, lang.chooseLanguage,
         inlineKeyboard = createInlineKeyboard(Lang.Langs.map(l => Button(l.label, l.id)), columns = 1))
-      goto(AwaitLanguage)
-  }
-
-  whenSafe(AwaitLanguage) {
-    case Event(Command(_, _, Some(langIdStr)), _) =>
-      val langId = langIdStr.toInt
-      localization.updateLanguage(userId.userId, Lang(langId))
-      bot.sendMessage(userId.source, lang.languageUpdated)
-      goto(RequestAction) using null
-  }
-
-  whenUnhandledSafe {
-    case Event(Init, _) =>
-      invokeNext()
-      goto(RequestAction)
-  }
-
-  initialize()
+    } answer {
+      case Msg(Command(_, _, Some(langIdStr)), _) =>
+        val langId = langIdStr.toInt
+        localization.updateLanguage(userId.userId, Lang(langId))
+        bot.sendMessage(userId.source, lang.languageUpdated)
+        end()
+    }
 }
 
 object Settings {
   def props(userId: UserId, bot: Bot, dataService: DataService, localization: Localization): Props =
     Props(new Settings(userId, bot, dataService, localization))
-
-  object AwaitLanguage extends FSMState
-
-  object RequestAction extends FSMState
-
-  object AwaitAction extends FSMState
 
   object Tags {
     val Language = "language"

@@ -28,6 +28,7 @@ import com.lbs.bot.model.Command
 import com.lbs.common.Logger
 import com.lbs.server.actor.Chat._
 import com.lbs.server.actor.Login.UserId
+import com.lbs.server.actor.conversation.Conversation.{InitConversation, StartConversation}
 import com.lbs.server.service.{DataService, MonitoringService}
 import com.lbs.server.util.MessageExtractors._
 
@@ -66,7 +67,8 @@ class Chat(val userId: UserId, dataService: DataService, monitoringService: Moni
 
   when(HistoryChat, historyActor) {
     case Event(Command(_, Text("/history"), _), _) =>
-      historyActor ! Init
+      historyActor ! InitConversation
+      historyActor ! StartConversation
       stay()
   }
 
@@ -78,25 +80,29 @@ class Chat(val userId: UserId, dataService: DataService, monitoringService: Moni
 
   when(BugChat, bugActor) {
     case Event(Command(_, Text("/bug"), _), _) =>
-      bugActor ! Init
+      bugActor ! InitConversation
+      bugActor ! StartConversation
       goto(BugChat)
   }
 
   when(MonitoringsChat, monitoringsActor) {
     case Event(Command(_, Text("/monitorings"), _), _) =>
-      monitoringsActor ! Init
+      monitoringsActor ! InitConversation
+      monitoringsActor ! StartConversation
       stay()
   }
 
   when(SettingsChat, settingsActor) {
     case Event(Command(_, Text("/settings"), _), _) =>
-      settingsActor ! Init
+      settingsActor ! InitConversation
+      settingsActor ! StartConversation
       stay()
   }
 
   when(AccountChat, accountActor) {
     case Event(Command(_, Text("/accounts"), _), _) =>
-      accountActor ! Init
+      accountActor ! InitConversation
+      accountActor ! StartConversation
       stay()
   }
 

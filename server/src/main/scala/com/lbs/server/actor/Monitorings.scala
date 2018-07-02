@@ -26,57 +26,54 @@ package com.lbs.server.actor
 import akka.actor.{PoisonPill, Props}
 import com.lbs.bot._
 import com.lbs.bot.model.{Button, Command}
-import com.lbs.server.actor.Chat.Init
 import com.lbs.server.actor.Login.UserId
-import com.lbs.server.actor.Monitorings.{AwaitDecision, AwaitPage, RequestData, Tags}
+import com.lbs.server.actor.Monitorings.Tags
+import com.lbs.server.actor.conversation.Conversation
+import com.lbs.server.actor.conversation.Conversation.{InitConversation, StartConversation}
 import com.lbs.server.lang.{Localizable, Localization}
 import com.lbs.server.repository.model.Monitoring
 import com.lbs.server.service.MonitoringService
 
-class Monitorings(val userId: UserId, bot: Bot, monitoringService: MonitoringService, val localization: Localization, monitoringsPagerActorFactory: ByUserIdWithOriginatorActorFactory) extends SafeFSM[FSMState, Monitoring] with Localizable {
+class Monitorings(val userId: UserId, bot: Bot, monitoringService: MonitoringService, val localization: Localization, monitoringsPagerActorFactory: ByUserIdWithOriginatorActorFactory) extends Conversation[Monitoring] with Localizable {
 
   private val monitoringsPager = monitoringsPagerActorFactory(userId, self)
 
-  startWith(RequestData, null)
+  entryPoint(prepareData)
 
-  whenSafe(RequestData) {
-    case Event(Next, _) =>
+  def prepareData: IC =
+    internalConfig { _ =>
       val monitorings = monitoringService.getActiveMonitorings(userId.accountId)
+      monitoringsPager ! InitConversation
+      monitoringsPager ! StartConversation
       monitoringsPager ! Right[Throwable, Seq[Monitoring]](monitorings)
-      goto(AwaitPage)
-  }
+      goto(processResponseFromPager)
+    }
 
-  whenSafe(AwaitPage) {
-    case Event(cmd: Command, _) =>
-      monitoringsPager ! cmd
-      stay()
-    case Event(Pager.NoItemsFound, _) =>
-      bot.sendMessage(userId.source, lang.noActiveMonitorings)
-      goto(RequestData)
-    case Event(monitoring: Monitoring, _) =>
+  def processResponseFromPager: M =
+    monologue {
+      case Msg(cmd: Command, _) =>
+        monitoringsPager ! cmd
+        stay()
+      case Msg(Pager.NoItemsFound, _) =>
+        bot.sendMessage(userId.source, lang.noActiveMonitorings)
+        end()
+      case Msg(monitoring: Monitoring, _) =>
+        goto(askToDeactivateMonitoring) using monitoring
+    }
+
+  def askToDeactivateMonitoring: QA =
+    question { monitoring =>
       bot.sendMessage(userId.source, lang.deactivateMonitoring(monitoring), inlineKeyboard =
         createInlineKeyboard(Seq(Button(lang.no, Tags.No), Button(lang.yes, Tags.Yes))))
-      goto(AwaitDecision) using monitoring
-  }
-
-  whenSafe(AwaitDecision) {
-    case Event(Command(_, _, Some(Tags.No)), _) =>
-      bot.sendMessage(userId.source, lang.monitoringWasNotDeactivated)
-      goto(RequestData)
-    case Event(Command(_, _, Some(Tags.Yes)), monitoring: Monitoring) =>
-      monitoringService.deactivateMonitoring(monitoring.recordId)
-      bot.sendMessage(userId.source, lang.deactivated)
-      goto(RequestData)
-  }
-
-  whenUnhandledSafe {
-    case Event(Init, _) =>
-      invokeNext()
-      monitoringsPager ! Init
-      goto(RequestData)
-  }
-
-  initialize()
+    } answer {
+      case Msg(Command(_, _, Some(Tags.No)), _) =>
+        bot.sendMessage(userId.source, lang.monitoringWasNotDeactivated)
+        end()
+      case Msg(Command(_, _, Some(Tags.Yes)), monitoring: Monitoring) =>
+        monitoringService.deactivateMonitoring(monitoring.recordId)
+        bot.sendMessage(userId.source, lang.deactivated)
+        end()
+    }
 
   override def postStop(): Unit = {
     monitoringsPager ! PoisonPill
@@ -87,12 +84,6 @@ class Monitorings(val userId: UserId, bot: Bot, monitoringService: MonitoringSer
 object Monitorings {
   def props(userId: UserId, bot: Bot, monitoringService: MonitoringService, localization: Localization, monitoringsPagerActorFactory: ByUserIdWithOriginatorActorFactory): Props =
     Props(new Monitorings(userId, bot, monitoringService, localization, monitoringsPagerActorFactory))
-
-  object RequestData extends FSMState
-
-  object AwaitPage extends FSMState
-
-  object AwaitDecision extends FSMState
 
   object Tags {
     val Yes = "yes"

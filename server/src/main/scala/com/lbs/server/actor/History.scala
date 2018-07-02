@@ -27,44 +27,38 @@ import akka.actor.{PoisonPill, Props}
 import com.lbs.api.json.model.HistoricVisit
 import com.lbs.bot.Bot
 import com.lbs.bot.model.Command
-import com.lbs.server.actor.Chat.Init
-import com.lbs.server.actor.History.{AwaitPage, RequestData}
 import com.lbs.server.actor.Login.UserId
+import com.lbs.server.actor.conversation.Conversation
+import com.lbs.server.actor.conversation.Conversation.{InitConversation, StartConversation}
 import com.lbs.server.lang.{Localizable, Localization}
 import com.lbs.server.service.ApiService
 
-class History(val userId: UserId, bot: Bot, apiService: ApiService, val localization: Localization, historyPagerActorFactory: ByUserIdWithOriginatorActorFactory) extends SafeFSM[FSMState, FSMData] with Localizable {
+class History(val userId: UserId, bot: Bot, apiService: ApiService, val localization: Localization, historyPagerActorFactory: ByUserIdWithOriginatorActorFactory) extends Conversation[Unit] with Localizable {
 
   private val historyPager = historyPagerActorFactory(userId, self)
 
-  startWith(RequestData, null)
+  entryPoint(prepareData)
 
-  whenSafe(RequestData) {
-    case Event(Next, _) =>
+  def prepareData: IC =
+    internalConfig { _ =>
       val visits = apiService.visitsHistory(userId.accountId)
+      historyPager ! InitConversation
+      historyPager ! StartConversation
       historyPager ! visits
-      goto(AwaitPage)
-  }
+      goto(processResponseFromPager)
+    }
 
-  whenSafe(AwaitPage) {
-    case Event(cmd: Command, _) =>
-      historyPager ! cmd
-      stay()
-    case Event(Pager.NoItemsFound, _) =>
-      bot.sendMessage(userId.source, lang.visitsHistoryIsEmpty)
-      goto(RequestData)
-    case Event(_: HistoricVisit, _) =>
-      goto(RequestData) using null
-  }
-
-  whenUnhandledSafe {
-    case Event(Init, _) =>
-      invokeNext()
-      historyPager ! Init
-      goto(RequestData)
-  }
-
-  initialize()
+  def processResponseFromPager: M =
+    monologue {
+      case Msg(cmd: Command, _) =>
+        historyPager ! cmd
+        stay()
+      case Msg(Pager.NoItemsFound, _) =>
+        bot.sendMessage(userId.source, lang.visitsHistoryIsEmpty)
+        end()
+      case Msg(_: HistoricVisit, _) =>
+        end()
+    }
 
   override def postStop(): Unit = {
     historyPager ! PoisonPill
@@ -75,10 +69,4 @@ class History(val userId: UserId, bot: Bot, apiService: ApiService, val localiza
 object History {
   def props(userId: UserId, bot: Bot, apiService: ApiService, localization: Localization, historyPagerActorFactory: ByUserIdWithOriginatorActorFactory): Props =
     Props(new History(userId, bot, apiService, localization, historyPagerActorFactory))
-
-  object RequestData extends FSMState
-
-  object AwaitPage extends FSMState
-
-
 }
