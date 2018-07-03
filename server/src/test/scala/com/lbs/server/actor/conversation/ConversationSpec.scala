@@ -54,7 +54,7 @@ class ConversationSpec extends AkkaTestKit {
               end()
           }
 
-        entryPoint(configure, Some(Data()))
+        entryPoint(configure, Data())
       }
 
       val expected = Data(configured = true, "hello", "world", "dialogue") -> "myconf"
@@ -99,7 +99,7 @@ class ConversationSpec extends AkkaTestKit {
               end()
           }
 
-        entryPoint(configure1, Some(Data()))
+        entryPoint(configure1, Data())
       }
 
       val expected = Data(configured = true, message1 = "hello", message2 = "world")
