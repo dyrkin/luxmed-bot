@@ -29,14 +29,6 @@ trait Domain[D] {
 
   private[conversation] case class Answer(answerFn: AnswerFn)
 
-  protected type QA = QuestionAnswer
-
-  protected type EC = ExternalConfiguration
-
-  protected type IC = InternalConfiguration
-
-  protected type M = Monologue
-
   protected implicit class RichQuestion(question: Question) {
     def answer(answerFn: AnswerFn): QuestionAnswer = QuestionAnswer(question, Answer(answerFn))
   }

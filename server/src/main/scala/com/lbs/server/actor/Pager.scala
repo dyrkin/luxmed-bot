@@ -42,7 +42,7 @@ class Pager[Data](val userId: UserId, bot: Bot, makeMessage: (Data, Int, Int) =>
 
   entryPoint(awaitForData)
 
-  private def awaitForData: EC =
+  private def awaitForData: Step =
     externalConfig {
       case Msg(Left(error: Throwable), _) =>
         bot.sendMessage(userId.source, error.getMessage)
@@ -54,7 +54,7 @@ class Pager[Data](val userId: UserId, bot: Bot, makeMessage: (Data, Int, Int) =>
         goto(displayPage) using Registry(0, items.grouped(Pager.PageSize).toList) -> None
     }
 
-  private def displayPage: QA =
+  private def displayPage: Step =
     question { case (registry, massageIdMaybe) =>
       sendPage(registry.page, registry.pages, massageIdMaybe)
     } answer {

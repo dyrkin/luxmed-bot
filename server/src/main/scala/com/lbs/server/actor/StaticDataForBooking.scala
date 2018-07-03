@@ -28,41 +28,38 @@ import com.lbs.api.json.model.IdName
 import com.lbs.bot.model.Command
 import com.lbs.server.actor.Book.BookingData
 import com.lbs.server.actor.StaticData.{FindOptions, FoundOptions, LatestOptions, StaticDataConfig}
+import com.lbs.server.actor.conversation.Conversation
 import com.lbs.server.actor.conversation.Conversation.{InitConversation, StartConversation}
 
-trait StaticDataForBooking extends SafeFSM[FSMState, FSMData] {
+trait StaticDataForBooking extends Conversation[BookingData] {
 
-  protected def staticData: ActorRef
+  private[actor] def staticData: ActorRef
 
-  protected def withFunctions(latestOptions: => Seq[IdName], staticOptions: => Either[Throwable, List[IdName]], applyId: IdName => BookingData): FSMState => StateFunction = {
-    nextState: FSMState => {
-      case Event(cmd: Command, _) =>
+  protected def withFunctions(latestOptions: => Seq[IdName], staticOptions: => Either[Throwable, List[IdName]], applyId: IdName => BookingData): Step => AnswerFn = {
+    nextStep: Step => {
+      case Msg(cmd: Command, _) =>
         staticData ! cmd
         stay()
-      case Event(LatestOptions, _) =>
+      case Msg(LatestOptions, _) =>
         staticData ! LatestOptions(latestOptions)
         stay()
-      case Event(FindOptions(searchText), _) =>
+      case Msg(FindOptions(searchText), _) =>
         staticData ! FoundOptions(filterOptions(staticOptions, searchText))
         stay()
-      case Event(id: IdName, _) =>
-        invokeNext()
-        goto(nextState) using applyId(id)
+      case Msg(id: IdName, _) =>
+        goto(nextStep) using applyId(id)
     }
   }
 
-  protected def requestStaticData(requestState: FSMState, awaitState: FSMState, staticDataConfig: => StaticDataConfig)(functions: BookingData => FSMState => StateFunction)(requestNext: FSMState): Unit = {
-    whenSafe(requestState) {
-      case Event(_, _) =>
-        staticData ! InitConversation
-        staticData ! StartConversation
-        staticData ! staticDataConfig
-        goto(awaitState)
-    }
-    whenSafe(awaitState) {
-      case event@Event(_, bookingData: BookingData) =>
+  protected def staticData(staticDataConfig: => StaticDataConfig)(functions: BookingData => Step => AnswerFn)(requestNext: Step): Step = {
+    question { _ =>
+      staticData ! InitConversation
+      staticData ! StartConversation
+      staticData ! staticDataConfig
+    } answer {
+      case msg@Msg(_, bookingData: BookingData) =>
         val fn = functions(bookingData)(requestNext)
-        if (fn.isDefinedAt(event)) fn(event) else eventHandler(event)
+        fn(msg)
     }
   }
 

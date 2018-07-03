@@ -39,7 +39,7 @@ class History(val userId: UserId, bot: Bot, apiService: ApiService, val localiza
 
   entryPoint(prepareData)
 
-  def prepareData: IC =
+  def prepareData: Step =
     internalConfig { _ =>
       val visits = apiService.visitsHistory(userId.accountId)
       historyPager ! InitConversation
@@ -48,7 +48,7 @@ class History(val userId: UserId, bot: Bot, apiService: ApiService, val localiza
       goto(processResponseFromPager)
     }
 
-  def processResponseFromPager: M =
+  def processResponseFromPager: Step =
     monologue {
       case Msg(cmd: Command, _) =>
         historyPager ! cmd

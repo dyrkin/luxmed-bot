@@ -32,11 +32,4 @@ package object actor {
   type ByUserIdActorFactory = UserId => ActorRef
   type ByMessageSourceActorFactory = MessageSource => ActorRef
   type ByMessageSourceWithOriginatorActorFactory = (MessageSource, ActorRef) => ActorRef
-
-  def invokeNext()(implicit self: ActorRef): Unit = {
-    self ! Next
-  }
-
-  object Next
-
 }

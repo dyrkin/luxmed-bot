@@ -26,8 +26,8 @@ package com.lbs.server.actor
 import akka.actor.{Actor, ActorRef, PoisonPill, Props}
 import com.lbs.bot.model.{Command, MessageSource}
 import com.lbs.common.Logger
-import com.lbs.server.actor.Chat.Init
 import com.lbs.server.actor.Login.{LoggedIn, UserId}
+import com.lbs.server.actor.conversation.Conversation.{InitConversation, StartConversation}
 import com.lbs.server.service.DataService
 import com.lbs.server.util.MessageExtractors._
 
@@ -47,7 +47,8 @@ class Auth(val source: MessageSource, dataService: DataService, unauthorizedHelp
       unauthorizedHelpActor ! cmd
     case cmd@Command(_, Text("/login"), _) =>
       userId = None
-      loginActor ! Init
+      loginActor ! InitConversation
+      loginActor ! StartConversation
       loginActor ! cmd
     case cmd: Command if userId.isEmpty =>
       loginActor ! cmd

@@ -22,14 +22,14 @@ class ConversationSpec extends AkkaTestKit {
 
         private var conf: String = _
 
-        def configure: EC =
+        def configure: Step =
           externalConfig {
             case Msg(confStr: String, data) =>
               conf = confStr
               goto(askHello) using data.copy(configured = true)
           }
 
-        def askHello: QA =
+        def askHello: Step =
           question { data =>
             self ! Hello
           } answer {
@@ -37,7 +37,7 @@ class ConversationSpec extends AkkaTestKit {
               goto(askWorld) using data.copy(hello = "hello")
           }
 
-        def askWorld: QA =
+        def askWorld: Step =
           question { data =>
             self ! World
           } answer {
@@ -45,7 +45,7 @@ class ConversationSpec extends AkkaTestKit {
               goto(askDialogue) using data.copy(world = "world")
           }
 
-        def askDialogue: QA =
+        def askDialogue: Step =
           question { data =>
             self ! Dialogue
           } answer {
@@ -80,17 +80,17 @@ class ConversationSpec extends AkkaTestKit {
 
       class TestActor(originator: ActorRef) extends Conversation[Data] {
 
-        def configure1: IC =
+        def configure1: Step =
           internalConfig { _ =>
             goto(configure2) using Data(configured = true)
           }
 
-        def configure2: IC =
+        def configure2: Step =
           internalConfig { data =>
             goto(askMessage2) using data.copy(message1 = "hello")
           }
 
-        def askMessage2: QA =
+        def askMessage2: Step =
           question { _ =>
             self ! InvokeEnrichMessage
           } answer {

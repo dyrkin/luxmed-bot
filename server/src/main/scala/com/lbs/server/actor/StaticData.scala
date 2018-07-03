@@ -40,14 +40,14 @@ class StaticData(val userId: UserId, bot: Bot, val localization: Localization, o
 
   entryPoint(AwaitConfig)
 
-  def AwaitConfig: EC =
+  def AwaitConfig: Step =
     externalConfig {
       case Msg(newConfig: StaticDataConfig, _) =>
         config = newConfig
         goto(askForLatestOption)
     }
 
-  def askForLatestOption: QA =
+  def askForLatestOption: Step =
     question { _ =>
       originator ! LatestOptions
     } answer {
@@ -59,7 +59,7 @@ class StaticData(val userId: UserId, bot: Bot, val localization: Localization, o
         goto(askForUserInput) using callbackTags
     }
 
-  def askForUserInput: QA =
+  def askForUserInput: Step =
     question { callbackTags =>
       bot.sendMessage(userId.source, lang.pleaseEnterStaticDataNameOrPrevious(config),
         inlineKeyboard = createInlineKeyboard(callbackTags, columns = 1))

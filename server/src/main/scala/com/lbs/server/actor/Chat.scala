@@ -28,6 +28,7 @@ import com.lbs.bot.model.Command
 import com.lbs.common.Logger
 import com.lbs.server.actor.Chat._
 import com.lbs.server.actor.Login.UserId
+import com.lbs.server.actor.conversation.Conversation
 import com.lbs.server.actor.conversation.Conversation.{InitConversation, StartConversation}
 import com.lbs.server.service.{DataService, MonitoringService}
 import com.lbs.server.util.MessageExtractors._
@@ -37,7 +38,7 @@ import scala.util.matching.Regex
 class Chat(val userId: UserId, dataService: DataService, monitoringService: MonitoringService, bookingActorFactory: ByUserIdActorFactory, helpActorFactory: ByUserIdActorFactory,
            monitoringsActorFactory: ByUserIdActorFactory, historyActorFactory: ByUserIdActorFactory,
            visitsActorFactory: ByUserIdActorFactory, settingsActorFactory: ByUserIdActorFactory,
-           bugActorFactory: ByUserIdActorFactory, accountActorFactory: ByUserIdActorFactory) extends SafeFSM[FSMState, FSMData] with Logger {
+           bugActorFactory: ByUserIdActorFactory, accountActorFactory: ByUserIdActorFactory) extends Conversation[Unit] with Logger {
 
   private val bookingActor = bookingActorFactory(userId)
   private val helpActor = helpActorFactory(userId)
@@ -48,123 +49,114 @@ class Chat(val userId: UserId, dataService: DataService, monitoringService: Moni
   private val bugActor = bugActorFactory(userId)
   private val accountActor = accountActorFactory(userId)
 
-  startWith(HelpChat, null)
+  entryPoint(helpChat)
 
-  when(HelpChat, helpActor) {
-    case Event(cmd@Command(_, Text("/help"), _), _) =>
+  private def helpChat: Step = actorDialogue(helpActor) {
+    case Msg(cmd@Command(_, Text("/help"), _), _) =>
       helpActor ! cmd
       stay()
-    case Event(cmd@Command(_, Text("/start"), _), _) =>
+    case Msg(cmd@Command(_, Text("/start"), _), _) =>
       helpActor ! cmd
       stay()
   }
 
-  when(BookChat, bookingActor) {
-    case Event(Command(_, Text("/book"), _), _) =>
-      bookingActor ! Init
+  private def bookChat: Step = actorDialogue(bookingActor) {
+    case Msg(Command(_, Text("/book"), _), _) =>
+      bookingActor ! InitConversation
+      bookingActor ! StartConversation
       stay()
   }
 
-  when(HistoryChat, historyActor) {
-    case Event(Command(_, Text("/history"), _), _) =>
+  private def historyChat: Step = actorDialogue(historyActor) {
+    case Msg(Command(_, Text("/history"), _), _) =>
       historyActor ! InitConversation
       historyActor ! StartConversation
       stay()
   }
 
-  when(VisitsChat, visitsActor) {
-    case Event(Command(_, Text("/reserved"), _), _) =>
+  private def visitsChat: Step = actorDialogue(visitsActor) {
+    case Msg(Command(_, Text("/reserved"), _), _) =>
       visitsActor ! InitConversation
       visitsActor ! StartConversation
       stay()
   }
 
-  when(BugChat, bugActor) {
-    case Event(Command(_, Text("/bug"), _), _) =>
+  private def bugChat: Step = actorDialogue(bugActor) {
+    case Msg(Command(_, Text("/bug"), _), _) =>
       bugActor ! InitConversation
       bugActor ! StartConversation
-      goto(BugChat)
+      stay()
   }
 
-  when(MonitoringsChat, monitoringsActor) {
-    case Event(Command(_, Text("/monitorings"), _), _) =>
+  private def monitoringsChat: Step = actorDialogue(monitoringsActor) {
+    case Msg(Command(_, Text("/monitorings"), _), _) =>
       monitoringsActor ! InitConversation
       monitoringsActor ! StartConversation
       stay()
   }
 
-  when(SettingsChat, settingsActor) {
-    case Event(Command(_, Text("/settings"), _), _) =>
+  private def settingsChat: Step = actorDialogue(settingsActor) {
+    case Msg(Command(_, Text("/settings"), _), _) =>
       settingsActor ! InitConversation
       settingsActor ! StartConversation
       stay()
   }
 
-  when(AccountChat, accountActor) {
-    case Event(Command(_, Text("/accounts"), _), _) =>
+  private def accountChat: Step = actorDialogue(accountActor) {
+    case Msg(Command(_, Text("/accounts"), _), _) =>
       accountActor ! InitConversation
       accountActor ! StartConversation
       stay()
   }
 
-  private def when(state: FSMState, actor: ActorRef)(mainStateFunction: StateFunction): Unit = {
-    whenSafe(state) {
-      case event: Event =>
+  private def actorDialogue(actor: ActorRef)(mainStateFunction: AnswerFn): Step =
+    monologue {
+      case event: Msg =>
         if (mainStateFunction.isDefinedAt(event)) mainStateFunction(event)
         else {
           val secondaryStateFunction = secondaryState(actor)
-          if (secondaryStateFunction.isDefinedAt(event)) secondaryStateFunction(event)
-          else eventHandler(event)
+          secondaryStateFunction(event)
         }
     }
-  }
 
-  private def secondaryState(actor: ActorRef): StateFunction = {
-    case Event(cmd@Command(_, Text("/bug"), _), _) =>
+  private def secondaryState(actor: ActorRef): AnswerFn = {
+    case Msg(cmd@Command(_, Text("/bug"), _), _) =>
       self ! cmd
-      goto(BugChat)
-    case Event(cmd@Command(_, Text("/help"), _), _) =>
+      goto(bugChat)
+    case Msg(cmd@Command(_, Text("/help"), _), _) =>
       self ! cmd
-      goto(HelpChat)
-    case Event(cmd@Command(_, Text("/start"), _), _) =>
+      goto(helpChat)
+    case Msg(cmd@Command(_, Text("/start"), _), _) =>
       self ! cmd
-      goto(HelpChat)
-    case Event(cmd@Command(_, Text("/book"), _), _) =>
+      goto(helpChat)
+    case Msg(cmd@Command(_, Text("/book"), _), _) =>
       self ! cmd
-      goto(BookChat)
-    case Event(cmd@Command(_, Text("/monitorings"), _), _) =>
+      goto(bookChat)
+    case Msg(cmd@Command(_, Text("/monitorings"), _), _) =>
       self ! cmd
-      goto(MonitoringsChat)
-    case Event(cmd@Command(_, Text("/history"), _), _) =>
+      goto(monitoringsChat)
+    case Msg(cmd@Command(_, Text("/history"), _), _) =>
       self ! cmd
-      goto(HistoryChat)
-    case Event(cmd@Command(_, Text("/reserved"), _), _) =>
+      goto(historyChat)
+    case Msg(cmd@Command(_, Text("/reserved"), _), _) =>
       self ! cmd
-      goto(VisitsChat)
-    case Event(cmd@Command(_, Text("/settings"), _), _) =>
+      goto(visitsChat)
+    case Msg(cmd@Command(_, Text("/settings"), _), _) =>
       self ! cmd
-      goto(SettingsChat)
-    case Event(cmd@Command(_, Text("/accounts"), _), _) =>
+      goto(settingsChat)
+    case Msg(cmd@Command(_, Text("/accounts"), _), _) =>
       self ! cmd
-      goto(AccountChat)
-    case Event(cmd@Command(_, Text(MonitoringId(monitoringIdStr, scheduleIdStr, timeStr)), _), _) =>
+      goto(accountChat)
+    case Msg(cmd@Command(_, Text(MonitoringId(monitoringIdStr, scheduleIdStr, timeStr)), _), _) =>
       val monitoringId = monitoringIdStr.toLong
       val scheduleId = scheduleIdStr.toLong
       val time = timeStr.toLong
       monitoringService.bookAppointmentByScheduleId(userId.accountId, monitoringId, scheduleId, time)
       stay()
-    case Event(cmd: Command, _) =>
+    case Msg(cmd: Command, _) =>
       actor ! cmd
       stay()
   }
-
-  whenUnhandledSafe {
-    case e: Event =>
-      debug(s"Unhandled event in state:$stateName. Event: $e")
-      stay()
-  }
-
-  initialize()
 
   override def postStop(): Unit = {
     bookingActor ! PoisonPill
@@ -186,24 +178,6 @@ object Chat {
             accountActorFactory: ByUserIdActorFactory): Props =
     Props(new Chat(userId, dataService, monitoringService, bookingActorFactory, helpActorFactory, monitoringsActorFactory,
       historyActorFactory, visitsActorFactory, settingsActorFactory, bugActorFactory, accountActorFactory))
-
-  object HelpChat extends FSMState
-
-  object BookChat extends FSMState
-
-  object MonitoringsChat extends FSMState
-
-  object HistoryChat extends FSMState
-
-  object VisitsChat extends FSMState
-
-  object SettingsChat extends FSMState
-
-  object BugChat extends FSMState
-
-  object AccountChat extends FSMState
-
-  object Init
 
   val MonitoringId: Regex = s"/reserve_(\\d+)_(\\d+)_(\\d+)".r
 

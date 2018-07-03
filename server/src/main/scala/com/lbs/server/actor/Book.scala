@@ -30,170 +30,153 @@ import com.lbs.api.json.model._
 import com.lbs.bot._
 import com.lbs.bot.model.{Button, Command}
 import com.lbs.server.actor.Book._
-import com.lbs.server.actor.Chat.Init
 import com.lbs.server.actor.DatePicker.{DateFromMode, DateToMode}
 import com.lbs.server.actor.Login.UserId
 import com.lbs.server.actor.StaticData.StaticDataConfig
+import com.lbs.server.actor.conversation.Conversation
 import com.lbs.server.actor.conversation.Conversation.{InitConversation, StartConversation}
 import com.lbs.server.lang.{Localizable, Localization}
 import com.lbs.server.repository.model.Monitoring
 import com.lbs.server.service.{ApiService, DataService, MonitoringService}
 import com.lbs.server.util.ServerModelConverters._
 
-import scala.util.{Failure, Success, Try}
-
 class Book(val userId: UserId, bot: Bot, apiService: ApiService, dataService: DataService, monitoringService: MonitoringService,
            val localization: Localization, datePickerActorFactory: ByUserIdWithOriginatorActorFactory, staticDataActorFactory: ByUserIdWithOriginatorActorFactory,
-           termsPagerActorFactory: ByUserIdWithOriginatorActorFactory) extends SafeFSM[FSMState, FSMData] with StaticDataForBooking with Localizable {
+           termsPagerActorFactory: ByUserIdWithOriginatorActorFactory) extends Conversation[BookingData] with StaticDataForBooking with Localizable {
 
   private val datePicker = datePickerActorFactory(userId, self)
-  protected val staticData = staticDataActorFactory(userId, self)
+  private[actor] val staticData = staticDataActorFactory(userId, self)
   private val termsPager = termsPagerActorFactory(userId, self)
 
-  startWith(RequestCity, BookingData())
+  entryPoint(askCity, BookingData())
 
-  requestStaticData(RequestCity, AwaitCity, cityConfig) { bd: BookingData =>
-    withFunctions(
-      latestOptions = dataService.getLatestCities(userId.accountId),
-      staticOptions = apiService.getAllCities(userId.accountId),
-      applyId = id => bd.copy(cityId = id))
-  }(requestNext = RequestClinic)
+  private def askCity: Step =
+    staticData(cityConfig) { bd: BookingData =>
+      withFunctions(
+        latestOptions = dataService.getLatestCities(userId.accountId),
+        staticOptions = apiService.getAllCities(userId.accountId),
+        applyId = id => bd.copy(cityId = id))
+    }(requestNext = askClinic)
 
-  requestStaticData(RequestClinic, AwaitClinic, clinicConfig) { bd: BookingData =>
-    withFunctions(
-      latestOptions = dataService.getLatestClinicsByCityId(userId.accountId, bd.cityId.id),
-      staticOptions = apiService.getAllClinics(userId.accountId, bd.cityId.id),
-      applyId = id => bd.copy(clinicId = id))
-  }(requestNext = RequestService)
+  private def askClinic: Step =
+    staticData(clinicConfig) { bd: BookingData =>
+      withFunctions(
+        latestOptions = dataService.getLatestClinicsByCityId(userId.accountId, bd.cityId.id),
+        staticOptions = apiService.getAllClinics(userId.accountId, bd.cityId.id),
+        applyId = id => bd.copy(clinicId = id))
+    }(requestNext = askService)
 
-  requestStaticData(RequestService, AwaitService, serviceConfig) { bd: BookingData =>
-    withFunctions(
-      latestOptions = dataService.getLatestServicesByCityIdAndClinicId(userId.accountId, bd.cityId.id, bd.clinicId.optionalId),
-      staticOptions = apiService.getAllServices(userId.accountId, bd.cityId.id, bd.clinicId.optionalId),
-      applyId = id => bd.copy(serviceId = id))
-  }(requestNext = RequestDoctor)
+  private def askService: Step =
+    staticData(serviceConfig) { bd: BookingData =>
+      withFunctions(
+        latestOptions = dataService.getLatestServicesByCityIdAndClinicId(userId.accountId, bd.cityId.id, bd.clinicId.optionalId),
+        staticOptions = apiService.getAllServices(userId.accountId, bd.cityId.id, bd.clinicId.optionalId),
+        applyId = id => bd.copy(serviceId = id))
+    }(requestNext = askDoctor)
 
-  requestStaticData(RequestDoctor, AwaitDoctor, doctorConfig) { bd: BookingData =>
-    withFunctions(
-      latestOptions = dataService.getLatestDoctorsByCityIdAndClinicIdAndServiceId(userId.accountId, bd.cityId.id, bd.clinicId.optionalId, bd.serviceId.id),
-      staticOptions = apiService.getAllDoctors(userId.accountId, bd.cityId.id, bd.clinicId.optionalId, bd.serviceId.id),
-      applyId = id => bd.copy(doctorId = id))
-  }(requestNext = RequestDateFrom)
+  private def askDoctor: Step =
+    staticData(doctorConfig) { bd: BookingData =>
+      withFunctions(
+        latestOptions = dataService.getLatestDoctorsByCityIdAndClinicIdAndServiceId(userId.accountId, bd.cityId.id, bd.clinicId.optionalId, bd.serviceId.id),
+        staticOptions = apiService.getAllDoctors(userId.accountId, bd.cityId.id, bd.clinicId.optionalId, bd.serviceId.id),
+        applyId = id => bd.copy(doctorId = id))
+    }(requestNext = requestDateFrom)
 
-  whenSafe(RequestDateFrom) {
-    case Event(_, bookingData: BookingData) =>
+  private def requestDateFrom: Step =
+    question { bookingData =>
+      datePicker ! InitConversation
       datePicker ! StartConversation
       datePicker ! DateFromMode
       datePicker ! bookingData.dateFrom
-      goto(AwaitDateFrom)
-  }
+    } answer {
+      case Msg(cmd: Command, _) =>
+        datePicker ! cmd
+        stay()
+      case Msg(date: ZonedDateTime, bookingData: BookingData) =>
+        goto(requestDateTo) using bookingData.copy(dateFrom = date)
+    }
 
-  whenSafe(AwaitDateFrom) {
-    case Event(cmd: Command, _) =>
-      datePicker ! cmd
-      stay()
-    case Event(date: ZonedDateTime, bookingData: BookingData) =>
-      invokeNext()
-      goto(RequestDateTo) using bookingData.copy(dateFrom = date)
-  }
-
-  whenSafe(RequestDateTo) {
-    case Event(_, bookingData: BookingData) =>
+  private def requestDateTo: Step =
+    question { bookingData =>
+      datePicker ! InitConversation
+      datePicker ! StartConversation
       datePicker ! DateToMode
       datePicker ! bookingData.dateFrom.plusDays(1)
-      goto(AwaitDateTo)
-  }
+    } answer {
+      case Msg(cmd: Command, _) =>
+        datePicker ! cmd
+        stay()
+      case Msg(date: ZonedDateTime, bookingData: BookingData) =>
+        goto(requestDayTime) using bookingData.copy(dateTo = date)
+    }
 
-  whenSafe(AwaitDateTo) {
-    case Event(cmd: Command, _) =>
-      datePicker ! cmd
-      stay()
-    case Event(date: ZonedDateTime, bookingData: BookingData) =>
-      invokeNext()
-      goto(RequestDayTime) using bookingData.copy(dateTo = date)
-  }
-
-  whenSafe(RequestDayTime) {
-    case Event(Next, _: BookingData) =>
+  private def requestDayTime: Step =
+    question { _ =>
       bot.sendMessage(userId.source, lang.chooseTimeOfDay,
         inlineKeyboard = createInlineKeyboard(lang.timeOfDay.map { case (id, label) => Button(label, id.toString) }.toSeq, columns = 1))
-      goto(AwaitDayTime)
-  }
+    } answer {
+      case Msg(Command(_, msg, Some(timeIdStr)), bookingData: BookingData) =>
+        val timeId = timeIdStr.toInt
+        bot.sendEditMessage(userId.source, msg.messageId, lang.preferredTimeIs(timeId))
+        goto(requestAction) using bookingData.copy(timeOfDay = timeId)
+    }
 
-  whenSafe(AwaitDayTime) {
-    case Event(Command(_, msg, Some(timeIdStr)), bookingData: BookingData) =>
-      invokeNext()
-      val timeId = timeIdStr.toInt
-      bot.sendEditMessage(userId.source, msg.messageId, lang.preferredTimeIs(timeId))
-      goto(RequestAction) using bookingData.copy(timeOfDay = timeId)
-  }
-
-  whenSafe(RequestAction) {
-    case Event(Next, bookingData: BookingData) =>
+  private def requestAction: Step =
+    question { bookingData =>
       dataService.storeAppointment(userId.accountId, bookingData)
       bot.sendMessage(userId.source,
         lang.bookingSummary(bookingData),
         inlineKeyboard = createInlineKeyboard(Seq(Button(lang.findTerms, Tags.FindTerms), Button(lang.modifyDate, Tags.ModifyDate))))
-      goto(AwaitAction)
-  }
+    } answer {
+      case Msg(Command(_, _, Some(Tags.FindTerms)), _) =>
+        goto(requestTerm)
+      case Msg(Command(_, _, Some(Tags.ModifyDate)), _) =>
+        goto(requestDateFrom)
+    }
 
-  whenSafe(AwaitAction) {
-    case Event(Command(_, _, Some(Tags.FindTerms)), _) =>
-      invokeNext()
-      goto(RequestTerm)
-    case Event(Command(_, _, Some(Tags.ModifyDate)), _) =>
-      invokeNext()
-      goto(RequestDateFrom)
-  }
-
-  whenSafe(RequestTerm) {
-    case Event(Next, bookingData: BookingData) =>
+  private def requestTerm: Step =
+    question { bookingData =>
       val availableTerms = apiService.getAvailableTerms(userId.accountId, bookingData.cityId.id,
         bookingData.clinicId.optionalId, bookingData.serviceId.id, bookingData.doctorId.optionalId,
         bookingData.dateFrom, Some(bookingData.dateTo), timeOfDay = bookingData.timeOfDay)
+      termsPager ! InitConversation
+      termsPager ! StartConversation
       termsPager ! availableTerms
-      goto(AwaitTerm)
-  }
+    } answer {
+      case Msg(cmd: Command, _) =>
+        termsPager ! cmd
+        stay()
+      case Msg(term: AvailableVisitsTermPresentation, bookingData) =>
+        val response = apiService.temporaryReservation(userId.accountId, term.mapTo[TemporaryReservationRequest], term.mapTo[ValuationsRequest])
+        response match {
+          case Left(ex) =>
+            bot.sendMessage(userId.source, ex.getMessage)
+            end()
+          case Right((temporaryReservation, valuations)) =>
+            bot.sendMessage(userId.source, lang.confirmAppointment(term, valuations),
+              inlineKeyboard = createInlineKeyboard(Seq(Button(lang.cancel, Tags.Cancel), Button(lang.book, Tags.Book))))
+            goto(awaitReservation) using bookingData.copy(term = Some(term), temporaryReservationId = Some(temporaryReservation.id), valuations = Some(valuations))
+        }
+      case Msg(Pager.NoItemsFound, _) =>
+        goto(askNoTermsAction)
+    }
 
-  whenSafe(AwaitTerm) {
-    case Event(Command(_, _, Some(Tags.ModifyDate)), _) =>
-      invokeNext()
-      goto(RequestDateFrom)
-    case Event(Command(_, _, Some(Tags.CreateMonitoring)), _) =>
-      invokeNext()
-      goto(AskMonitoringOptions)
-    case Event(cmd: Command, _) =>
-      termsPager ! cmd
-      stay()
-    case Event(term: AvailableVisitsTermPresentation, _) =>
-      self ! term
-      goto(RequestReservation)
-    case Event(Pager.NoItemsFound, _) =>
+  private def askNoTermsAction: Step =
+    question { _ =>
       bot.sendMessage(userId.source, lang.noTermsFound, inlineKeyboard =
         createInlineKeyboard(Seq(Button(lang.modifyDate, Tags.ModifyDate), Button(lang.createMonitoring, Tags.CreateMonitoring))))
-      stay()
-  }
+    } answer {
+      case Msg(Command(_, _, Some(Tags.ModifyDate)), _) =>
+        goto(requestDateFrom)
+      case Msg(Command(_, _, Some(Tags.CreateMonitoring)), _) =>
+        goto(askMonitoringOptions)
+    }
 
-  whenSafe(RequestReservation) {
-    case Event(term: AvailableVisitsTermPresentation, bookingData: BookingData) =>
-      val response = apiService.temporaryReservation(userId.accountId, term.mapTo[TemporaryReservationRequest], term.mapTo[ValuationsRequest])
-      response match {
-        case Left(ex) =>
-          bot.sendMessage(userId.source, ex.getMessage)
-          invokeNext()
-          stay()
-        case Right((temporaryReservation, valuations)) =>
-          bot.sendMessage(userId.source, lang.confirmAppointment(term, valuations),
-            inlineKeyboard = createInlineKeyboard(Seq(Button(lang.cancel, Tags.Cancel), Button(lang.book, Tags.Book))))
-          goto(AwaitReservation) using bookingData.copy(term = Some(term), temporaryReservationId = Some(temporaryReservation.id), valuations = Some(valuations))
-      }
-  }
-
-  whenSafe(AwaitReservation) {
-    case Event(Command(_, _, Some(Tags.Cancel)), bookingData: BookingData) =>
+  private def awaitReservation: Step = monologue {
+    case Msg(Command(_, _, Some(Tags.Cancel)), bookingData: BookingData) =>
       apiService.deleteTemporaryReservation(userId.accountId, bookingData.temporaryReservationId.get)
       stay()
-    case Event(Command(_, _, Some(Tags.Book)), bookingData: BookingData) =>
+    case Msg(Command(_, _, Some(Tags.Book)), bookingData: BookingData) =>
       val reservationRequestMaybe = for {
         tmpReservationId <- bookingData.temporaryReservationId
         valuations <- bookingData.valuations
@@ -205,49 +188,41 @@ class Book(val userId: UserId, bot: Bot, apiService: ApiService, dataService: Da
         case Some(reservationRequest) =>
           apiService.reservation(userId.accountId, reservationRequest) match {
             case Left(ex) =>
+              error("Error during reservation", ex)
               bot.sendMessage(userId.source, ex.getMessage)
-              invokeNext()
-              stay()
+              end()
             case Right(success) =>
-              log.debug(s"Successfully confirmed: $success")
+              debug(s"Successfully confirmed: $success")
               bot.sendMessage(userId.source, lang.appointmentIsConfirmed)
-              stay()
+              end()
           }
         case _ => sys.error(s"Can not prepare reservation request using booking data $bookingData")
       }
-
   }
 
-  whenSafe(AskMonitoringOptions) {
-    case Event(Next, _) =>
+  private def askMonitoringOptions: Step =
+    question { _ =>
       bot.sendMessage(userId.source, lang.chooseTypeOfMonitoring,
         inlineKeyboard = createInlineKeyboard(Seq(Button(lang.bookByApplication, Tags.BookByApplication), Button(lang.bookManually, Tags.BookManually)), columns = 1))
-      stay()
-    case Event(Command(_, _, Some(autobookStr)), bookingData: BookingData) =>
-      val autobook = autobookStr.toBoolean
-      invokeNext()
-      goto(CreateMonitoring) using bookingData.copy(autobook = autobook)
-  }
+    } answer {
+      case Msg(Command(_, _, Some(autobookStr)), bookingData: BookingData) =>
+        val autobook = autobookStr.toBoolean
+        goto(createMonitoring) using bookingData.copy(autobook = autobook)
+    }
 
-  whenSafe(CreateMonitoring) {
-    case Event(Next, bookingData: BookingData) =>
+  private def createMonitoring: Step =
+    internalConfig { bookingData =>
       debug(s"Creating monitoring for $bookingData")
-      Try(monitoringService.createMonitoring((userId -> bookingData).mapTo[Monitoring])) match {
-        case Success(_) => bot.sendMessage(userId.source, lang.monitoringHasBeenCreated)
-        case Failure(ex) =>
+      try {
+        monitoringService.createMonitoring((userId -> bookingData).mapTo[Monitoring])
+        bot.sendMessage(userId.source, lang.monitoringHasBeenCreated)
+      } catch {
+        case ex: Exception =>
           error("Unable to create monitoring", ex)
           bot.sendMessage(userId.source, lang.unableToCreateMonitoring)
       }
-      goto(RequestCity) using BookingData()
-  }
-
-  whenUnhandledSafe {
-    case Event(Init, _) =>
-      reinit()
-    case e: Event =>
-      error(s"Unhandled event in state:$stateName. Event: $e")
-      stay()
-  }
+      end()
+    }
 
   private def cityConfig = StaticDataConfig(lang.city, "Wrocław", isAnyAllowed = false)
 
@@ -256,16 +231,6 @@ class Book(val userId: UserId, bot: Bot, apiService: ApiService, dataService: Da
   private def serviceConfig = StaticDataConfig(lang.service, "Stomatolog", isAnyAllowed = false)
 
   private def doctorConfig = StaticDataConfig(lang.doctor, "Bartniak", isAnyAllowed = true)
-
-  private def reinit() = {
-    invokeNext()
-    datePicker ! InitConversation
-    staticData ! InitConversation
-    termsPager ! Init
-    goto(RequestCity) using BookingData()
-  }
-
-  initialize()
 
   override def postStop(): Unit = {
     datePicker ! PoisonPill
@@ -283,54 +248,10 @@ object Book {
     Props(new Book(userId, bot, apiService, dataService, monitoringService, localization, datePickerActorFactory,
       staticDataActorFactory, termsPagerActorFactory))
 
-  object RequestCity extends FSMState
-
-  object AwaitCity extends FSMState
-
-  object RequestClinic extends FSMState
-
-  object AwaitClinic extends FSMState
-
-  object RequestService extends FSMState
-
-  object AwaitService extends FSMState
-
-  object RequestDoctor extends FSMState
-
-  object AwaitDoctor extends FSMState
-
-  object CreateMonitoring extends FSMState
-
-  object AskMonitoringOptions extends FSMState
-
-  object RequestDateFrom extends FSMState
-
-  object AwaitDateFrom extends FSMState
-
-  object RequestDateTo extends FSMState
-
-  object AwaitDateTo extends FSMState
-
-  object RequestDayTime extends FSMState
-
-  object AwaitDayTime extends FSMState
-
-  object RequestAction extends FSMState
-
-  object AwaitAction extends FSMState
-
-  object RequestTerm extends FSMState
-
-  object AwaitTerm extends FSMState
-
-  object RequestReservation extends FSMState
-
-  object AwaitReservation extends FSMState
-
   case class BookingData(cityId: IdName = null, clinicId: IdName = null,
                          serviceId: IdName = null, doctorId: IdName = null, dateFrom: ZonedDateTime = ZonedDateTime.now(),
                          dateTo: ZonedDateTime = ZonedDateTime.now().plusDays(1L), timeOfDay: Int = 0, autobook: Boolean = false, term: Option[AvailableVisitsTermPresentation] = None,
-                         temporaryReservationId: Option[Long] = None, valuations: Option[ValuationsResponse] = None) extends FSMData
+                         temporaryReservationId: Option[Long] = None, valuations: Option[ValuationsResponse] = None)
 
   object Tags {
     val Cancel = "cancel"

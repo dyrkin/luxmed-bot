@@ -34,7 +34,7 @@ class Help(val userId: UserId, bot: Bot, val localization: Localization) extends
 
   entryPoint(displayHelp)
 
-  def displayHelp: M =
+  def displayHelp: Step =
     monologue {
       case Msg(_: Command, _) =>
         bot.sendMessage(userId.source, lang.help)

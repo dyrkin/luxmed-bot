@@ -36,7 +36,7 @@ class Settings(val userId: UserId, bot: Bot, dataService: DataService, val local
 
   entryPoint(askForAction)
 
-  def askForAction: QA =
+  def askForAction: Step =
     question { _ =>
       bot.sendMessage(userId.source, lang.settingsHeader, inlineKeyboard =
         createInlineKeyboard(Seq(Button(lang.language, Tags.Language))))
@@ -45,7 +45,7 @@ class Settings(val userId: UserId, bot: Bot, dataService: DataService, val local
         goto(askLanguage)
     }
 
-  def askLanguage: QA =
+  def askLanguage: Step =
     question { _ =>
       bot.sendMessage(userId.source, lang.chooseLanguage,
         inlineKeyboard = createInlineKeyboard(Lang.Langs.map(l => Button(l.label, l.id)), columns = 1))

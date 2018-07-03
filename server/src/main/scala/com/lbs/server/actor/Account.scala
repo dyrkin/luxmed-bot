@@ -34,7 +34,9 @@ import com.lbs.server.service.DataService
 
 class Account(val userId: UserId, bot: Bot, dataService: DataService, val localization: Localization, router: ActorRef) extends Conversation[Unit] with Localizable {
 
-  def askAction: QA =
+  entryPoint(askAction)
+
+  def askAction: Step =
     question { _ =>
       val credentials = dataService.getUserCredentials(userId.userId)
       val currentAccount = credentials.find(c => c.accountId == userId.accountId).getOrElse(sys.error("Can't determine current account"))
@@ -68,8 +70,6 @@ class Account(val userId: UserId, bot: Bot, dataService: DataService, val locali
             }
         }
     }
-
-  entryPoint(askAction)
 }
 
 object Account {

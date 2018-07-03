@@ -41,14 +41,14 @@ class Login(source: MessageSource, bot: Bot, dataService: DataService, apiServic
 
   private var forwardCommand: ForwardCommand = _
 
-  def logIn: M =
+  def logIn: Step =
     monologue {
       case Msg(cmd: Command, LoginData(None, None)) =>
         forwardCommand = ForwardCommand(cmd)
         goto(requestUsername)
     }
 
-  def requestUsername: QA =
+  def requestUsername: Step =
     question { _ =>
       bot.sendMessage(source, lang.provideUsername)
     } answer {
@@ -56,7 +56,7 @@ class Login(source: MessageSource, bot: Bot, dataService: DataService, apiServic
         goto(requestPassword) using LoginData(username = username)
     }
 
-  def requestPassword: QA =
+  def requestPassword: Step =
     question { _ =>
       bot.sendMessage(source, lang.providePassword)
     } answer {
@@ -64,7 +64,7 @@ class Login(source: MessageSource, bot: Bot, dataService: DataService, apiServic
         goto(processLoginInformation) using loginData.copy(password = password.map(textEncryptor.encrypt))
     }
 
-  def processLoginInformation: IC = {
+  def processLoginInformation: Step = {
     internalConfig { case LoginData(Some(username), Some(password)) =>
       val loginResult = apiService.login(username, password)
       loginResult match {

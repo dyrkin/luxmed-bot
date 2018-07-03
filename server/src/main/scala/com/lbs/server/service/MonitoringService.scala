@@ -196,9 +196,9 @@ class MonitoringService extends Logger {
         debug(s"Deactivating monitoring [#$monitoringId]")
         if (!future.isCancelled) {
           future.cancel(true)
-          monitoring.active = false
-          dataService.saveMonitoring(monitoring)
         }
+        monitoring.active = false
+        dataService.saveMonitoring(monitoring)
     }
   }
 
@@ -244,7 +244,6 @@ class MonitoringService extends Logger {
       MessageSourceSystem(monitoring.sourceSystemId), monitoring.chatId
     )
   }
-
 
   private def lang(userId: Long) = localization.lang(userId)
 

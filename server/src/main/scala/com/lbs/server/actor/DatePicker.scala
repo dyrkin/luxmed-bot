@@ -48,7 +48,7 @@ class DatePicker(val userId: UserId, val bot: Bot, val localization: Localizatio
 
   entryPoint(configure)
 
-  def configure: EC =
+  def configure: Step =
     externalConfig {
       case Msg(newMode: Mode, _) =>
         mode = newMode
@@ -57,7 +57,7 @@ class DatePicker(val userId: UserId, val bot: Bot, val localization: Localizatio
         goto(requestDate) using initialDate
     }
 
-  def requestDate: QA =
+  def requestDate: Step =
     question { initialDate =>
       val message = mode match {
         case DateFromMode => lang.chooseDateFrom

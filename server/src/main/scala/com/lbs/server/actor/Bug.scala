@@ -51,7 +51,7 @@ class Bug(val userId: UserId, bot: Bot, dataService: DataService, bugPagerActorF
         goto(displaySubmittedBugs)
     }
 
-  def displaySubmittedBugs: IC =
+  def displaySubmittedBugs: Step =
     internalConfig { _ =>
       val bugs = dataService.getBugs(userId.userId)
       bugPager ! InitConversation
@@ -60,7 +60,7 @@ class Bug(val userId: UserId, bot: Bot, dataService: DataService, bugPagerActorF
       goto(processResponseFromPager)
     }
 
-  def processResponseFromPager: M =
+  def processResponseFromPager: Step =
     monologue {
       case Msg(cmd: Command, _) =>
         bugPager ! cmd

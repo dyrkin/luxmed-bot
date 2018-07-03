@@ -3,8 +3,8 @@ package com.lbs.server.actor
 import akka.actor.ActorRef
 import akka.testkit.TestProbe
 import com.lbs.bot.model.{Command, Message, MessageSource, TelegramMessageSourceSystem}
-import com.lbs.server.actor.Chat.Init
 import com.lbs.server.actor.Login.{ForwardCommand, LoggedIn, UserId}
+import com.lbs.server.actor.conversation.Conversation.{InitConversation, StartConversation}
 import com.lbs.server.service.DataService
 import org.mockito.Mockito._
 
@@ -42,7 +42,8 @@ class AuthSpec extends AkkaTestKit {
       "initialize dialogue with login actor on /login command" in {
         val cmd = Command(source, Message("1", Some("/login")))
         auth ! cmd
-        loginActor.expectMsg(Init)
+        loginActor.expectMsg(InitConversation)
+        loginActor.expectMsg(StartConversation)
         loginActor.expectMsg(cmd)
       }
 
@@ -95,7 +96,8 @@ class AuthSpec extends AkkaTestKit {
       "initialize dialogue with login actor on /login command" in {
         val cmd = Command(source, Message("1", Some("/login")))
         auth ! cmd
-        loginActor.expectMsg(Init)
+        loginActor.expectMsg(InitConversation)
+        loginActor.expectMsg(StartConversation)
         loginActor.expectMsg(cmd)
       }
 
