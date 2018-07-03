@@ -74,7 +74,8 @@ class Chat(val userId: UserId, dataService: DataService, monitoringService: Moni
 
   when(VisitsChat, visitsActor) {
     case Event(Command(_, Text("/reserved"), _), _) =>
-      visitsActor ! Init
+      visitsActor ! InitConversation
+      visitsActor ! StartConversation
       stay()
   }
 
