@@ -23,16 +23,21 @@
   */
 package com.lbs.server.actor
 
-import akka.actor.{Actor, Props}
+import akka.actor.Props
 import com.lbs.bot.Bot
 import com.lbs.bot.model.{Command, MessageSource}
+import com.lbs.server.actor.conversation.Conversation
 import com.lbs.server.lang.En
 
-class UnauthorizedHelp(source: MessageSource, bot: Bot) extends Actor {
-  override def receive: Receive = {
-    case _: Command =>
-      bot.sendMessage(source, En.help)
-  }
+class UnauthorizedHelp(source: MessageSource, bot: Bot) extends Conversation[Unit] {
+  entryPoint(displayHelp)
+
+  def displayHelp: Step =
+    monologue {
+      case Msg(_: Command, _) =>
+        bot.sendMessage(source, En.help)
+        stay()
+    }
 }
 
 object UnauthorizedHelp {
