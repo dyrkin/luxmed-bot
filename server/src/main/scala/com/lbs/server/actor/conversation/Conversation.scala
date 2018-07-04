@@ -27,25 +27,21 @@ trait Conversation[D] extends Actor with Domain[D] with Logger {
 
   override def receive: Receive = {
     case InitConversation => init()
-    case StartConversation | ContinueConversation =>
-      try {
-        currentStep match {
-          case qa: QuestionAnswer => qa.question.questionFn(currentData)
-          case InternalConfiguration(fn) =>
-            val nextStep = fn(currentData)
-            moveToNextStep(nextStep)
-          case _ => //do nothing
-        }
-      } catch {
-        case NonFatal(ex) => error("Step execution failed", ex)
-      }
+    case StartConversation | ContinueConversation => execute()
     case any => makeTransition(any)
   }
 
-  private def moveToNextStep(nextStep: NextStep): Unit = {
-    currentStep = nextStep.step
-    nextStep.data.foreach { data =>
-      currentData = data
+  def execute(): Unit = {
+    try {
+      currentStep match {
+        case qa: QuestionAnswer => qa.question.questionFn(currentData)
+        case InternalConfiguration(fn) =>
+          val nextStep = fn(currentData)
+          moveToNextStep(nextStep)
+        case _ => //do nothing
+      }
+    } catch {
+      case NonFatal(ex) => error("Step execution failed", ex)
     }
   }
 
@@ -70,6 +66,13 @@ trait Conversation[D] extends Actor with Domain[D] with Logger {
         val fact = Msg(any, currentData)
         handle(fact, fn, msgHandler)
       case _ => //do nothing
+    }
+  }
+
+  private def moveToNextStep(nextStep: NextStep): Unit = {
+    currentStep = nextStep.step
+    nextStep.data.foreach { data =>
+      currentData = data
     }
   }
 
