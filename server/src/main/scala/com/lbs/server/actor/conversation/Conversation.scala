@@ -4,6 +4,8 @@ import akka.actor.Actor
 import com.lbs.common.Logger
 import com.lbs.server.actor.conversation.Conversation.{ContinueConversation, InitConversation, StartConversation}
 
+import scala.util.control.NonFatal
+
 trait Conversation[D] extends Actor with Domain[D] with Logger {
   private var currentData: D = _
 
@@ -15,7 +17,7 @@ trait Conversation[D] extends Actor with Domain[D] with Logger {
 
   private val defaultMsgHandler: AnswerFn = {
     case Msg(any, data) =>
-      debug(s"Unhandled fact message received. [$any, $data]")
+      debug(s"Unhandled message received. [$any, $data]")
       NextStep(currentStep, Some(data))
   }
 
@@ -26,12 +28,16 @@ trait Conversation[D] extends Actor with Domain[D] with Logger {
   override def receive: Receive = {
     case InitConversation => init()
     case StartConversation | ContinueConversation =>
-      currentStep match {
-        case qa: QuestionAnswer => qa.question.questionFn(currentData)
-        case InternalConfiguration(fn) =>
-          val nextStep = fn(currentData)
-          moveToNextStep(nextStep)
-        case _ => //do nothing
+      try {
+        currentStep match {
+          case qa: QuestionAnswer => qa.question.questionFn(currentData)
+          case InternalConfiguration(fn) =>
+            val nextStep = fn(currentData)
+            moveToNextStep(nextStep)
+          case _ => //do nothing
+        }
+      } catch {
+        case NonFatal(ex) => error("Step execution failed", ex)
       }
     case any => makeTransition(any)
   }
@@ -45,8 +51,12 @@ trait Conversation[D] extends Actor with Domain[D] with Logger {
 
   private def makeTransition(any: Any): Unit = {
     def handle[X](unit: X, fn: PartialFunction[X, NextStep], defaultFn: PartialFunction[X, NextStep]): Unit = {
-      val nextStep = if (fn.isDefinedAt(unit)) fn(unit) else defaultFn(unit)
-      moveToNextStep(nextStep)
+      try {
+        val nextStep = if (fn.isDefinedAt(unit)) fn(unit) else defaultFn(unit)
+        moveToNextStep(nextStep)
+      } catch {
+        case NonFatal(ex) => error("Step transition failed", ex)
+      }
     }
 
     currentStep match {
