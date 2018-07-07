@@ -45,7 +45,7 @@ class Auth(val source: MessageSource, dataService: DataService, unauthorizedHelp
       unauthorizedHelpActor ! cmd
     case cmd@TextCommand("/start") if userId.isEmpty =>
       unauthorizedHelpActor ! cmd
-    case cmd@TextCommand("/start") =>
+    case cmd@TextCommand("/login") =>
       userId = None
       loginActor ! InitConversation
       loginActor ! StartConversation
