@@ -64,7 +64,7 @@ class Pager[Data](val userId: UserId, bot: Bot, makeMessage: (Data, Int, Int) =>
       case Msg(Command(_, msg, Some(Tags.Previous)), (registry, _)) =>
         val page = registry.page - 1
         goto(displayPage) using registry.copy(page = page) -> Some(msg.messageId)
-      case Msg(Command(_, MessageExtractors.Text(Selection(pageStr, indexStr)), _), (registry, _)) if selectionPrefix.nonEmpty =>
+      case Msg(MessageExtractors.TextCommand(Selection(pageStr, indexStr)), (registry, _)) if selectionPrefix.nonEmpty =>
         val page = pageStr.toInt
         val index = indexStr.toInt
         originator ! registry.pages(page)(index)

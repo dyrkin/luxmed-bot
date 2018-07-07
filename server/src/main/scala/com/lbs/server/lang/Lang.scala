@@ -84,6 +84,8 @@ trait Lang {
 
   def modifyDate: String
 
+  def moreParameters: String
+
   def bookingSummary(bookingData: BookingData): String
 
   def noTermsFound: String

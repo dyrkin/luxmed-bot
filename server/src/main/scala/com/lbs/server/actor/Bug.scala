@@ -74,7 +74,7 @@ class Bug(val userId: UserId, bot: Bot, dataService: DataService, bugPagerActorF
     question { _ =>
       bot.sendMessage(userId.source, lang.enterIssueDetails)
     } answer {
-      case Msg(Command(_, MessageExtractors.Text(details), _), _) =>
+      case Msg(MessageExtractors.TextCommand(details), _) =>
         val bugId = dataService.submitBug(userId.userId, userId.source.sourceSystem.id, details)
         bot.sendMessage(userId.source, lang.bugHasBeenCreated(bugId.getOrElse(-1L)))
         end()

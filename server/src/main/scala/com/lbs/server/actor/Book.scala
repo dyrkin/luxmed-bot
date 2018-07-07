@@ -38,6 +38,7 @@ import com.lbs.server.actor.conversation.Conversation.{InitConversation, StartCo
 import com.lbs.server.lang.{Localizable, Localization}
 import com.lbs.server.repository.model.Monitoring
 import com.lbs.server.service.{ApiService, DataService, MonitoringService}
+import com.lbs.server.util.MessageExtractors.CallbackCommand
 import com.lbs.server.util.ServerModelConverters._
 
 class Book(val userId: UserId, bot: Bot, apiService: ApiService, dataService: DataService, monitoringService: MonitoringService,
@@ -128,9 +129,9 @@ class Book(val userId: UserId, bot: Bot, apiService: ApiService, dataService: Da
         lang.bookingSummary(bookingData),
         inlineKeyboard = createInlineKeyboard(Seq(Button(lang.findTerms, Tags.FindTerms), Button(lang.modifyDate, Tags.ModifyDate))))
     } answer {
-      case Msg(Command(_, _, Some(Tags.FindTerms)), _) =>
+      case Msg(CallbackCommand(Tags.FindTerms), _) =>
         goto(requestTerm)
-      case Msg(Command(_, _, Some(Tags.ModifyDate)), _) =>
+      case Msg(CallbackCommand(Tags.ModifyDate), _) =>
         goto(requestDateFrom)
     }
 
@@ -166,46 +167,47 @@ class Book(val userId: UserId, bot: Bot, apiService: ApiService, dataService: Da
       bot.sendMessage(userId.source, lang.noTermsFound, inlineKeyboard =
         createInlineKeyboard(Seq(Button(lang.modifyDate, Tags.ModifyDate), Button(lang.createMonitoring, Tags.CreateMonitoring))))
     } answer {
-      case Msg(Command(_, _, Some(Tags.ModifyDate)), _) =>
+      case Msg(CallbackCommand(Tags.ModifyDate), _) =>
         goto(requestDateFrom)
-      case Msg(Command(_, _, Some(Tags.CreateMonitoring)), _) =>
+      case Msg(CallbackCommand(Tags.CreateMonitoring), _) =>
         goto(askMonitoringOptions)
     }
 
-  private def awaitReservation: Step = monologue {
-    case Msg(Command(_, _, Some(Tags.Cancel)), bookingData: BookingData) =>
-      apiService.deleteTemporaryReservation(userId.accountId, bookingData.temporaryReservationId.get)
-      stay()
-    case Msg(Command(_, _, Some(Tags.Book)), bookingData: BookingData) =>
-      val reservationRequestMaybe = for {
-        tmpReservationId <- bookingData.temporaryReservationId
-        valuations <- bookingData.valuations
-        visitTermVariant <- valuations.visitTermVariants.headOption
-        term <- bookingData.term
-      } yield (tmpReservationId, visitTermVariant, term).mapTo[ReservationRequest]
+  private def awaitReservation: Step =
+    monologue {
+      case Msg(CallbackCommand(Tags.Cancel), bookingData: BookingData) =>
+        apiService.deleteTemporaryReservation(userId.accountId, bookingData.temporaryReservationId.get)
+        stay()
+      case Msg(CallbackCommand(Tags.Book), bookingData: BookingData) =>
+        val reservationRequestMaybe = for {
+          tmpReservationId <- bookingData.temporaryReservationId
+          valuations <- bookingData.valuations
+          visitTermVariant <- valuations.visitTermVariants.headOption
+          term <- bookingData.term
+        } yield (tmpReservationId, visitTermVariant, term).mapTo[ReservationRequest]
 
-      reservationRequestMaybe match {
-        case Some(reservationRequest) =>
-          apiService.reservation(userId.accountId, reservationRequest) match {
-            case Left(ex) =>
-              error("Error during reservation", ex)
-              bot.sendMessage(userId.source, ex.getMessage)
-              end()
-            case Right(success) =>
-              debug(s"Successfully confirmed: $success")
-              bot.sendMessage(userId.source, lang.appointmentIsConfirmed)
-              end()
-          }
-        case _ => sys.error(s"Can not prepare reservation request using booking data $bookingData")
-      }
-  }
+        reservationRequestMaybe match {
+          case Some(reservationRequest) =>
+            apiService.reservation(userId.accountId, reservationRequest) match {
+              case Left(ex) =>
+                error("Error during reservation", ex)
+                bot.sendMessage(userId.source, ex.getMessage)
+                end()
+              case Right(success) =>
+                debug(s"Successfully confirmed: $success")
+                bot.sendMessage(userId.source, lang.appointmentIsConfirmed)
+                end()
+            }
+          case _ => sys.error(s"Can not prepare reservation request using booking data $bookingData")
+        }
+    }
 
   private def askMonitoringOptions: Step =
     question { _ =>
       bot.sendMessage(userId.source, lang.chooseTypeOfMonitoring,
         inlineKeyboard = createInlineKeyboard(Seq(Button(lang.bookByApplication, Tags.BookByApplication), Button(lang.bookManually, Tags.BookManually)), columns = 1))
     } answer {
-      case Msg(Command(_, _, Some(autobookStr)), bookingData: BookingData) =>
+      case Msg(CallbackCommand(autobookStr), bookingData: BookingData) =>
         val autobook = autobookStr.toBoolean
         goto(createMonitoring) using bookingData.copy(autobook = autobook)
     }

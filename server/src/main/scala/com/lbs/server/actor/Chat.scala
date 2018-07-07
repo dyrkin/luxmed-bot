@@ -52,58 +52,58 @@ class Chat(val userId: UserId, dataService: DataService, monitoringService: Moni
   entryPoint(helpChat)
 
   private def helpChat: Step = actorDialogue(helpActor) {
-    case Msg(cmd@Command(_, Text("/help"), _), _) =>
+    case Msg(cmd@TextCommand("/help"), _) =>
       helpActor ! cmd
       stay()
-    case Msg(cmd@Command(_, Text("/start"), _), _) =>
+    case Msg(cmd@TextCommand("/start"), _) =>
       helpActor ! cmd
       stay()
   }
 
   private def bookChat: Step = actorDialogue(bookingActor) {
-    case Msg(Command(_, Text("/book"), _), _) =>
+    case Msg(TextCommand("/book"), _) =>
       bookingActor ! InitConversation
       bookingActor ! StartConversation
       stay()
   }
 
   private def historyChat: Step = actorDialogue(historyActor) {
-    case Msg(Command(_, Text("/history"), _), _) =>
+    case Msg(TextCommand("/history"), _) =>
       historyActor ! InitConversation
       historyActor ! StartConversation
       stay()
   }
 
   private def visitsChat: Step = actorDialogue(visitsActor) {
-    case Msg(Command(_, Text("/reserved"), _), _) =>
+    case Msg(TextCommand("/reserved"), _) =>
       visitsActor ! InitConversation
       visitsActor ! StartConversation
       stay()
   }
 
   private def bugChat: Step = actorDialogue(bugActor) {
-    case Msg(Command(_, Text("/bug"), _), _) =>
+    case Msg(TextCommand("/bug"), _) =>
       bugActor ! InitConversation
       bugActor ! StartConversation
       stay()
   }
 
   private def monitoringsChat: Step = actorDialogue(monitoringsActor) {
-    case Msg(Command(_, Text("/monitorings"), _), _) =>
+    case Msg(TextCommand("/monitorings"), _) =>
       monitoringsActor ! InitConversation
       monitoringsActor ! StartConversation
       stay()
   }
 
   private def settingsChat: Step = actorDialogue(settingsActor) {
-    case Msg(Command(_, Text("/settings"), _), _) =>
+    case Msg(TextCommand("/settings"), _) =>
       settingsActor ! InitConversation
       settingsActor ! StartConversation
       stay()
   }
 
   private def accountChat: Step = actorDialogue(accountActor) {
-    case Msg(Command(_, Text("/accounts"), _), _) =>
+    case Msg(TextCommand("/accounts"), _) =>
       accountActor ! InitConversation
       accountActor ! StartConversation
       stay()
@@ -120,34 +120,34 @@ class Chat(val userId: UserId, dataService: DataService, monitoringService: Moni
     }
 
   private def secondaryState(actor: ActorRef): AnswerFn = {
-    case Msg(cmd@Command(_, Text("/bug"), _), _) =>
+    case Msg(cmd@TextCommand("/bug"), _) =>
       self ! cmd
       goto(bugChat)
-    case Msg(cmd@Command(_, Text("/help"), _), _) =>
+    case Msg(cmd@TextCommand("/help"), _) =>
       self ! cmd
       goto(helpChat)
-    case Msg(cmd@Command(_, Text("/start"), _), _) =>
+    case Msg(cmd@TextCommand("/start"), _) =>
       self ! cmd
       goto(helpChat)
-    case Msg(cmd@Command(_, Text("/book"), _), _) =>
+    case Msg(cmd@TextCommand("/book"), _) =>
       self ! cmd
       goto(bookChat)
-    case Msg(cmd@Command(_, Text("/monitorings"), _), _) =>
+    case Msg(cmd@TextCommand("/monitorings"), _) =>
       self ! cmd
       goto(monitoringsChat)
-    case Msg(cmd@Command(_, Text("/history"), _), _) =>
+    case Msg(cmd@TextCommand("/history"), _) =>
       self ! cmd
       goto(historyChat)
-    case Msg(cmd@Command(_, Text("/reserved"), _), _) =>
+    case Msg(cmd@TextCommand("/reserved"), _) =>
       self ! cmd
       goto(visitsChat)
-    case Msg(cmd@Command(_, Text("/settings"), _), _) =>
+    case Msg(cmd@TextCommand("/settings"), _) =>
       self ! cmd
       goto(settingsChat)
-    case Msg(cmd@Command(_, Text("/accounts"), _), _) =>
+    case Msg(cmd@TextCommand("/accounts"), _) =>
       self ! cmd
       goto(accountChat)
-    case Msg(cmd@Command(_, Text(MonitoringId(monitoringIdStr, scheduleIdStr, timeStr)), _), _) =>
+    case Msg(cmd@TextCommand(MonitoringId(monitoringIdStr, scheduleIdStr, timeStr)), _) =>
       val monitoringId = monitoringIdStr.toLong
       val scheduleId = scheduleIdStr.toLong
       val time = timeStr.toLong

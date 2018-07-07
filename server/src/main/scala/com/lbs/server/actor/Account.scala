@@ -31,6 +31,7 @@ import com.lbs.server.actor.Login._
 import com.lbs.server.actor.conversation.Conversation
 import com.lbs.server.lang.{Localizable, Localization}
 import com.lbs.server.service.DataService
+import com.lbs.server.util.MessageExtractors.CallbackCommand
 
 class Account(val userId: UserId, bot: Bot, dataService: DataService, val localization: Localization, router: ActorRef) extends Conversation[Unit] with Localizable {
 
@@ -43,7 +44,7 @@ class Account(val userId: UserId, bot: Bot, dataService: DataService, val locali
       val buttons = Seq(Button(lang.addAccount, -1L), Button(lang.deleteAccount, -2L)) ++ credentials.map(c => Button(s"🔐️ ${c.username}", c.accountId))
       bot.sendMessage(userId.source, lang.pleaseChooseAccount(currentAccount.username), inlineKeyboard = createInlineKeyboard(buttons, columns = 1))
     } answer {
-      case Msg(cmd@Command(_, _, Some(actionStr)), _) =>
+      case Msg(cmd@CallbackCommand(actionStr), _) =>
         val action = actionStr.toLong
         action match {
           case -1L =>

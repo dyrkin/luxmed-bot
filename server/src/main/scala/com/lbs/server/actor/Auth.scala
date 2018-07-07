@@ -41,11 +41,11 @@ class Auth(val source: MessageSource, dataService: DataService, unauthorizedHelp
   private var chatActor: ActorRef = _
 
   override def receive: Receive = {
-    case cmd@Command(_, Text("/help"), _) if userId.isEmpty =>
+    case cmd@TextCommand("/help") if userId.isEmpty =>
       unauthorizedHelpActor ! cmd
-    case cmd@Command(_, Text("/start"), _) if userId.isEmpty =>
+    case cmd@TextCommand("/start") if userId.isEmpty =>
       unauthorizedHelpActor ! cmd
-    case cmd@Command(_, Text("/login"), _) =>
+    case cmd@TextCommand("/start") =>
       userId = None
       loginActor ! InitConversation
       loginActor ! StartConversation

@@ -52,7 +52,7 @@ class Login(source: MessageSource, bot: Bot, dataService: DataService, apiServic
     question { _ =>
       bot.sendMessage(source, lang.provideUsername)
     } answer {
-      case Msg(Command(_, MessageExtractors.TextOpt(username), _), _) =>
+      case Msg(MessageExtractors.OptionalTextCommand(username), _) =>
         goto(requestPassword) using LoginData(username = username)
     }
 
@@ -60,7 +60,7 @@ class Login(source: MessageSource, bot: Bot, dataService: DataService, apiServic
     question { _ =>
       bot.sendMessage(source, lang.providePassword)
     } answer {
-      case Msg(Command(_, MessageExtractors.TextOpt(password), _), loginData: LoginData) =>
+      case Msg(MessageExtractors.OptionalTextCommand(password), loginData: LoginData) =>
         goto(processLoginInformation) using loginData.copy(password = password.map(textEncryptor.encrypt))
     }
 

@@ -28,7 +28,7 @@ import java.time.{ZoneId, ZonedDateTime}
 import java.util.Locale
 
 import com.lbs.api.json.model._
-import com.lbs.bot.model.Message
+import com.lbs.bot.model.{Command, Message}
 import com.lbs.common.ModelConverters
 import com.lbs.server.actor.Book.BookingData
 import com.lbs.server.actor.Login.UserId
@@ -126,12 +126,16 @@ package object util {
 
   object MessageExtractors {
 
-    object Text {
-      def unapply(msg: Message): Option[String] = msg.text
+    object TextCommand {
+      def unapply(cmd: Command): Option[String] = cmd.message.text
     }
 
-    object TextOpt {
-      def unapply(msg: Message): Option[Option[String]] = Some(msg.text)
+    object OptionalTextCommand {
+      def unapply(cmd: Command): Option[Option[String]] = Some(cmd.message.text)
+    }
+
+    object CallbackCommand {
+      def unapply(cmd: Command): Option[String] = cmd.callbackData
     }
 
   }

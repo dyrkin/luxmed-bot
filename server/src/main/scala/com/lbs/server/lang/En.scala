@@ -365,4 +365,6 @@ object En extends Lang {
     s"""Current account is <b>$currentAccountName</b>
        |
        |<b>➡</b> Please choose an <b>action</b> or select <b>account</b>""".stripMargin
+
+  override def moreParameters: String = "🛠 More parameters"
 }

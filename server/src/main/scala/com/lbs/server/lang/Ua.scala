@@ -364,4 +364,6 @@ object Ua extends Lang {
     s"""Поточний акаунт <b>$currentAccountName</b>
        |
        |<b>➡</b> Будь ласка, оберіть <b>дію</b> або виберіть <b>акаунт</b>""".stripMargin
+
+  override def moreParameters: String = "🛠 Більше налаштувань"
 }
