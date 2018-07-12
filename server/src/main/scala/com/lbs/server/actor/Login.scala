@@ -49,23 +49,23 @@ class Login(source: MessageSource, bot: Bot, dataService: DataService, apiServic
     }
 
   def requestUsername: Step =
-    question { _ =>
+    ask { _ =>
       bot.sendMessage(source, lang.provideUsername)
-    } answer {
+    } onReply {
       case Msg(MessageExtractors.OptionalTextCommand(username), _) =>
         goto(requestPassword) using LoginData(username = username)
     }
 
   def requestPassword: Step =
-    question { _ =>
+    ask { _ =>
       bot.sendMessage(source, lang.providePassword)
-    } answer {
+    } onReply {
       case Msg(MessageExtractors.OptionalTextCommand(password), loginData: LoginData) =>
         goto(processLoginInformation) using loginData.copy(password = password.map(textEncryptor.encrypt))
     }
 
   def processLoginInformation: Step = {
-    internalConfig { case LoginData(Some(username), Some(password)) =>
+    process { case LoginData(Some(username), Some(password)) =>
       val loginResult = apiService.login(username, password)
       loginResult match {
         case Left(error) =>

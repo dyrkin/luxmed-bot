@@ -23,32 +23,32 @@ class ConversationSpec extends AkkaTestKit {
         private var conf: String = _
 
         def configure: Step =
-          externalConfig {
+          monologue {
             case Msg(confStr: String, data) =>
               conf = confStr
               goto(askHello) using data.copy(configured = true)
           }
 
         def askHello: Step =
-          question { data =>
+          ask { data =>
             self ! Hello
-          } answer {
+          } onReply {
             case Msg(Hello, data) =>
               goto(askWorld) using data.copy(hello = "hello")
           }
 
         def askWorld: Step =
-          question { data =>
+          ask { data =>
             self ! World
-          } answer {
+          } onReply {
             case Msg(World, data) =>
               goto(askDialogue) using data.copy(world = "world")
           }
 
         def askDialogue: Step =
-          question { data =>
+          ask { data =>
             self ! Dialogue
-          } answer {
+          } onReply {
             case Msg(Dialogue, data) =>
               originator ! data.copy(people = "dialogue") -> conf
               end()
@@ -81,19 +81,19 @@ class ConversationSpec extends AkkaTestKit {
       class TestActor(originator: ActorRef) extends Conversation[Data] {
 
         def configure1: Step =
-          internalConfig { _ =>
+          process { _ =>
             goto(configure2) using Data(configured = true)
           }
 
         def configure2: Step =
-          internalConfig { data =>
+          process { data =>
             goto(askMessage2) using data.copy(message1 = "hello")
           }
 
         def askMessage2: Step =
-          question { _ =>
+          ask { _ =>
             self ! InvokeEnrichMessage
-          } answer {
+          } onReply {
             case Msg(InvokeEnrichMessage, data) =>
               originator ! data.copy(message2 = "world")
               end()

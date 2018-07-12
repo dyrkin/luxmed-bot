@@ -41,7 +41,7 @@ class Monitorings(val userId: UserId, bot: Bot, monitoringService: MonitoringSer
   entryPoint(prepareData)
 
   def prepareData: Step =
-    internalConfig { _ =>
+    process { _ =>
       val monitorings = monitoringService.getActiveMonitorings(userId.accountId)
       monitoringsPager ! InitConversation
       monitoringsPager ! StartConversation
@@ -62,10 +62,10 @@ class Monitorings(val userId: UserId, bot: Bot, monitoringService: MonitoringSer
     }
 
   def askToDeactivateMonitoring: Step =
-    question { monitoring =>
+    ask { monitoring =>
       bot.sendMessage(userId.source, lang.deactivateMonitoring(monitoring), inlineKeyboard =
         createInlineKeyboard(Seq(Button(lang.no, Tags.No), Button(lang.yes, Tags.Yes))))
-    } answer {
+    } onReply {
       case Msg(Command(_, _, Some(Tags.No)), _) =>
         bot.sendMessage(userId.source, lang.monitoringWasNotDeactivated)
         end()

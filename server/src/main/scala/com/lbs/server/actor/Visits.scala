@@ -42,7 +42,7 @@ class Visits(val userId: UserId, bot: Bot, apiService: ApiService, val localizat
   entryPoint(prepareData)
 
   def prepareData: Step =
-    internalConfig { _ =>
+    process { _ =>
       val visits = apiService.reservedVisits(userId.accountId)
       reservedVisitsPager ! InitConversation
       reservedVisitsPager ! StartConversation
@@ -63,10 +63,10 @@ class Visits(val userId: UserId, bot: Bot, apiService: ApiService, val localizat
     }
 
   def askToCancelVisit: Step =
-    question { visit =>
+    ask { visit =>
       bot.sendMessage(userId.source, lang.areYouSureToCancelAppointment(visit),
         inlineKeyboard = createInlineKeyboard(Seq(Button(lang.no, Tags.No), Button(lang.yes, Tags.Yes))))
-    } answer {
+    } onReply {
       case Msg(Command(_, _, Some(Tags.No)), _) =>
         bot.sendMessage(userId.source, lang.appointmentWasNotCancelled)
         end()

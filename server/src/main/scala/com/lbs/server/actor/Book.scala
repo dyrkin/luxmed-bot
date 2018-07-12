@@ -84,12 +84,12 @@ class Book(val userId: UserId, bot: Bot, apiService: ApiService, dataService: Da
     }(requestNext = requestDateFrom)
 
   private def requestDateFrom: Step =
-    question { bookingData =>
+    ask { bookingData =>
       datePicker ! InitConversation
       datePicker ! StartConversation
       datePicker ! DateFromMode
       datePicker ! bookingData.dateFrom
-    } answer {
+    } onReply {
       case Msg(cmd: Command, _) =>
         datePicker ! cmd
         stay()
@@ -98,37 +98,28 @@ class Book(val userId: UserId, bot: Bot, apiService: ApiService, dataService: Da
     }
 
   private def requestDateTo: Step =
-    question { bookingData =>
+    ask { bookingData =>
       datePicker ! InitConversation
       datePicker ! StartConversation
       datePicker ! DateToMode
       datePicker ! bookingData.dateFrom.plusDays(1)
-    } answer {
+    } onReply {
       case Msg(cmd: Command, _) =>
         datePicker ! cmd
         stay()
       case Msg(date: ZonedDateTime, bookingData: BookingData) =>
-        goto(requestDayTime) using bookingData.copy(dateTo = date)
-    }
-
-  private def requestDayTime: Step =
-    question { _ =>
-      bot.sendMessage(userId.source, lang.chooseTimeOfDay,
-        inlineKeyboard = createInlineKeyboard(lang.timeOfDay.map { case (id, label) => Button(label, id.toString) }.toSeq, columns = 1))
-    } answer {
-      case Msg(Command(_, msg, Some(timeIdStr)), bookingData: BookingData) =>
-        val timeId = timeIdStr.toInt
-        bot.sendEditMessage(userId.source, msg.messageId, lang.preferredTimeIs(timeId))
-        goto(requestAction) using bookingData.copy(timeOfDay = timeId)
+        goto(requestAction) using bookingData.copy(dateTo = date)
     }
 
   private def requestAction: Step =
-    question { bookingData =>
+    ask { bookingData =>
       dataService.storeAppointment(userId.accountId, bookingData)
       bot.sendMessage(userId.source,
         lang.bookingSummary(bookingData),
-        inlineKeyboard = createInlineKeyboard(Seq(Button(lang.findTerms, Tags.FindTerms), Button(lang.modifyDate, Tags.ModifyDate))))
-    } answer {
+        inlineKeyboard = createInlineKeyboard(
+          Seq(Button(lang.findTerms, Tags.FindTerms), Button(lang.modifyDate, Tags.ModifyDate))
+        ))
+    } onReply {
       case Msg(CallbackCommand(Tags.FindTerms), _) =>
         goto(requestTerm)
       case Msg(CallbackCommand(Tags.ModifyDate), _) =>
@@ -136,14 +127,14 @@ class Book(val userId: UserId, bot: Bot, apiService: ApiService, dataService: Da
     }
 
   private def requestTerm: Step =
-    question { bookingData =>
+    ask { bookingData =>
       val availableTerms = apiService.getAvailableTerms(userId.accountId, bookingData.cityId.id,
         bookingData.clinicId.optionalId, bookingData.serviceId.id, bookingData.doctorId.optionalId,
         bookingData.dateFrom, Some(bookingData.dateTo), timeOfDay = bookingData.timeOfDay)
       termsPager ! InitConversation
       termsPager ! StartConversation
       termsPager ! availableTerms
-    } answer {
+    } onReply {
       case Msg(cmd: Command, _) =>
         termsPager ! cmd
         stay()
@@ -163,10 +154,10 @@ class Book(val userId: UserId, bot: Bot, apiService: ApiService, dataService: Da
     }
 
   private def askNoTermsAction: Step =
-    question { _ =>
+    ask { _ =>
       bot.sendMessage(userId.source, lang.noTermsFound, inlineKeyboard =
         createInlineKeyboard(Seq(Button(lang.modifyDate, Tags.ModifyDate), Button(lang.createMonitoring, Tags.CreateMonitoring))))
-    } answer {
+    } onReply {
       case Msg(CallbackCommand(Tags.ModifyDate), _) =>
         goto(requestDateFrom)
       case Msg(CallbackCommand(Tags.CreateMonitoring), _) =>
@@ -203,17 +194,17 @@ class Book(val userId: UserId, bot: Bot, apiService: ApiService, dataService: Da
     }
 
   private def askMonitoringOptions: Step =
-    question { _ =>
+    ask { _ =>
       bot.sendMessage(userId.source, lang.chooseTypeOfMonitoring,
         inlineKeyboard = createInlineKeyboard(Seq(Button(lang.bookByApplication, Tags.BookByApplication), Button(lang.bookManually, Tags.BookManually)), columns = 1))
-    } answer {
+    } onReply {
       case Msg(CallbackCommand(autobookStr), bookingData: BookingData) =>
         val autobook = autobookStr.toBoolean
         goto(createMonitoring) using bookingData.copy(autobook = autobook)
     }
 
   private def createMonitoring: Step =
-    internalConfig { bookingData =>
+    process { bookingData =>
       debug(s"Creating monitoring for $bookingData")
       try {
         monitoringService.createMonitoring((userId -> bookingData).mapTo[Monitoring])

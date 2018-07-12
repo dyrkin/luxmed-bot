@@ -35,7 +35,7 @@ trait StaticDataForBooking extends Conversation[BookingData] {
 
   private[actor] def staticData: ActorRef
 
-  protected def withFunctions(latestOptions: => Seq[IdName], staticOptions: => Either[Throwable, List[IdName]], applyId: IdName => BookingData): Step => AnswerFn = {
+  protected def withFunctions(latestOptions: => Seq[IdName], staticOptions: => Either[Throwable, List[IdName]], applyId: IdName => BookingData): Step => MessageProcessorFn = {
     nextStep: Step => {
       case Msg(cmd: Command, _) =>
         staticData ! cmd
@@ -51,12 +51,12 @@ trait StaticDataForBooking extends Conversation[BookingData] {
     }
   }
 
-  protected def staticData(staticDataConfig: => StaticDataConfig)(functions: BookingData => Step => AnswerFn)(requestNext: Step): Step = {
-    question { _ =>
+  protected def staticData(staticDataConfig: => StaticDataConfig)(functions: BookingData => Step => MessageProcessorFn)(requestNext: Step): Step = {
+    ask { _ =>
       staticData ! InitConversation
       staticData ! StartConversation
       staticData ! staticDataConfig
-    } answer {
+    } onReply {
       case msg@Msg(_, bookingData: BookingData) =>
         val fn = functions(bookingData)(requestNext)
         fn(msg)

@@ -43,7 +43,7 @@ class Pager[Data](val userId: UserId, bot: Bot, makeMessage: (Data, Int, Int) =>
   entryPoint(awaitForData)
 
   private def awaitForData: Step =
-    externalConfig {
+    monologue {
       case Msg(Left(error: Throwable), _) =>
         bot.sendMessage(userId.source, error.getMessage)
         end()
@@ -55,9 +55,9 @@ class Pager[Data](val userId: UserId, bot: Bot, makeMessage: (Data, Int, Int) =>
     }
 
   private def displayPage: Step =
-    question { case (registry, massageIdMaybe) =>
+    ask { case (registry, massageIdMaybe) =>
       sendPage(registry.page, registry.pages, massageIdMaybe)
-    } answer {
+    } onReply {
       case Msg(Command(_, msg, Some(Tags.Next)), (registry, _)) =>
         val page = registry.page + 1
         goto(displayPage) using registry.copy(page = page) -> Some(msg.messageId)

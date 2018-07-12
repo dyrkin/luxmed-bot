@@ -15,13 +15,13 @@ trait Conversation[D] extends Actor with Domain[D] with Logger {
 
   private var startWithStep: Step = _
 
-  private val defaultMsgHandler: AnswerFn = {
+  private val defaultMsgHandler: MessageProcessorFn = {
     case Msg(any, data) =>
       debug(s"Unhandled message received. [$any, $data]")
       NextStep(currentStep, Some(data))
   }
 
-  private var msgHandler: AnswerFn = defaultMsgHandler
+  private var msgHandler: MessageProcessorFn = defaultMsgHandler
 
   private var runAfterInit: () => Unit = () => {}
 
@@ -34,8 +34,8 @@ trait Conversation[D] extends Actor with Domain[D] with Logger {
   def execute(): Unit = {
     try {
       currentStep match {
-        case qa: QuestionAnswer => qa.question.questionFn(currentData)
-        case InternalConfiguration(fn) =>
+        case qa: Dialogue => qa.askFn(currentData)
+        case Process(fn) =>
           val nextStep = fn(currentData)
           moveToNextStep(nextStep)
         case _ => //do nothing
@@ -56,10 +56,7 @@ trait Conversation[D] extends Actor with Domain[D] with Logger {
     }
 
     currentStep match {
-      case ExternalConfiguration(fn) =>
-        val conf = Msg(any, currentData)
-        handle(conf, fn, msgHandler)
-      case QuestionAnswer(_, Answer(fn)) =>
+      case Dialogue(_, fn) =>
         val fact = Msg(any, currentData)
         handle(fact, fn, msgHandler)
       case Monologue(fn) =>
@@ -87,13 +84,11 @@ trait Conversation[D] extends Actor with Domain[D] with Logger {
     init()
   }
 
-  protected def monologue(answerFn: AnswerFn): Monologue = Monologue(answerFn)
+  protected def monologue(answerFn: MessageProcessorFn): Monologue = Monologue(answerFn)
 
-  protected def question(questionFn: D => Unit): Question = Question(questionFn)
+  protected def ask(askFn: D => Unit): Ask = Ask(askFn)
 
-  protected def externalConfig(receiveConfFunction: ExternalConfigFn): ExternalConfiguration = ExternalConfiguration(receiveConfFunction)
-
-  protected def internalConfig(receiveConfFunction: InternalConfigFn): InternalConfiguration = InternalConfiguration(receiveConfFunction)
+  protected def process(processFn: ProcessFn): Process = Process(processFn)
 
   protected def end(): NextStep = NextStep(End)
 
@@ -104,7 +99,7 @@ trait Conversation[D] extends Actor with Domain[D] with Logger {
 
   protected def stay(): NextStep = NextStep(currentStep)
 
-  protected def whenUnhandledMsg(receiveMsgFn: AnswerFn): Unit = {
+  protected def whenUnhandledMsg(receiveMsgFn: MessageProcessorFn): Unit = {
     msgHandler = receiveMsgFn orElse defaultMsgHandler
   }
 

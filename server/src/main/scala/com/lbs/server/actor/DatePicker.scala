@@ -49,7 +49,7 @@ class DatePicker(val userId: UserId, val bot: Bot, val localization: Localizatio
   entryPoint(configure)
 
   def configure: Step =
-    externalConfig {
+    monologue {
       case Msg(newMode: Mode, _) =>
         mode = newMode
         stay()
@@ -58,13 +58,13 @@ class DatePicker(val userId: UserId, val bot: Bot, val localization: Localizatio
     }
 
   def requestDate: Step =
-    question { initialDate =>
+    ask { initialDate =>
       val message = mode match {
         case DateFromMode => lang.chooseDateFrom
         case DateToMode => lang.chooseDateTo
       }
       bot.sendMessage(userId.source, message, inlineKeyboard = dateButtons(initialDate))
-    } answer {
+    } onReply {
       case Msg(Command(_, msg, Some(Tags.Done)), finalDate) =>
         val (message, updatedDate) = mode match {
           case DateFromMode =>

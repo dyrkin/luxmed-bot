@@ -37,19 +37,19 @@ class Settings(val userId: UserId, bot: Bot, dataService: DataService, val local
   entryPoint(askForAction)
 
   def askForAction: Step =
-    question { _ =>
+    ask { _ =>
       bot.sendMessage(userId.source, lang.settingsHeader, inlineKeyboard =
         createInlineKeyboard(Seq(Button(lang.language, Tags.Language))))
-    } answer {
+    } onReply {
       case Msg(Command(_, _, Some(Tags.Language)), _) =>
         goto(askLanguage)
     }
 
   def askLanguage: Step =
-    question { _ =>
+    ask { _ =>
       bot.sendMessage(userId.source, lang.chooseLanguage,
         inlineKeyboard = createInlineKeyboard(Lang.Langs.map(l => Button(l.label, l.id)), columns = 1))
-    } answer {
+    } onReply {
       case Msg(Command(_, _, Some(langIdStr)), _) =>
         val langId = langIdStr.toInt
         localization.updateLanguage(userId.userId, Lang(langId))

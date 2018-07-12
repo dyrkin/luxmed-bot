@@ -38,12 +38,12 @@ class Account(val userId: UserId, bot: Bot, dataService: DataService, val locali
   entryPoint(askAction)
 
   def askAction: Step =
-    question { _ =>
+    ask { _ =>
       val credentials = dataService.getUserCredentials(userId.userId)
       val currentAccount = credentials.find(c => c.accountId == userId.accountId).getOrElse(sys.error("Can't determine current account"))
       val buttons = Seq(Button(lang.addAccount, -1L), Button(lang.deleteAccount, -2L)) ++ credentials.map(c => Button(s"🔐️ ${c.username}", c.accountId))
       bot.sendMessage(userId.source, lang.pleaseChooseAccount(currentAccount.username), inlineKeyboard = createInlineKeyboard(buttons, columns = 1))
-    } answer {
+    } onReply {
       case Msg(cmd@CallbackCommand(actionStr), _) =>
         val action = actionStr.toLong
         action match {

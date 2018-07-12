@@ -40,11 +40,13 @@ class Bug(val userId: UserId, bot: Bot, dataService: DataService, bugPagerActorF
 
   private val bugPager = bugPagerActorFactory(userId, self)
 
+  entryPoint(askAction)
+
   def askAction: Step =
-    question { _ =>
+    ask { _ =>
       bot.sendMessage(userId.source, lang.bugAction, inlineKeyboard =
         createInlineKeyboard(Seq(Button(lang.createNewBug, Tags.SubmitNew), Button(lang.showSubmittedBugs, Tags.ListSubmitted))))
-    } answer {
+    } onReply {
       case Msg(Command(_, _, Some(Tags.SubmitNew)), _) =>
         goto(askBugDescription)
       case Msg(Command(_, _, Some(Tags.ListSubmitted)), _) =>
@@ -52,7 +54,7 @@ class Bug(val userId: UserId, bot: Bot, dataService: DataService, bugPagerActorF
     }
 
   def displaySubmittedBugs: Step =
-    internalConfig { _ =>
+    process { _ =>
       val bugs = dataService.getBugs(userId.userId)
       bugPager ! InitConversation
       bugPager ! StartConversation
@@ -71,16 +73,14 @@ class Bug(val userId: UserId, bot: Bot, dataService: DataService, bugPagerActorF
     }
 
   def askBugDescription: Step =
-    question { _ =>
+    ask { _ =>
       bot.sendMessage(userId.source, lang.enterIssueDetails)
-    } answer {
+    } onReply {
       case Msg(MessageExtractors.TextCommand(details), _) =>
         val bugId = dataService.submitBug(userId.userId, userId.source.sourceSystem.id, details)
         bot.sendMessage(userId.source, lang.bugHasBeenCreated(bugId.getOrElse(-1L)))
         end()
     }
-
-  entryPoint(askAction)
 }
 
 object Bug {

@@ -109,7 +109,7 @@ class Chat(val userId: UserId, dataService: DataService, monitoringService: Moni
       stay()
   }
 
-  private def actorDialogue(actor: ActorRef)(mainStateFunction: AnswerFn): Step =
+  private def actorDialogue(actor: ActorRef)(mainStateFunction: MessageProcessorFn): Step =
     monologue {
       case event: Msg =>
         if (mainStateFunction.isDefinedAt(event)) mainStateFunction(event)
@@ -119,7 +119,7 @@ class Chat(val userId: UserId, dataService: DataService, monitoringService: Moni
         }
     }
 
-  private def secondaryState(actor: ActorRef): AnswerFn = {
+  private def secondaryState(actor: ActorRef): MessageProcessorFn = {
     case Msg(cmd@TextCommand("/bug"), _) =>
       self ! cmd
       goto(bugChat)

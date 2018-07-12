@@ -40,7 +40,7 @@ class History(val userId: UserId, bot: Bot, apiService: ApiService, val localiza
   entryPoint(prepareData)
 
   def prepareData: Step =
-    internalConfig { _ =>
+    process { _ =>
       val visits = apiService.visitsHistory(userId.accountId)
       historyPager ! InitConversation
       historyPager ! StartConversation

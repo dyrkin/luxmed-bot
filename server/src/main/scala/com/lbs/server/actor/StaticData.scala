@@ -41,16 +41,16 @@ class StaticData(val userId: UserId, bot: Bot, val localization: Localization, o
   entryPoint(AwaitConfig)
 
   def AwaitConfig: Step =
-    externalConfig {
+    monologue {
       case Msg(newConfig: StaticDataConfig, _) =>
         config = newConfig
         goto(askForLatestOption)
     }
 
   def askForLatestOption: Step =
-    question { _ =>
+    ask { _ =>
       originator ! LatestOptions
-    } answer {
+    } onReply {
       case Msg(LatestOptions(options), _) if options.isEmpty =>
         val callbackTags = anySelectOption
         goto(askForUserInput) using callbackTags
@@ -60,10 +60,10 @@ class StaticData(val userId: UserId, bot: Bot, val localization: Localization, o
     }
 
   def askForUserInput: Step =
-    question { callbackTags =>
+    ask { callbackTags =>
       bot.sendMessage(userId.source, lang.pleaseEnterStaticDataNameOrPrevious(config),
         inlineKeyboard = createInlineKeyboard(callbackTags, columns = 1))
-    } answer {
+    } onReply {
       case Msg(Command(_, msg, Some(tag)), callbackTags) =>
         val id = tag.toLong
         val label = callbackTags.find(_.tag == tag).map(_.label).getOrElse(sys.error("Unable to get callback tag label"))
