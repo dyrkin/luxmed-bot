@@ -23,14 +23,14 @@
   */
 package com.lbs.server.lang
 
-import java.time.ZonedDateTime
+import java.time.{LocalTime, ZonedDateTime}
 import java.util.Locale
 
 import com.lbs.api.json.model.{AvailableVisitsTermPresentation, HistoricVisit, ReservedVisit, ValuationsResponse}
 import com.lbs.server.actor.Book
 import com.lbs.server.actor.StaticData.StaticDataConfig
 import com.lbs.server.repository.model.{Bug, Monitoring}
-import com.lbs.server.util.DateTimeUtil.{formatDate, formatDateTime, minutesSinceBeginOf2018}
+import com.lbs.server.util.DateTimeUtil.{formatDate, formatDateTime, formatTime, minutesSinceBeginOf2018}
 
 object En extends Lang {
 
@@ -81,7 +81,7 @@ object En extends Lang {
       s" in <b>${bookingData.clinicId.name}</b> clinic" +
       s" of the <b>${bookingData.cityId.name}</b> city." +
       s"\nDesired dates: <b>${formatDate(bookingData.dateFrom, locale)}</b> -> <b>${formatDate(bookingData.dateTo, locale)}</b>" +
-      s"\nTime: <b>${timeOfDay(bookingData.timeOfDay)}</b>" +
+      s"\nTime: <b>${formatTime(bookingData.timeFrom)} -> ${formatTime(bookingData.timeTo)}</b>" +
       s"\n\n<b>➡</b> Now choose your action"
 
   override def noTermsFound: String =
@@ -135,7 +135,7 @@ object En extends Lang {
     s"""<b>➡</b> Are you sure want to deactivate monitoring?
        |
        |📅 <b>${formatDate(monitoring.dateFrom, locale)}</b> -> <b>${formatDate(monitoring.dateTo, locale)}</b>
-       |⏱ <b>${timeOfDay(monitoring.timeOfDay)}</b>
+       |⏱ <b>${formatTime(monitoring.timeFrom)}</b> -> <b>${formatTime(monitoring.timeTo)}</b>
        |${capitalizeFirstLetter(doctor)}: ${monitoring.doctorName}
        |${capitalizeFirstLetter(service)}: ${monitoring.serviceName}
        |${capitalizeFirstLetter(clinic)}: ${monitoring.clinicName}""".stripMargin
@@ -249,7 +249,7 @@ object En extends Lang {
 
   override def monitoringEntry(monitoring: Monitoring, page: Int, index: Int): String =
     s"""📅 <b>${formatDate(monitoring.dateFrom, locale)}</b> -> <b>${formatDate(monitoring.dateTo, locale)}</b>
-       |⏱ <b>${timeOfDay(monitoring.timeOfDay)}</b>
+       |⏱ <b>${formatTime(monitoring.timeFrom)}</b> -> <b>${formatTime(monitoring.timeTo)}</b>
        |${capitalizeFirstLetter(doctor)}: ${monitoring.doctorName}
        |${capitalizeFirstLetter(service)}: ${monitoring.serviceName}
        |${capitalizeFirstLetter(clinic)}: ${monitoring.clinicName}
@@ -286,7 +286,7 @@ object En extends Lang {
     s"""❗ Nothing was found by your monitoring. Monitoring has been <b>disabled</b> as outdated.
        |
        |📅 <b>${formatDate(monitoring.dateFrom, locale)}</b> -> <b>${formatDate(monitoring.dateTo, locale)}</b>
-       |⏱ <b>${timeOfDay(monitoring.timeOfDay)}</b>
+       |⏱ <b>${formatTime(monitoring.timeFrom)}</b> -> <b>${formatTime(monitoring.timeTo)}</b>
        |${capitalizeFirstLetter(doctor)}: ${monitoring.doctorName}
        |${capitalizeFirstLetter(service)}: ${monitoring.serviceName}
        |${capitalizeFirstLetter(clinic)}: ${monitoring.clinicName}
@@ -342,8 +342,6 @@ object En extends Lang {
 
   override def bugHasBeenCreated(bugId: Long): String = s"✅ Thank you for submitting bug <b>#$bugId</b>!"
 
-  override def chooseTimeOfDay: String = "<b>➡</b> Please choose preferred time of day"
-
   override def afterFive: String = "After 17:00"
 
   override def nineToFive: String = "From 09:00 to 17:00"
@@ -351,8 +349,6 @@ object En extends Lang {
   override def beforeNine: String = "Before 09:00"
 
   override def allDay: String = "All day"
-
-  override def preferredTimeIs(time: Int): String = s"⏱ Preferred time is ${timeOfDay(time)}"
 
   override def deleteAccount: String = "➖ Delete account"
 
@@ -367,4 +363,12 @@ object En extends Lang {
        |<b>➡</b> Please choose an <b>action</b> or select <b>account</b>""".stripMargin
 
   override def moreParameters: String = "🛠 More parameters"
+
+  override def chooseTimeFrom: String = "<b>➡</b> Please choose time from"
+
+  override def chooseTimeTo: String = "<b>➡</b> Please choose time to"
+
+  override def timeFromIs(timeFrom: LocalTime): String = s"⏱ Time from is ${formatTime(timeFrom)}"
+
+  override def timeToIs(timeTo: LocalTime): String = s"⏱ Date to is ${formatTime(timeTo)}"
 }

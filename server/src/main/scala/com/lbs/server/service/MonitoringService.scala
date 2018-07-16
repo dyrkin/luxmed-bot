@@ -91,7 +91,7 @@ class MonitoringService extends Logger {
     debug(s"Looking for available terms. Monitoring [#${monitoring.recordId}]")
     val dateFrom = optimizeDateFrom(monitoring.dateFrom)
     val termsEither = apiService.getAvailableTerms(monitoring.accountId, monitoring.cityId, monitoring.clinicId, monitoring.serviceId,
-      monitoring.doctorId, dateFrom, Some(monitoring.dateTo))
+      monitoring.doctorId, dateFrom, Some(monitoring.dateTo), timeFrom = monitoring.timeFrom, timeTo = monitoring.timeTo)
     termsEither match {
       case Right(terms) =>
         if (terms.nonEmpty) {
@@ -219,7 +219,7 @@ class MonitoringService extends Logger {
     monitoringMaybe match {
       case Some(monitoring) =>
         val termsEither = apiService.getAvailableTerms(monitoring.accountId, monitoring.cityId, monitoring.clinicId, monitoring.serviceId,
-          monitoring.doctorId, monitoring.dateFrom, Some(monitoring.dateTo))
+          monitoring.doctorId, monitoring.dateFrom, Some(monitoring.dateTo), timeFrom = monitoring.timeFrom, timeTo = monitoring.timeTo)
         termsEither match {
           case Right(terms) =>
             val termMaybe = terms.find(term => term.scheduleId == scheduleId && minutesSinceBeginOf2018(term.visitDate.startDateTime) == time)

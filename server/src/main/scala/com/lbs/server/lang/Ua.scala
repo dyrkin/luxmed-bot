@@ -23,14 +23,14 @@
   */
 package com.lbs.server.lang
 
-import java.time.ZonedDateTime
+import java.time.{LocalTime, ZonedDateTime}
 import java.util.Locale
 
 import com.lbs.api.json.model.{AvailableVisitsTermPresentation, HistoricVisit, ReservedVisit, ValuationsResponse}
 import com.lbs.server.actor.Book
 import com.lbs.server.actor.StaticData.StaticDataConfig
 import com.lbs.server.repository.model.{Bug, Monitoring}
-import com.lbs.server.util.DateTimeUtil.{formatDate, formatDateTime, minutesSinceBeginOf2018}
+import com.lbs.server.util.DateTimeUtil.{formatDate, formatDateTime, formatTime, minutesSinceBeginOf2018}
 
 object Ua extends Lang {
 
@@ -81,7 +81,7 @@ object Ua extends Lang {
       s" в <b>${bookingData.clinicId.name}</b> клініці" +
       s" міста <b>${bookingData.cityId.name}</b>." +
       s"\nБажані дати: <b>${formatDate(bookingData.dateFrom, locale)}</b> -> <b>${formatDate(bookingData.dateTo, locale)}</b>" +
-      s"\nЧас: <b>${timeOfDay(bookingData.timeOfDay)}</b>" +
+      s"\nЧас: <b>${formatTime(bookingData.timeFrom)}</b> -> <b>${formatTime(bookingData.timeTo)}</b>" +
       s"\n\n<b>➡</b> Тепер оберіть наступну дію"
 
   override def noTermsFound: String =
@@ -135,7 +135,7 @@ object Ua extends Lang {
     s"""<b>➡</b> Ви впевнені, що хочете вимкнути моніторинг?
        |
        |📅 <b>${formatDate(monitoring.dateFrom, locale)}</b> -> <b>${formatDate(monitoring.dateTo, locale)}</b>
-       |⏱ <b>${timeOfDay(monitoring.timeOfDay)}</b>
+       |⏱ <b>${formatTime(monitoring.timeFrom)}</b> -> <b>${formatTime(monitoring.timeTo)}</b>
        |${capitalizeFirstLetter(doctor)}: ${monitoring.doctorName}
        |${capitalizeFirstLetter(service)}: ${monitoring.serviceName}
        |${capitalizeFirstLetter(clinic)}: ${monitoring.clinicName}""".stripMargin
@@ -248,7 +248,7 @@ object Ua extends Lang {
 
   override def monitoringEntry(monitoring: Monitoring, page: Int, index: Int): String =
     s"""📅 <b>${formatDate(monitoring.dateFrom, locale)}</b> -> <b>${formatDate(monitoring.dateTo, locale)}</b>
-       |⏱ <b>${timeOfDay(monitoring.timeOfDay)}</b>
+       |⏱ <b>${formatTime(monitoring.timeFrom)}</b> -> <b>${formatTime(monitoring.timeTo)}</b>
        |${capitalizeFirstLetter(doctor)}: ${monitoring.doctorName}
        |${capitalizeFirstLetter(service)}: ${monitoring.serviceName}
        |${capitalizeFirstLetter(clinic)}: ${monitoring.clinicName}
@@ -285,7 +285,7 @@ object Ua extends Lang {
     s"""❗ Нічого не знайдено за вашим моніторингом. Моніторинг був <b>вимкнений</b> як застарілий.
        |
        |📅 <b>${formatDate(monitoring.dateFrom, locale)}</b> -> <b>${formatDate(monitoring.dateTo, locale)}</b>
-       |⏱ <b>${timeOfDay(monitoring.timeOfDay)}</b>
+       |⏱ <b>${formatTime(monitoring.timeFrom)}</b> -> <b>${formatTime(monitoring.timeTo)}</b>
        |${capitalizeFirstLetter(doctor)}: ${monitoring.doctorName}
        |${capitalizeFirstLetter(service)}: ${monitoring.serviceName}
        |${capitalizeFirstLetter(clinic)}: ${monitoring.clinicName}
@@ -341,8 +341,6 @@ object Ua extends Lang {
 
   override def bugHasBeenCreated(bugId: Long): String = s"✅ Дякуємо за відправлений баг <b>#$bugId</b>!"
 
-  override def chooseTimeOfDay: String = "<b>➡</b> Будь ласка, оберіть бажаний час"
-
   override def afterFive: String = "Після 17:00"
 
   override def nineToFive: String = "Від 09:00 до 17:00"
@@ -350,8 +348,6 @@ object Ua extends Lang {
   override def beforeNine: String = "До 09:00"
 
   override def allDay: String = "Весь день"
-
-  override def preferredTimeIs(time: Int): String = s"⏱ Бажаний час ${timeOfDay(time)}"
 
   override def deleteAccount: String = "➖ Видалити акаунт"
 
@@ -366,4 +362,12 @@ object Ua extends Lang {
        |<b>➡</b> Будь ласка, оберіть <b>дію</b> або виберіть <b>акаунт</b>""".stripMargin
 
   override def moreParameters: String = "🛠 Більше налаштувань"
+
+  override def chooseTimeFrom: String = "<b>➡</b> Будь ласка, виберіть початковий час"
+
+  override def chooseTimeTo: String = "<b>➡</b> Будь ласка, виберіть кінцевий час"
+
+  override def timeFromIs(timeFrom: LocalTime): String = s"⏱ Початковий час  ${formatTime(timeFrom)}"
+
+  override def timeToIs(timeTo: LocalTime): String = s"⏱ Кінцевий час ${formatTime(timeTo)}"
 }

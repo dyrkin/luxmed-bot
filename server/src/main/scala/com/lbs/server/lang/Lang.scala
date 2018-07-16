@@ -23,7 +23,7 @@
   */
 package com.lbs.server.lang
 
-import java.time.ZonedDateTime
+import java.time.{LocalTime, ZonedDateTime}
 import java.util.Locale
 
 import com.lbs.api.json.model.{AvailableVisitsTermPresentation, HistoricVisit, ReservedVisit, ValuationsResponse}
@@ -50,13 +50,6 @@ trait Lang {
 
   def label: String
 
-  val timeOfDay = Map(
-    0 -> allDay,
-    1 -> beforeNine,
-    2 -> nineToFive,
-    3 -> afterFive
-  )
-
   protected def capitalizeFirstLetter(str: String): String = {
     val fistCapitalLetter = str.head.toTitleCase
     fistCapitalLetter + str.tail
@@ -79,6 +72,10 @@ trait Lang {
   def chooseDateFrom: String
 
   def chooseDateTo: String
+
+  def chooseTimeFrom: String
+
+  def chooseTimeTo: String
 
   def findTerms: String
 
@@ -162,6 +159,10 @@ trait Lang {
 
   def dateToIs(dateTo: ZonedDateTime): String
 
+  def timeFromIs(timeFrom: LocalTime): String
+
+  def timeToIs(timeTo: LocalTime): String
+
   def termEntry(term: AvailableVisitsTermPresentation, page: Int, index: Int): String
 
   def termsHeader(page: Int, pages: Int): String
@@ -224,8 +225,6 @@ trait Lang {
 
   def enterIssueDetails: String
 
-  def chooseTimeOfDay: String
-
   def afterFive: String
 
   def nineToFive: String
@@ -233,8 +232,6 @@ trait Lang {
   def beforeNine: String
 
   def allDay: String
-
-  def preferredTimeIs(time: Int): String
 
   def deleteAccount: String
 

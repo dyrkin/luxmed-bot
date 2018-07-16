@@ -23,7 +23,7 @@
   */
 package com.lbs.server.repository.model
 
-import java.time.ZonedDateTime
+import java.time.{LocalTime, ZonedDateTime}
 
 import javax.persistence.{Access, AccessType, Column, Entity}
 
@@ -89,8 +89,12 @@ class Monitoring extends RecordId {
   var dateTo: ZonedDateTime = _
 
   @BeanProperty
-  @Column(name = "time_of_day", nullable = true)
-  var timeOfDay: JInt = 0
+  @Column(name = "time_from", nullable = false)
+  var timeFrom: LocalTime = _
+
+  @BeanProperty
+  @Column(name = "time_to", nullable = false)
+  var timeTo: LocalTime = _
 
   @BeanProperty
   @Column(nullable = false)
@@ -108,7 +112,7 @@ class Monitoring extends RecordId {
 object Monitoring {
   def apply(userId: Long, accountId: Long, chatId: String, sourceSystemId: Long, cityId: Long, cityName: String, clinicId: Option[Long], clinicName: String,
             serviceId: Long, serviceName: String, doctorId: Option[Long], doctorName: String, dateFrom: ZonedDateTime,
-            dateTo: ZonedDateTime, autobook: Boolean = false, created: ZonedDateTime = ZonedDateTime.now(), timeOfDay: Int,
+            dateTo: ZonedDateTime, autobook: Boolean = false, created: ZonedDateTime = ZonedDateTime.now(), timeFrom: LocalTime, timeTo: LocalTime,
             active: Boolean = true): Monitoring = {
     val monitoring = new Monitoring
     monitoring.userId = userId
@@ -125,7 +129,8 @@ object Monitoring {
     monitoring.doctorName = doctorName
     monitoring.dateFrom = dateFrom
     monitoring.dateTo = dateTo
-    monitoring.timeOfDay = timeOfDay
+    monitoring.timeFrom = timeFrom
+    monitoring.timeTo = timeTo
     monitoring.autobook = autobook
     monitoring.created = created
     monitoring.active = active

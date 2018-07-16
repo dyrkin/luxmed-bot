@@ -23,7 +23,7 @@
   */
 package com.lbs.server.actor
 
-import java.time.ZonedDateTime
+import java.time.{LocalTime, ZonedDateTime}
 
 import akka.actor.{PoisonPill, Props}
 import com.lbs.api.json.model._
@@ -33,6 +33,7 @@ import com.lbs.server.actor.Book._
 import com.lbs.server.actor.DatePicker.{DateFromMode, DateToMode}
 import com.lbs.server.actor.Login.UserId
 import com.lbs.server.actor.StaticData.StaticDataConfig
+import com.lbs.server.actor.TimePicker.{TimeFromMode, TimeToMode}
 import com.lbs.server.actor.conversation.Conversation
 import com.lbs.server.actor.conversation.Conversation.{InitConversation, StartConversation}
 import com.lbs.server.lang.{Localizable, Localization}
@@ -42,10 +43,11 @@ import com.lbs.server.util.MessageExtractors.CallbackCommand
 import com.lbs.server.util.ServerModelConverters._
 
 class Book(val userId: UserId, bot: Bot, apiService: ApiService, dataService: DataService, monitoringService: MonitoringService,
-           val localization: Localization, datePickerActorFactory: ByUserIdWithOriginatorActorFactory, staticDataActorFactory: ByUserIdWithOriginatorActorFactory,
-           termsPagerActorFactory: ByUserIdWithOriginatorActorFactory) extends Conversation[BookingData] with StaticDataForBooking with Localizable {
+           val localization: Localization, datePickerActorFactory: ByUserIdWithOriginatorActorFactory, timePickerActorFactory: ByUserIdWithOriginatorActorFactory,
+           staticDataActorFactory: ByUserIdWithOriginatorActorFactory, termsPagerActorFactory: ByUserIdWithOriginatorActorFactory) extends Conversation[BookingData] with StaticDataForBooking with Localizable {
 
   private val datePicker = datePickerActorFactory(userId, self)
+  private val timePicker = timePickerActorFactory(userId, self)
   private[actor] val staticData = staticDataActorFactory(userId, self)
   private val termsPager = termsPagerActorFactory(userId, self)
 
@@ -108,7 +110,35 @@ class Book(val userId: UserId, bot: Bot, apiService: ApiService, dataService: Da
         datePicker ! cmd
         stay()
       case Msg(date: ZonedDateTime, bookingData: BookingData) =>
-        goto(requestAction) using bookingData.copy(dateTo = date)
+        goto(requestTimeFrom) using bookingData.copy(dateTo = date)
+    }
+
+  private def requestTimeFrom: Step =
+    ask { bookingData =>
+      timePicker ! InitConversation
+      timePicker ! StartConversation
+      timePicker ! TimeFromMode
+      timePicker ! bookingData.timeFrom
+    } onReply {
+      case Msg(cmd: Command, _) =>
+        timePicker ! cmd
+        stay()
+      case Msg(time: LocalTime, bookingData: BookingData) =>
+        goto(requestTimeTo) using bookingData.copy(timeFrom = time)
+    }
+
+  private def requestTimeTo: Step =
+    ask { bookingData =>
+      timePicker ! InitConversation
+      timePicker ! StartConversation
+      timePicker ! TimeToMode
+      timePicker ! bookingData.timeTo
+    } onReply {
+      case Msg(cmd: Command, _) =>
+        timePicker ! cmd
+        stay()
+      case Msg(time: LocalTime, bookingData: BookingData) =>
+        goto(requestAction) using bookingData.copy(timeTo = time)
     }
 
   private def requestAction: Step =
@@ -130,7 +160,7 @@ class Book(val userId: UserId, bot: Bot, apiService: ApiService, dataService: Da
     ask { bookingData =>
       val availableTerms = apiService.getAvailableTerms(userId.accountId, bookingData.cityId.id,
         bookingData.clinicId.optionalId, bookingData.serviceId.id, bookingData.doctorId.optionalId,
-        bookingData.dateFrom, Some(bookingData.dateTo), timeOfDay = bookingData.timeOfDay)
+        bookingData.dateFrom, Some(bookingData.dateTo), timeFrom = bookingData.timeFrom, timeTo = bookingData.timeTo)
       termsPager ! InitConversation
       termsPager ! StartConversation
       termsPager ! availableTerms
@@ -229,6 +259,7 @@ class Book(val userId: UserId, bot: Bot, apiService: ApiService, dataService: Da
     datePicker ! PoisonPill
     staticData ! PoisonPill
     termsPager ! PoisonPill
+    timePicker ! PoisonPill
     super.postStop()
   }
 }
@@ -237,13 +268,14 @@ object Book {
 
   def props(userId: UserId, bot: Bot, apiService: ApiService, dataService: DataService, monitoringService: MonitoringService,
             localization: Localization, datePickerActorFactory: ByUserIdWithOriginatorActorFactory,
+            timePickerFactory: ByUserIdWithOriginatorActorFactory,
             staticDataActorFactory: ByUserIdWithOriginatorActorFactory, termsPagerActorFactory: ByUserIdWithOriginatorActorFactory): Props =
     Props(new Book(userId, bot, apiService, dataService, monitoringService, localization, datePickerActorFactory,
-      staticDataActorFactory, termsPagerActorFactory))
+      timePickerFactory, staticDataActorFactory, termsPagerActorFactory))
 
   case class BookingData(cityId: IdName = null, clinicId: IdName = null,
                          serviceId: IdName = null, doctorId: IdName = null, dateFrom: ZonedDateTime = ZonedDateTime.now(),
-                         dateTo: ZonedDateTime = ZonedDateTime.now().plusDays(1L), timeOfDay: Int = 0, autobook: Boolean = false, term: Option[AvailableVisitsTermPresentation] = None,
+                         dateTo: ZonedDateTime = ZonedDateTime.now().plusDays(1L), timeFrom: LocalTime = LocalTime.of(7, 0), timeTo: LocalTime = LocalTime.of(21, 0), autobook: Boolean = false, term: Option[AvailableVisitsTermPresentation] = None,
                          temporaryReservationId: Option[Long] = None, valuations: Option[ValuationsResponse] = None)
 
   object Tags {

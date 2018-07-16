@@ -74,7 +74,7 @@ class BootConfig {
 
   @Bean
   def bookingActorFactory: ByUserIdActorFactory = userId => actorSystem.actorOf(Book.props(userId, bot, apiService, dataService,
-    monitoringService, localization, datePickerFactory, staticDataActorFactory, termsPagerActorFactory))
+    monitoringService, localization, datePickerFactory, timePickerFactory, staticDataActorFactory, termsPagerActorFactory))
 
   @Bean
   def unauthorizedHelpActorFactory: ByMessageSourceActorFactory = source => actorSystem.actorOf(UnauthorizedHelp.props(source, bot))
@@ -114,6 +114,10 @@ class BootConfig {
   @Bean
   def datePickerFactory: ByUserIdWithOriginatorActorFactory = (userId, originator) =>
     actorSystem.actorOf(DatePicker.props(userId, bot, localization, originator))
+
+  @Bean
+  def timePickerFactory: ByUserIdWithOriginatorActorFactory = (userId, originator) =>
+    actorSystem.actorOf(TimePicker.props(userId, bot, localization, originator))
 
   @Bean
   def staticDataActorFactory: ByUserIdWithOriginatorActorFactory = (userId, originator) =>

@@ -23,7 +23,7 @@
   */
 package com.lbs.server.service
 
-import java.time.ZonedDateTime
+import java.time.{LocalTime, ZonedDateTime}
 
 import com.lbs.api.LuxmedApi
 import com.lbs.api.json.model._
@@ -73,13 +73,19 @@ class ApiService extends SessionSupport {
     }
 
   def getAvailableTerms(accountId: Long, cityId: Long, clinicId: Option[Long], serviceId: Long, doctorId: Option[Long],
-                        fromDate: ZonedDateTime = ZonedDateTime.now(), toDate: Option[ZonedDateTime] = None, timeOfDay: Int = 0,
+                        fromDate: ZonedDateTime = ZonedDateTime.now(), toDate: Option[ZonedDateTime] = None, timeFrom: LocalTime, timeTo: LocalTime,
                         languageId: Long = 10, findFirstFreeTerm: Boolean = false): Either[Throwable, List[AvailableVisitsTermPresentation]] =
     getDefaultPayer(accountId, cityId, clinicId, serviceId).flatMap {
       case Some(payerId) =>
         withSession(accountId) { session =>
-          LuxmedApi.availableTerms(session.accessToken, session.tokenType, payerId.id, cityId, clinicId, serviceId, doctorId,
-            fromDate, toDate, timeOfDay, languageId, findFirstFreeTerm).map(_.availableVisitsTermPresentation)
+          val termsEither = LuxmedApi.availableTerms(session.accessToken, session.tokenType, payerId.id, cityId, clinicId, serviceId, doctorId,
+            fromDate, toDate, languageId = languageId, findFirstFreeTerm = findFirstFreeTerm).map(_.availableVisitsTermPresentation)
+          termsEither.map { terms =>
+            terms.filter { term =>
+              val time = term.visitDate.startDateTime.toLocalTime
+              time == timeFrom || time == timeTo || (time.isAfter(timeFrom) && time.isBefore(timeTo))
+            }
+          }
         }
       case None => sys.error(s"Can't determine payer id by user: $accountId, city: $cityId, clinic: $clinicId, service: $serviceId")
     }

@@ -24,11 +24,11 @@
 package com.lbs.server
 
 import java.time.format.DateTimeFormatter
-import java.time.{ZoneId, ZonedDateTime}
+import java.time.{LocalTime, ZoneId, ZonedDateTime}
 import java.util.Locale
 
 import com.lbs.api.json.model._
-import com.lbs.bot.model.{Command, Message}
+import com.lbs.bot.model.Command
 import com.lbs.common.ModelConverters
 import com.lbs.server.actor.Book.BookingData
 import com.lbs.server.actor.Login.UserId
@@ -62,7 +62,8 @@ package object util {
             doctorName = bookingData.doctorId.name,
             dateFrom = bookingData.dateFrom,
             dateTo = bookingData.dateTo,
-            timeOfDay = bookingData.timeOfDay,
+            timeFrom = bookingData.timeFrom,
+            timeTo = bookingData.timeTo,
             autobook = bookingData.autobook
           )
         }
@@ -143,9 +144,13 @@ package object util {
   object DateTimeUtil {
     private val DateFormat: Locale => DateTimeFormatter = locale => DateTimeFormatter.ofPattern("dd MMM yyyy", locale)
 
+    private val TimeFormat: DateTimeFormatter = DateTimeFormatter.ofPattern("HH:mm")
+
     private val DateTimeFormat: Locale => DateTimeFormatter = locale => DateTimeFormatter.ofPattern("EEE',' dd MMM yyyy',' HH:mm", locale)
 
     def formatDate(date: ZonedDateTime, locale: Locale): String = date.format(DateFormat(locale))
+
+    def formatTime(time: LocalTime): String = time.format(TimeFormat)
 
     def formatDateTime(date: ZonedDateTime, locale: Locale): String = date.format(DateTimeFormat(locale))
 
