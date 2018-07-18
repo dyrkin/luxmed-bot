@@ -6,7 +6,7 @@ Non official Telegram bot for **Portal Pacjenta LUX MED**.
 
 With its help user can book a visit to a doctor, create term monitoring, view upcoming visits and visit history.
 
-It is available by [@luxmedbot](https://telegram.me/luxmedbot)
+It is available here [@luxmedbot](https://telegram.me/luxmedbot)
 
 ![Screenshot](screenshot.png)
 
