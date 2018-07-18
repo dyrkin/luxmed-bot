@@ -23,6 +23,8 @@ dependencies {
     compile project(':bot')
     compile project(':common')
 
+    compile('com.lihaoyi:sourcecode_2.12:0.1.4')
+
     compile('org.springframework.boot:spring-boot-starter')
     compile('org.springframework.boot:spring-boot-starter-data-jpa')
 

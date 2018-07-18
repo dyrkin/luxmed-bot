@@ -59,4 +59,9 @@ trait Logger {
       log.info(msg)
   }
 
+  def trace(msg: => String): Unit = {
+    if (log.isTraceEnabled)
+      log.trace(msg)
+  }
+
 }

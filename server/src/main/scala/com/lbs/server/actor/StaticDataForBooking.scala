@@ -51,7 +51,7 @@ trait StaticDataForBooking extends Conversation[BookingData] {
     }
   }
 
-  protected def staticData(staticDataConfig: => StaticDataConfig)(functions: BookingData => Step => MessageProcessorFn)(requestNext: Step): Step = {
+  protected def staticData(staticDataConfig: => StaticDataConfig)(functions: BookingData => Step => MessageProcessorFn)(requestNext: Step)(implicit functionName: sourcecode.Name): Step = {
     ask { _ =>
       staticData ! InitConversation
       staticData ! StartConversation

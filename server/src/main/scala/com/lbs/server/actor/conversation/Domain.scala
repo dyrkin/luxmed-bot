@@ -9,23 +9,23 @@ trait Domain[D] {
 
   protected case class Msg(message: Any, data: D)
 
-  sealed trait Step
+  sealed trait Step {
+    def stepName: String
+  }
 
-  private[conversation] object End extends Step
+  private[conversation] object End extends Step {
+    val stepName: String = "end"
+  }
 
-  protected case class Process(processFn: ProcessFn) extends Step
+  protected case class Process(stepName: String, processFn: ProcessFn) extends Step
 
-  protected case class Dialogue(askFn: AskFn, replyProcessorFn: MessageProcessorFn) extends Step
+  protected case class Dialogue(stepName: String, askFn: AskFn, replyProcessorFn: MessageProcessorFn) extends Step
 
-  protected case class Monologue(replyProcessorFn: MessageProcessorFn) extends Step
+  protected case class Monologue(stepName: String, replyProcessorFn: MessageProcessorFn) extends Step
 
   private[conversation] case class NextStep(step: Step, data: Option[D] = None)
 
   private[conversation] case class Ask(askFn: AskFn)
-
-  protected implicit class RichQuestion(ask: Ask) {
-    def onReply(replyProcessorFn: MessageProcessorFn): Dialogue = Dialogue(ask.askFn, replyProcessorFn)
-  }
 
   protected implicit class NextStepOps(nextStep: NextStep) {
     def using(data: D): NextStep = {

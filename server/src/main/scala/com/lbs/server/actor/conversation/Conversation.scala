@@ -17,7 +17,7 @@ trait Conversation[D] extends Actor with Domain[D] with Logger {
 
   private val defaultMsgHandler: MessageProcessorFn = {
     case Msg(any, data) =>
-      debug(s"Unhandled message received. [$any, $data]")
+      warn(s"Unhandled message received in step '${currentStep.stepName}'. Message: [$any]. Data: [$data]")
       NextStep(currentStep, Some(data))
   }
 
@@ -35,7 +35,7 @@ trait Conversation[D] extends Actor with Domain[D] with Logger {
     try {
       currentStep match {
         case qa: Dialogue => qa.askFn(currentData)
-        case Process(fn) =>
+        case Process(_, fn) =>
           val nextStep = fn(currentData)
           moveToNextStep(nextStep)
         case _ => //do nothing
@@ -56,10 +56,10 @@ trait Conversation[D] extends Actor with Domain[D] with Logger {
     }
 
     currentStep match {
-      case Dialogue(_, fn) =>
+      case Dialogue(_, _, fn) =>
         val fact = Msg(any, currentData)
         handle(fact, fn, msgHandler)
-      case Monologue(fn) =>
+      case Monologue(_, fn) =>
         val fact = Msg(any, currentData)
         handle(fact, fn, msgHandler)
       case _ => //do nothing
@@ -67,6 +67,7 @@ trait Conversation[D] extends Actor with Domain[D] with Logger {
   }
 
   private def moveToNextStep(nextStep: NextStep): Unit = {
+    debug(s"Moving from step '${currentStep.stepName}' to step '${nextStep.step.stepName}'")
     currentStep = nextStep.step
     nextStep.data.foreach { data =>
       currentData = data
@@ -84,13 +85,19 @@ trait Conversation[D] extends Actor with Domain[D] with Logger {
     init()
   }
 
-  protected def monologue(answerFn: MessageProcessorFn): Monologue = Monologue(answerFn)
+  protected def monologue(answerFn: MessageProcessorFn)(implicit functionName: sourcecode.Name): Monologue = Monologue(functionName.value, answerFn)
 
   protected def ask(askFn: D => Unit): Ask = Ask(askFn)
 
-  protected def process(processFn: ProcessFn): Process = Process(processFn)
+  protected def process(processFn: ProcessFn)(implicit functionName: sourcecode.Name): Process = Process(functionName.value, processFn)
 
   protected def end(): NextStep = NextStep(End)
+
+  protected implicit class AskOps(ask: Ask) {
+    def onReply(replyProcessorFn: MessageProcessorFn)(implicit functionName: sourcecode.Name): Dialogue = {
+      Dialogue(functionName.value, ask.askFn, replyProcessorFn)
+    }
+  }
 
   protected def goto(step: Step): NextStep = {
     self ! ContinueConversation
