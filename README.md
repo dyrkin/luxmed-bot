@@ -8,11 +8,12 @@ With its help user can book a visit to a doctor, create term monitoring, view up
 
 It is available here [@luxmedbot](https://telegram.me/luxmedbot)
 
+#### Screenshot
 ![Screenshot](screenshot.png)
 
-#### To setup your own
+#### To setup your own telegram bot
 
-1. create your own telegram bot using [@BotFather](https://telegram.me/botfather)
+1. create telegram bot using [@BotFather](https://telegram.me/botfather)
 2. install jdk8
 3. add to .bash_profile 
 
