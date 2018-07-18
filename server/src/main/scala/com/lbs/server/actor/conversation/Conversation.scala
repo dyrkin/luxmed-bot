@@ -67,7 +67,7 @@ trait Conversation[D] extends Actor with Domain[D] with Logger {
   }
 
   private def moveToNextStep(nextStep: NextStep): Unit = {
-    debug(s"Moving from step '${currentStep.stepName}' to step '${nextStep.step.stepName}'")
+    trace(s"Moving from step '${currentStep.stepName}' to step '${nextStep.step.stepName}'")
     currentStep = nextStep.step
     nextStep.data.foreach { data =>
       currentData = data
