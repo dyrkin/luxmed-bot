@@ -8,16 +8,19 @@ With its help user can book a visit to a doctor, create term monitoring, view up
 
 It is available by [@luxmedbot](https://telegram.me/luxmedbot)
 
+![Screenshot](screenshot.png)
+
 #### To setup your own
 
 1. create your own telegram bot using [@BotFather](https://telegram.me/botfather)
-2. add to .bash_profile 
+2. install jdk8
+3. add to .bash_profile 
 
     ```
     export TELEGRAM_TOKEN="SOME TOKEN"
     export SECURITY_SECRET="SOME SECRET FOR ENCODING USER PASSWORDS"
     ```
-3. 
+4. 
     - install **docker**
     - run using `./docker.sh run`
 

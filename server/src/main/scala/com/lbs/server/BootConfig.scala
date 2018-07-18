@@ -26,7 +26,6 @@ package com.lbs.server
 import akka.actor.{ActorRef, ActorSystem}
 import com.lbs.bot.Bot
 import com.lbs.bot.telegram.TelegramBot
-import com.lbs.server.actor.Login.UserId
 import com.lbs.server.actor._
 import com.lbs.server.lang.Localization
 import com.lbs.server.service.{ApiService, DataService, MonitoringService}
@@ -128,7 +127,7 @@ class BootConfig {
     actorSystem.actorOf(Pagers(userId, bot, localization).termsPagerProps(originator))
 
   @Bean
-  def visitsPagerActorFactory: (UserId, ActorRef) => ActorRef = (userId, originator) =>
+  def visitsPagerActorFactory: ByUserIdWithOriginatorActorFactory = (userId, originator) =>
     actorSystem.actorOf(Pagers(userId, bot, localization).visitsPagerProps(originator))
 
   @Bean
