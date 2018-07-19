@@ -10,18 +10,18 @@ trait Domain[D] {
   protected case class Msg(message: Any, data: D)
 
   sealed trait Step {
-    def stepName: String
+    def name: String
   }
 
   private[conversation] object End extends Step {
-    val stepName: String = "end"
+    override val name: String = "end"
   }
 
-  protected case class Process(stepName: String, processFn: ProcessFn) extends Step
+  protected case class Process(name: String, processFn: ProcessFn) extends Step
 
-  protected case class Dialogue(stepName: String, askFn: AskFn, replyProcessorFn: MessageProcessorFn) extends Step
+  protected case class Dialogue(name: String, askFn: AskFn, replyProcessorFn: MessageProcessorFn) extends Step
 
-  protected case class Monologue(stepName: String, replyProcessorFn: MessageProcessorFn) extends Step
+  protected case class Monologue(name: String, replyProcessorFn: MessageProcessorFn) extends Step
 
   private[conversation] case class NextStep(step: Step, data: Option[D] = None)
 

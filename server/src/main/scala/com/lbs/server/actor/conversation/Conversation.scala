@@ -11,13 +11,13 @@ trait Conversation[D] extends Actor with Domain[D] with Logger {
 
   private var currentStep: Step = _
 
-  private var startWithData: D = _
+  private var initialData: D = _
 
-  private var startWithStep: Step = _
+  private var initialStep: Step = _
 
   private val defaultMsgHandler: MessageProcessorFn = {
     case Msg(any, data) =>
-      warn(s"Unhandled message received in step '${currentStep.stepName}'. Message: [$any]. Data: [$data]")
+      warn(s"Unhandled message received in step '${currentStep.name}'. Message: [$any]. Data: [$data]")
       NextStep(currentStep, Some(data))
   }
 
@@ -67,7 +67,7 @@ trait Conversation[D] extends Actor with Domain[D] with Logger {
   }
 
   private def moveToNextStep(nextStep: NextStep): Unit = {
-    trace(s"Moving from step '${currentStep.stepName}' to step '${nextStep.step.stepName}'")
+    trace(s"Moving from step '${currentStep.name}' to step '${nextStep.step.name}'")
     currentStep = nextStep.step
     nextStep.data.foreach { data =>
       currentData = data
@@ -75,9 +75,9 @@ trait Conversation[D] extends Actor with Domain[D] with Logger {
   }
 
   private def init(): Unit = {
-    require(startWithStep != null, "Entry point must be defined")
-    currentStep = startWithStep
-    currentData = startWithData
+    require(initialStep != null, "Entry point must be defined")
+    currentStep = initialStep
+    currentData = initialData
     runAfterInit()
   }
 
@@ -115,8 +115,8 @@ trait Conversation[D] extends Actor with Domain[D] with Logger {
   }
 
   protected def entryPoint(step: Step, data: D): Unit = {
-    startWithStep = step
-    startWithData = data
+    initialStep = step
+    initialData = data
   }
 
   protected def entryPoint(step: Step): Unit = {
