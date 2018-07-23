@@ -21,21 +21,21 @@
   * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
   * SOFTWARE.
   */
-package com.lbs.server.actor
+package com.lbs.server.conversation
 
-import akka.actor.{ActorRef, Props}
+import akka.actor.ActorSystem
 import com.lbs.bot.model.{Button, Command}
 import com.lbs.bot.{Bot, _}
 import com.lbs.common.Logger
-import com.lbs.server.actor.Login.UserId
-import com.lbs.server.actor.Pager.{Tags, _}
-import com.lbs.server.actor.conversation.Conversation
+import com.lbs.server.conversation.Login.UserId
+import com.lbs.server.conversation.Pager.{Tags, _}
+import com.lbs.server.conversation.base.{Conversation, Interactional}
 import com.lbs.server.lang.{Localizable, Localization}
 import com.lbs.server.util.MessageExtractors
 
 class Pager[Data](val userId: UserId, bot: Bot, makeMessage: (Data, Int, Int) => String,
                   makeHeader: (Int, Int) => String, selectionPrefix: Option[String],
-                  val localization: Localization, originator: ActorRef)
+                  val localization: Localization, originator: Interactional)(val actorSystem: ActorSystem)
   extends Conversation[(Registry[Data], Option[String])] with Localizable with Logger {
 
   private val Selection = s"/${selectionPrefix.getOrElse("")}_(\\d+)_(\\d+)".r
@@ -89,10 +89,6 @@ class Pager[Data](val userId: UserId, bot: Bot, makeMessage: (Data, Int, Int) =>
 }
 
 object Pager {
-  def props[Data](userId: UserId, bot: Bot,
-                  makeMessage: (Data, Int, Int) => String, makeHeader: (Int, Int) => String, dataPrefix: Option[String], localization: Localization, originator: ActorRef): Props =
-    Props(new Pager[Data](userId, bot, makeMessage, makeHeader, dataPrefix, localization, originator))
-
   val PageSize = 5
 
   case class Registry[Data](page: Int, pages: Seq[Seq[Data]])

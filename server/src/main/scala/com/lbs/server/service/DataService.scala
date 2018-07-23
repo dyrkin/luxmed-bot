@@ -27,7 +27,7 @@ import java.time.ZonedDateTime
 
 import com.lbs.api.json.model.IdName
 import com.lbs.bot.model.MessageSource
-import com.lbs.server.actor.Book.BookingData
+import com.lbs.server.conversation.Book.BookingData
 import com.lbs.server.repository.DataRepository
 import com.lbs.server.repository.model._
 import com.lbs.server.util.ServerModelConverters._

@@ -21,30 +21,28 @@
   * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
   * SOFTWARE.
   */
-package com.lbs.server.actor
+package com.lbs.server.conversation
 
-import akka.actor.{PoisonPill, Props}
+import akka.actor.ActorSystem
 import com.lbs.bot._
 import com.lbs.bot.model.{Button, Command}
-import com.lbs.server.actor.Login.UserId
-import com.lbs.server.actor.Monitorings.Tags
-import com.lbs.server.actor.conversation.Conversation
-import com.lbs.server.actor.conversation.Conversation.{InitConversation, StartConversation}
+import com.lbs.server.conversation.Login.UserId
+import com.lbs.server.conversation.Monitorings.Tags
+import com.lbs.server.conversation.base.Conversation
 import com.lbs.server.lang.{Localizable, Localization}
 import com.lbs.server.repository.model.Monitoring
 import com.lbs.server.service.MonitoringService
 
-class Monitorings(val userId: UserId, bot: Bot, monitoringService: MonitoringService, val localization: Localization, monitoringsPagerActorFactory: ByUserIdWithOriginatorActorFactory) extends Conversation[Monitoring] with Localizable {
+class Monitorings(val userId: UserId, bot: Bot, monitoringService: MonitoringService, val localization: Localization, monitoringsPagerFactory: UserIdWithOriginatorTo[Pager[Monitoring]])(val actorSystem: ActorSystem) extends Conversation[Monitoring] with Localizable {
 
-  private val monitoringsPager = monitoringsPagerActorFactory(userId, self)
+  private val monitoringsPager = monitoringsPagerFactory(userId, self)
 
   entryPoint(prepareData)
 
   def prepareData: Step =
     process { _ =>
       val monitorings = monitoringService.getActiveMonitorings(userId.accountId)
-      monitoringsPager ! InitConversation
-      monitoringsPager ! StartConversation
+      monitoringsPager.restart()
       monitoringsPager ! Right[Throwable, Seq[Monitoring]](monitorings)
       goto(processResponseFromPager)
     }
@@ -75,15 +73,12 @@ class Monitorings(val userId: UserId, bot: Bot, monitoringService: MonitoringSer
         end()
     }
 
-  override def postStop(): Unit = {
-    monitoringsPager ! PoisonPill
-    super.postStop()
+  beforeDestroy {
+    monitoringsPager.destroy()
   }
 }
 
 object Monitorings {
-  def props(userId: UserId, bot: Bot, monitoringService: MonitoringService, localization: Localization, monitoringsPagerActorFactory: ByUserIdWithOriginatorActorFactory): Props =
-    Props(new Monitorings(userId, bot, monitoringService, localization, monitoringsPagerActorFactory))
 
   object Tags {
     val Yes = "yes"

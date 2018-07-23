@@ -1,4 +1,4 @@
-package com.lbs.server.actor.conversation
+package com.lbs.server.conversation.base
 
 trait Domain[D] {
   protected type AskFn = D => Unit
@@ -13,7 +13,7 @@ trait Domain[D] {
     def name: String
   }
 
-  private[conversation] object End extends Step {
+  private[base] object End extends Step {
     override val name: String = "end"
   }
 
@@ -23,9 +23,9 @@ trait Domain[D] {
 
   protected case class Monologue(name: String, replyProcessorFn: MessageProcessorFn) extends Step
 
-  private[conversation] case class NextStep(step: Step, data: Option[D] = None)
+  private[base] case class NextStep(step: Step, data: Option[D] = None)
 
-  private[conversation] case class Ask(askFn: AskFn)
+  private[base] case class Ask(askFn: AskFn)
 
   protected implicit class NextStepOps(nextStep: NextStep) {
     def using(data: D): NextStep = {

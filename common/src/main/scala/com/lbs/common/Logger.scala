@@ -29,37 +29,37 @@ import org.slf4j.LoggerFactory
 trait Logger {
   private val log: slf4j.Logger = LoggerFactory.getLogger(this.getClass)
 
-  def debug(msg: => String): Unit = {
+  protected def debug(msg: => String): Unit = {
     if (log.isDebugEnabled)
       log.debug(msg)
   }
 
-  def warn(msg: => String): Unit = {
+  protected def warn(msg: => String): Unit = {
     if (log.isWarnEnabled)
       log.warn(msg)
   }
 
-  def warn(msg: => String, throwable: Throwable): Unit = {
+  protected def warn(msg: => String, throwable: Throwable): Unit = {
     if (log.isWarnEnabled)
       log.warn(msg, throwable)
   }
 
-  def error(msg: => String): Unit = {
+  protected def error(msg: => String): Unit = {
     if (log.isErrorEnabled)
       log.error(msg)
   }
 
-  def error(msg: => String, throwable: Throwable): Unit = {
+  protected def error(msg: => String, throwable: Throwable): Unit = {
     if (log.isErrorEnabled)
       log.error(msg, throwable)
   }
 
-  def info(msg: => String): Unit = {
+  protected def info(msg: => String): Unit = {
     if (log.isInfoEnabled)
       log.info(msg)
   }
 
-  def trace(msg: => String): Unit = {
+  protected def trace(msg: => String): Unit = {
     if (log.isTraceEnabled)
       log.trace(msg)
   }

@@ -1,9 +1,8 @@
-package com.lbs.server.actor.conversation
+package com.lbs.server.conversation.base
 
-import akka.actor.{ActorRef, Props}
+import akka.actor.{ActorRef, ActorSystem}
 import akka.testkit.TestProbe
-import com.lbs.server.actor.AkkaTestKit
-import com.lbs.server.actor.conversation.Conversation.{InitConversation, StartConversation}
+import com.lbs.server.conversation.AkkaTestKit
 
 class ConversationSpec extends AkkaTestKit {
 
@@ -18,7 +17,7 @@ class ConversationSpec extends AkkaTestKit {
 
       object Dialogue
 
-      class TestActor(originator: ActorRef) extends Conversation[Data] {
+      class TestConversation(originator: ActorRef)(implicit val actorSystem: ActorSystem) extends Conversation[Data] {
 
         private var conf: String = _
 
@@ -60,15 +59,14 @@ class ConversationSpec extends AkkaTestKit {
       val expected = Data(configured = true, "hello", "world", "dialogue") -> "myconf"
 
       val originator = TestProbe()
-      val actor = system.actorOf(Props(new TestActor(originator.ref)))
-      actor ! StartConversation
-      actor ! expected._2
+      val testConversation = new TestConversation(originator.ref)(system)
+      testConversation.start()
+      testConversation ! expected._2
       originator.expectMsg(expected)
 
       //reinit
-      actor ! InitConversation
-      actor ! StartConversation
-      actor ! expected._2
+      testConversation.restart()
+      testConversation ! expected._2
       originator.expectMsg(expected)
     }
 
@@ -78,7 +76,7 @@ class ConversationSpec extends AkkaTestKit {
 
       object InvokeEnrichMessage
 
-      class TestActor(originator: ActorRef) extends Conversation[Data] {
+      class TestConversation(originator: ActorRef)(implicit val actorSystem: ActorSystem) extends Conversation[Data] {
 
         def configure1: Step =
           process { _ =>
@@ -105,13 +103,12 @@ class ConversationSpec extends AkkaTestKit {
       val expected = Data(configured = true, message1 = "hello", message2 = "world")
 
       val originator = TestProbe()
-      val actor = system.actorOf(Props(new TestActor(originator.ref)))
-      actor ! StartConversation
+      val actor = new TestConversation(originator.ref)(system)
+      actor.start()
       originator.expectMsg(expected)
 
       //reinit
-      actor ! InitConversation
-      actor ! StartConversation
+      actor.restart()
       originator.expectMsg(expected)
     }
   }

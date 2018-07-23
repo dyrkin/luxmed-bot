@@ -21,29 +21,28 @@
   * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
   * SOFTWARE.
   */
-package com.lbs.server.actor
+package com.lbs.server.conversation
 
-import akka.actor.{PoisonPill, Props}
+import akka.actor.ActorSystem
 import com.lbs.api.json.model.HistoricVisit
 import com.lbs.bot.Bot
 import com.lbs.bot.model.Command
-import com.lbs.server.actor.Login.UserId
-import com.lbs.server.actor.conversation.Conversation
-import com.lbs.server.actor.conversation.Conversation.{InitConversation, StartConversation}
+import com.lbs.server.conversation.Login.UserId
+import com.lbs.server.conversation.base.Conversation
 import com.lbs.server.lang.{Localizable, Localization}
 import com.lbs.server.service.ApiService
 
-class History(val userId: UserId, bot: Bot, apiService: ApiService, val localization: Localization, historyPagerActorFactory: ByUserIdWithOriginatorActorFactory) extends Conversation[Unit] with Localizable {
+class History(val userId: UserId, bot: Bot, apiService: ApiService, val localization: Localization,
+              historyPagerFactory: UserIdWithOriginatorTo[Pager[HistoricVisit]])(val actorSystem: ActorSystem) extends Conversation[Unit] with Localizable {
 
-  private val historyPager = historyPagerActorFactory(userId, self)
+  private val historyPager = historyPagerFactory(userId, self)
 
   entryPoint(prepareData)
 
   def prepareData: Step =
     process { _ =>
       val visits = apiService.visitsHistory(userId.accountId)
-      historyPager ! InitConversation
-      historyPager ! StartConversation
+      historyPager.restart()
       historyPager ! visits
       goto(processResponseFromPager)
     }
@@ -60,13 +59,7 @@ class History(val userId: UserId, bot: Bot, apiService: ApiService, val localiza
         end()
     }
 
-  override def postStop(): Unit = {
-    historyPager ! PoisonPill
-    super.postStop()
+  beforeDestroy {
+    historyPager.destroy()
   }
-}
-
-object History {
-  def props(userId: UserId, bot: Bot, apiService: ApiService, localization: Localization, historyPagerActorFactory: ByUserIdWithOriginatorActorFactory): Props =
-    Props(new History(userId, bot, apiService, localization, historyPagerActorFactory))
 }

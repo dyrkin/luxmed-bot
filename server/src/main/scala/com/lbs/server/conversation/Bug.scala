@@ -21,24 +21,23 @@
   * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
   * SOFTWARE.
   */
-package com.lbs.server.actor
+package com.lbs.server.conversation
 
-import akka.actor.Props
+import akka.actor.ActorSystem
 import com.lbs.bot.model.{Button, Command}
 import com.lbs.bot.{Bot, _}
-import com.lbs.server.actor.Bug._
-import com.lbs.server.actor.Login.UserId
-import com.lbs.server.actor.conversation.Conversation
-import com.lbs.server.actor.conversation.Conversation.{InitConversation, StartConversation}
+import com.lbs.server.conversation.Bug._
+import com.lbs.server.conversation.Login.UserId
+import com.lbs.server.conversation.base.Conversation
 import com.lbs.server.lang.{Localizable, Localization}
 import com.lbs.server.repository.model
 import com.lbs.server.service.DataService
 import com.lbs.server.util.MessageExtractors
 
-class Bug(val userId: UserId, bot: Bot, dataService: DataService, bugPagerActorFactory: ByUserIdWithOriginatorActorFactory,
-          val localization: Localization) extends Conversation[Unit] with Localizable {
+class Bug(val userId: UserId, bot: Bot, dataService: DataService, bugPagerFactory: UserIdWithOriginatorTo[Pager[model.Bug]],
+          val localization: Localization)(val actorSystem: ActorSystem) extends Conversation[Unit] with Localizable {
 
-  private val bugPager = bugPagerActorFactory(userId, self)
+  private val bugPager = bugPagerFactory(userId, self)
 
   entryPoint(askAction)
 
@@ -56,8 +55,7 @@ class Bug(val userId: UserId, bot: Bot, dataService: DataService, bugPagerActorF
   def displaySubmittedBugs: Step =
     process { _ =>
       val bugs = dataService.getBugs(userId.userId)
-      bugPager ! InitConversation
-      bugPager ! StartConversation
+      bugPager.restart()
       bugPager ! Right[Throwable, Seq[model.Bug]](bugs)
       goto(processResponseFromPager)
     }
@@ -81,11 +79,13 @@ class Bug(val userId: UserId, bot: Bot, dataService: DataService, bugPagerActorF
         bot.sendMessage(userId.source, lang.bugHasBeenCreated(bugId.getOrElse(-1L)))
         end()
     }
+
+  beforeDestroy {
+    bugPager.destroy()
+  }
 }
 
 object Bug {
-  def props(userId: UserId, bot: Bot, dataService: DataService, bugPagerActorFactory: ByUserIdWithOriginatorActorFactory, localization: Localization): Props =
-    Props(new Bug(userId, bot, dataService, bugPagerActorFactory, localization))
 
   object Tags {
     val SubmitNew = "submit"

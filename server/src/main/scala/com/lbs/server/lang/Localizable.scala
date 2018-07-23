@@ -23,7 +23,7 @@
  */
 package com.lbs.server.lang
 
-import com.lbs.server.actor.Login.UserId
+import com.lbs.server.conversation.Login.UserId
 
 trait Localizable {
   protected def userId: UserId

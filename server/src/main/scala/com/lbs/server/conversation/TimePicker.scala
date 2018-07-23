@@ -21,16 +21,16 @@
   * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
   * SOFTWARE.
   */
-package com.lbs.server.actor
+package com.lbs.server.conversation
 
 import java.time.LocalTime
 
-import akka.actor.{ActorRef, Props}
+import akka.actor.ActorSystem
 import com.lbs.bot.model.{Button, Command}
 import com.lbs.bot.{Bot, _}
-import com.lbs.server.actor.Login.UserId
-import com.lbs.server.actor.TimePicker.{Mode, Tags, TimeFromMode, TimeToMode}
-import com.lbs.server.actor.conversation.Conversation
+import com.lbs.server.conversation.Login.UserId
+import com.lbs.server.conversation.TimePicker.{Mode, Tags, TimeFromMode, TimeToMode}
+import com.lbs.server.conversation.base.{Conversation, Interactional}
 import com.lbs.server.lang.{Localizable, Localization}
 
 /**
@@ -41,7 +41,7 @@ import com.lbs.server.lang.{Localizable, Localization}
   * ⬇   ⬇
   *
   */
-class TimePicker(val userId: UserId, val bot: Bot, val localization: Localization, originator: ActorRef) extends Conversation[LocalTime] with Localizable {
+class TimePicker(val userId: UserId, val bot: Bot, val localization: Localization, originator: Interactional)(val actorSystem: ActorSystem) extends Conversation[LocalTime] with Localizable {
 
   private var mode: Mode = TimeFromMode
 
@@ -107,8 +107,6 @@ class TimePicker(val userId: UserId, val bot: Bot, val localization: Localizatio
 }
 
 object TimePicker {
-  def props(userId: UserId, bot: Bot, localization: Localization, originator: ActorRef): Props =
-    Props(new TimePicker(userId, bot, localization, originator))
 
   trait Mode
 

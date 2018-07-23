@@ -21,21 +21,20 @@
   * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
   * SOFTWARE.
   */
-package com.lbs.server.actor
+package com.lbs.server.conversation
 
 import java.time.{LocalTime, ZonedDateTime}
 
-import akka.actor.{PoisonPill, Props}
+import akka.actor.ActorSystem
 import com.lbs.api.json.model._
 import com.lbs.bot._
 import com.lbs.bot.model.{Button, Command}
-import com.lbs.server.actor.Book._
-import com.lbs.server.actor.DatePicker.{DateFromMode, DateToMode}
-import com.lbs.server.actor.Login.UserId
-import com.lbs.server.actor.StaticData.StaticDataConfig
-import com.lbs.server.actor.TimePicker.{TimeFromMode, TimeToMode}
-import com.lbs.server.actor.conversation.Conversation
-import com.lbs.server.actor.conversation.Conversation.{InitConversation, StartConversation}
+import com.lbs.server.conversation.Book._
+import com.lbs.server.conversation.DatePicker.{DateFromMode, DateToMode}
+import com.lbs.server.conversation.Login.UserId
+import com.lbs.server.conversation.StaticData.StaticDataConfig
+import com.lbs.server.conversation.TimePicker.{TimeFromMode, TimeToMode}
+import com.lbs.server.conversation.base.Conversation
 import com.lbs.server.lang.{Localizable, Localization}
 import com.lbs.server.repository.model.Monitoring
 import com.lbs.server.service.{ApiService, DataService, MonitoringService}
@@ -43,13 +42,13 @@ import com.lbs.server.util.MessageExtractors.CallbackCommand
 import com.lbs.server.util.ServerModelConverters._
 
 class Book(val userId: UserId, bot: Bot, apiService: ApiService, dataService: DataService, monitoringService: MonitoringService,
-           val localization: Localization, datePickerActorFactory: ByUserIdWithOriginatorActorFactory, timePickerActorFactory: ByUserIdWithOriginatorActorFactory,
-           staticDataActorFactory: ByUserIdWithOriginatorActorFactory, termsPagerActorFactory: ByUserIdWithOriginatorActorFactory) extends Conversation[BookingData] with StaticDataForBooking with Localizable {
+           val localization: Localization, datePickerFactory: UserIdWithOriginatorTo[DatePicker], timePickerFactory: UserIdWithOriginatorTo[TimePicker],
+           staticDataFactory: UserIdWithOriginatorTo[StaticData], termsPagerFactory: UserIdWithOriginatorTo[Pager[AvailableVisitsTermPresentation]])(implicit val actorSystem: ActorSystem) extends Conversation[BookingData] with StaticDataForBooking with Localizable {
 
-  private val datePicker = datePickerActorFactory(userId, self)
-  private val timePicker = timePickerActorFactory(userId, self)
-  private[actor] val staticData = staticDataActorFactory(userId, self)
-  private val termsPager = termsPagerActorFactory(userId, self)
+  private val datePicker = datePickerFactory(userId, self)
+  private val timePicker = timePickerFactory(userId, self)
+  private[conversation] val staticData = staticDataFactory(userId, self)
+  private val termsPager = termsPagerFactory(userId, self)
 
   entryPoint(askCity, BookingData())
 
@@ -87,8 +86,7 @@ class Book(val userId: UserId, bot: Bot, apiService: ApiService, dataService: Da
 
   private def requestDateFrom: Step =
     ask { bookingData =>
-      datePicker ! InitConversation
-      datePicker ! StartConversation
+      datePicker.restart()
       datePicker ! DateFromMode
       datePicker ! bookingData.dateFrom
     } onReply {
@@ -101,8 +99,7 @@ class Book(val userId: UserId, bot: Bot, apiService: ApiService, dataService: Da
 
   private def requestDateTo: Step =
     ask { bookingData =>
-      datePicker ! InitConversation
-      datePicker ! StartConversation
+      datePicker.restart()
       datePicker ! DateToMode
       datePicker ! bookingData.dateFrom.plusDays(1)
     } onReply {
@@ -115,8 +112,7 @@ class Book(val userId: UserId, bot: Bot, apiService: ApiService, dataService: Da
 
   private def requestTimeFrom: Step =
     ask { bookingData =>
-      timePicker ! InitConversation
-      timePicker ! StartConversation
+      timePicker.restart()
       timePicker ! TimeFromMode
       timePicker ! bookingData.timeFrom
     } onReply {
@@ -129,8 +125,7 @@ class Book(val userId: UserId, bot: Bot, apiService: ApiService, dataService: Da
 
   private def requestTimeTo: Step =
     ask { bookingData =>
-      timePicker ! InitConversation
-      timePicker ! StartConversation
+      timePicker.restart()
       timePicker ! TimeToMode
       timePicker ! bookingData.timeTo
     } onReply {
@@ -161,8 +156,7 @@ class Book(val userId: UserId, bot: Bot, apiService: ApiService, dataService: Da
       val availableTerms = apiService.getAvailableTerms(userId.accountId, bookingData.cityId.id,
         bookingData.clinicId.optionalId, bookingData.serviceId.id, bookingData.doctorId.optionalId,
         bookingData.dateFrom, Some(bookingData.dateTo), timeFrom = bookingData.timeFrom, timeTo = bookingData.timeTo)
-      termsPager ! InitConversation
-      termsPager ! StartConversation
+      termsPager.restart()
       termsPager ! availableTerms
     } onReply {
       case Msg(cmd: Command, _) =>
@@ -255,23 +249,15 @@ class Book(val userId: UserId, bot: Bot, apiService: ApiService, dataService: Da
 
   private def doctorConfig = StaticDataConfig(lang.doctor, "Bartniak", isAnyAllowed = true)
 
-  override def postStop(): Unit = {
-    datePicker ! PoisonPill
-    staticData ! PoisonPill
-    termsPager ! PoisonPill
-    timePicker ! PoisonPill
-    super.postStop()
+  beforeDestroy {
+    datePicker.destroy()
+    staticData.destroy()
+    termsPager.destroy()
+    timePicker.destroy()
   }
 }
 
 object Book {
-
-  def props(userId: UserId, bot: Bot, apiService: ApiService, dataService: DataService, monitoringService: MonitoringService,
-            localization: Localization, datePickerActorFactory: ByUserIdWithOriginatorActorFactory,
-            timePickerFactory: ByUserIdWithOriginatorActorFactory,
-            staticDataActorFactory: ByUserIdWithOriginatorActorFactory, termsPagerActorFactory: ByUserIdWithOriginatorActorFactory): Props =
-    Props(new Book(userId, bot, apiService, dataService, monitoringService, localization, datePickerActorFactory,
-      timePickerFactory, staticDataActorFactory, termsPagerActorFactory))
 
   case class BookingData(cityId: IdName = null, clinicId: IdName = null,
                          serviceId: IdName = null, doctorId: IdName = null, dateFrom: ZonedDateTime = ZonedDateTime.now(),

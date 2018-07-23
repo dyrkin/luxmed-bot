@@ -8,7 +8,6 @@ With its help user can book a visit to a doctor, create term monitoring, view up
 
 It is available here [@luxmedbot](https://telegram.me/luxmedbot)
 
-#### Screenshot
 ![Screenshot](screenshot.png)
 
 #### To setup your own telegram bot

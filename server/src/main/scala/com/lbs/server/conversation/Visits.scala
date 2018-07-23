@@ -21,31 +21,29 @@
   * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
   * SOFTWARE.
   */
-package com.lbs.server.actor
+package com.lbs.server.conversation
 
-import akka.actor.{PoisonPill, Props}
+import akka.actor.ActorSystem
 import com.lbs.api.json.model.ReservedVisit
 import com.lbs.bot.model.{Button, Command}
 import com.lbs.bot.{Bot, _}
-import com.lbs.server.actor.Login.UserId
-import com.lbs.server.actor.Visits.Tags
-import com.lbs.server.actor.conversation.Conversation
-import com.lbs.server.actor.conversation.Conversation.{InitConversation, StartConversation}
+import com.lbs.server.conversation.Login.UserId
+import com.lbs.server.conversation.Visits.Tags
+import com.lbs.server.conversation.base.Conversation
 import com.lbs.server.lang.{Localizable, Localization}
 import com.lbs.server.service.ApiService
 
 class Visits(val userId: UserId, bot: Bot, apiService: ApiService, val localization: Localization,
-             visitsPagerActorFactory: ByUserIdWithOriginatorActorFactory) extends Conversation[ReservedVisit] with Localizable {
+             visitsPagerFactory: UserIdWithOriginatorTo[Pager[ReservedVisit]])(val actorSystem: ActorSystem) extends Conversation[ReservedVisit] with Localizable {
 
-  private val reservedVisitsPager = visitsPagerActorFactory(userId, self)
+  private val reservedVisitsPager = visitsPagerFactory(userId, self)
 
   entryPoint(prepareData)
 
   def prepareData: Step =
     process { _ =>
       val visits = apiService.reservedVisits(userId.accountId)
-      reservedVisitsPager ! InitConversation
-      reservedVisitsPager ! StartConversation
+      reservedVisitsPager.restart()
       reservedVisitsPager ! visits
       goto(processResponseFromPager)
     }
@@ -78,16 +76,12 @@ class Visits(val userId: UserId, bot: Bot, apiService: ApiService, val localizat
         end()
     }
 
-  override def postStop(): Unit = {
-    reservedVisitsPager ! PoisonPill
-    super.postStop()
+  beforeDestroy {
+    reservedVisitsPager.destroy()
   }
 }
 
 object Visits {
-  def props(userId: UserId, bot: Bot, apiService: ApiService, localization: Localization,
-            visitsPagerActorFactory: ByUserIdWithOriginatorActorFactory): Props =
-    Props(new Visits(userId, bot, apiService, localization, visitsPagerActorFactory))
 
   object Tags {
     val Yes = "yes"

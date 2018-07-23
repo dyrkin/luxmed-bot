@@ -1,10 +1,8 @@
-package com.lbs.server.actor
+package com.lbs.server.conversation
 
-import akka.actor.ActorRef
-import akka.testkit.TestProbe
 import com.lbs.bot.model.{Command, Message, MessageSource, TelegramMessageSourceSystem}
-import com.lbs.server.actor.Login.{ForwardCommand, LoggedIn, UserId}
-import com.lbs.server.actor.conversation.Conversation.{InitConversation, StartConversation}
+import com.lbs.server.conversation.Login.{ForwardCommand, LoggedIn, UserId}
+import com.lbs.server.conversation.base.ConversationTestProbe
 import com.lbs.server.service.DataService
 import org.mockito.Mockito._
 
@@ -16,15 +14,15 @@ class AuthSpec extends AkkaTestKit {
     val userId = UserId(1L, 1L, source)
 
     "user is unauthorized" must {
-      val unauthorizedHelpActor = TestProbe()
-      val loginActor = TestProbe()
-      val chatActor = TestProbe()
-      val unauthorizedHelpFactory: ByMessageSourceActorFactory = _ => unauthorizedHelpActor.ref
-      val loginActorFactory: ByMessageSourceWithOriginatorActorFactory = (_, _) => loginActor.ref
-      val chatActorFactory: UserId => ActorRef = _ => chatActor.ref
+      val unauthorizedHelpActor = ConversationTestProbe[UnauthorizedHelp]()
+      val loginActor = ConversationTestProbe[Login]()
+      val chatActor = ConversationTestProbe[Chat]()
+      val unauthorizedHelpFactory: MessageSourceTo[UnauthorizedHelp] = _ => unauthorizedHelpActor.conversation
+      val loginActorFactory: MessageSourceWithOriginatorTo[Login] = (_, _) => loginActor.conversation
+      val chatActorFactory: UserIdTo[Chat] = _ => chatActor.conversation
       val dataService = mock(classOf[DataService])
       when(dataService.findUserAndAccountIdBySource(source)).thenReturn(None)
-      val auth = system.actorOf(Auth.props(source, dataService, unauthorizedHelpFactory, loginActorFactory, chatActorFactory))
+      val auth = new Auth(source, dataService, unauthorizedHelpFactory, loginActorFactory, chatActorFactory)(system)
 
 
       "send english help on /start command" in {
@@ -42,8 +40,6 @@ class AuthSpec extends AkkaTestKit {
       "initialize dialogue with login actor on /login command" in {
         val cmd = Command(source, Message("1", Some("/login")))
         auth ! cmd
-        loginActor.expectMsg(InitConversation)
-        loginActor.expectMsg(StartConversation)
         loginActor.expectMsg(cmd)
       }
 
@@ -73,16 +69,16 @@ class AuthSpec extends AkkaTestKit {
     }
 
     "user is authorized" must {
-      val unauthorizedHelpActor = TestProbe()
-      val loginActor = TestProbe()
-      val chatActor = TestProbe()
-      val unauthorizedHelpFactory: ByMessageSourceActorFactory = _ => unauthorizedHelpActor.ref
-      val loginActorFactory: ByMessageSourceWithOriginatorActorFactory = (_, _) => loginActor.ref
-      val chatActorFactory: UserId => ActorRef = _ => chatActor.ref
+      val unauthorizedHelpActor = ConversationTestProbe[UnauthorizedHelp]()
+      val loginActor = ConversationTestProbe[Login]()
+      val chatActor = ConversationTestProbe[Chat]()
+      val unauthorizedHelpFactory: MessageSourceTo[UnauthorizedHelp] = _ => unauthorizedHelpActor.conversation
+      val loginActorFactory: MessageSourceWithOriginatorTo[Login] = (_, _) => loginActor.conversation
+      val chatActorFactory: UserIdTo[Chat] = _ => chatActor.conversation
       val dataService = mock(classOf[DataService])
       when(dataService.findUserAndAccountIdBySource(source)).thenReturn(Some(userId.userId, userId.accountId))
 
-      val auth = system.actorOf(Auth.props(source, dataService, unauthorizedHelpFactory, loginActorFactory, chatActorFactory))
+      val auth = new Auth(source, dataService, unauthorizedHelpFactory, loginActorFactory, chatActorFactory)(system)
 
 
       "forward all commands to chat actor" in {
@@ -96,8 +92,6 @@ class AuthSpec extends AkkaTestKit {
       "initialize dialogue with login actor on /login command" in {
         val cmd = Command(source, Message("1", Some("/login")))
         auth ! cmd
-        loginActor.expectMsg(InitConversation)
-        loginActor.expectMsg(StartConversation)
         loginActor.expectMsg(cmd)
       }
 

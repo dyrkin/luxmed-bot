@@ -21,19 +21,17 @@
   * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
   * SOFTWARE.
   */
-package com.lbs.server.actor
+package com.lbs.server.conversation
 
-import akka.actor.ActorRef
 import com.lbs.api.json.model.IdName
 import com.lbs.bot.model.Command
-import com.lbs.server.actor.Book.BookingData
-import com.lbs.server.actor.StaticData.{FindOptions, FoundOptions, LatestOptions, StaticDataConfig}
-import com.lbs.server.actor.conversation.Conversation
-import com.lbs.server.actor.conversation.Conversation.{InitConversation, StartConversation}
+import com.lbs.server.conversation.Book.BookingData
+import com.lbs.server.conversation.StaticData.{FindOptions, FoundOptions, LatestOptions, StaticDataConfig}
+import com.lbs.server.conversation.base.Conversation
 
 trait StaticDataForBooking extends Conversation[BookingData] {
 
-  private[actor] def staticData: ActorRef
+  private[conversation] def staticData: StaticData
 
   protected def withFunctions(latestOptions: => Seq[IdName], staticOptions: => Either[Throwable, List[IdName]], applyId: IdName => BookingData): Step => MessageProcessorFn = {
     nextStep: Step => {
@@ -53,8 +51,7 @@ trait StaticDataForBooking extends Conversation[BookingData] {
 
   protected def staticData(staticDataConfig: => StaticDataConfig)(functions: BookingData => Step => MessageProcessorFn)(requestNext: Step)(implicit functionName: sourcecode.Name): Step = {
     ask { _ =>
-      staticData ! InitConversation
-      staticData ! StartConversation
+      staticData.restart()
       staticData ! staticDataConfig
     } onReply {
       case msg@Msg(_, bookingData: BookingData) =>

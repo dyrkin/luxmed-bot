@@ -21,21 +21,21 @@
   * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
   * SOFTWARE.
   */
-package com.lbs.server.actor
+package com.lbs.server.conversation
 
-import akka.actor.{Actor, ActorRef, Cancellable, PoisonPill, Props}
+import akka.actor.{Actor, Cancellable, Props}
 import com.lbs.bot.model.{Command, MessageSource}
 import com.lbs.common.Logger
-import com.lbs.server.actor.Account.SwitchUser
-import com.lbs.server.actor.Router.DestroyChat
+import com.lbs.server.conversation.Account.SwitchUser
+import com.lbs.server.conversation.Router.DestroyChat
 
 import scala.collection.mutable
 import scala.concurrent.ExecutionContextExecutor
 import scala.concurrent.duration.DurationLong
 
-class Router(authActorFactory: ByMessageSourceActorFactory) extends Actor with Logger {
+class Router(authFactory: MessageSourceTo[Auth]) extends Actor with Logger {
 
-  private val chats = mutable.Map.empty[MessageSource, ActorRef]
+  private val chats = mutable.Map.empty[MessageSource, Auth]
 
   private val timers = mutable.Map.empty[MessageSource, Cancellable]
 
@@ -48,7 +48,7 @@ class Router(authActorFactory: ByMessageSourceActorFactory) extends Actor with L
       scheduleIdleChatDestroyer(source)
       val chat = chats.get(source) match {
         case Some(actor) => actor
-        case None => addNewChatActor(source)
+        case None => addNewChat(source)
       }
       chat ! cmd
     case DestroyChat(source) =>
@@ -58,8 +58,8 @@ class Router(authActorFactory: ByMessageSourceActorFactory) extends Actor with L
     case what => info(s"Unknown message: $what")
   }
 
-  private def addNewChatActor(source: MessageSource): ActorRef = {
-    val actor = authActorFactory(source)
+  private def addNewChat(source: MessageSource): Auth = {
+    val actor = authFactory(source)
     chats += source -> actor
     actor
   }
@@ -72,11 +72,11 @@ class Router(authActorFactory: ByMessageSourceActorFactory) extends Actor with L
 
   private def switchUser(userId: Login.UserId): Unit = {
     removeChat(userId.source)
-    addNewChatActor(userId.source)
+    addNewChat(userId.source)
   }
 
   private def removeChat(source: MessageSource): Unit = {
-    chats.remove(source).foreach(_ ! PoisonPill)
+    chats.remove(source).foreach(_.destroy())
   }
 
   private def scheduleIdleChatDestroyer(source: MessageSource): Unit = {
@@ -88,12 +88,12 @@ class Router(authActorFactory: ByMessageSourceActorFactory) extends Actor with L
   }
 
   override def postStop(): Unit = {
-    chats.foreach(_._2 ! PoisonPill)
+    chats.foreach(chat => removeChat(chat._1))
   }
 }
 
 object Router {
-  def props(authActorFactory: MessageSource => ActorRef) = Props(new Router(authActorFactory))
+  def props(authFactory: MessageSourceTo[Auth]) = Props(new Router(authFactory))
 
   case class DestroyChat(source: MessageSource)
 

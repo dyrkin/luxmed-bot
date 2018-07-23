@@ -1,4 +1,4 @@
-package com.lbs.server.actor
+package com.lbs.server.conversation
 
 import akka.actor.ActorSystem
 import akka.testkit.{ImplicitSender, TestKit}

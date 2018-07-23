@@ -27,8 +27,8 @@ import java.time.{LocalTime, ZonedDateTime}
 import java.util.Locale
 
 import com.lbs.api.json.model.{AvailableVisitsTermPresentation, HistoricVisit, ReservedVisit, ValuationsResponse}
-import com.lbs.server.actor.Book.BookingData
-import com.lbs.server.actor.StaticData.StaticDataConfig
+import com.lbs.server.conversation.Book.BookingData
+import com.lbs.server.conversation.StaticData.StaticDataConfig
 import com.lbs.server.repository.model
 import com.lbs.server.repository.model.Monitoring
 

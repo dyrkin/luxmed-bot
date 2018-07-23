@@ -1,12 +1,11 @@
-package com.lbs.server.actor.conversation
+package com.lbs.server.conversation.base
 
-import akka.actor.Actor
 import com.lbs.common.Logger
-import com.lbs.server.actor.conversation.Conversation.{ContinueConversation, InitConversation, StartConversation}
 
 import scala.util.control.NonFatal
 
-trait Conversation[D] extends Actor with Domain[D] with Logger {
+trait Conversation[D] extends Domain[D] with Interactional with Logger {
+
   private var currentData: D = _
 
   private var currentStep: Step = _
@@ -23,15 +22,7 @@ trait Conversation[D] extends Actor with Domain[D] with Logger {
 
   private var msgHandler: MessageProcessorFn = defaultMsgHandler
 
-  private var runAfterInit: () => Unit = () => {}
-
-  override def receive: Receive = {
-    case InitConversation => init()
-    case StartConversation | ContinueConversation => execute()
-    case any => makeTransition(any)
-  }
-
-  def execute(): Unit = {
+  private[base] def executeCurrentStep(): Unit = {
     try {
       currentStep match {
         case qa: Dialogue => qa.askFn(currentData)
@@ -45,7 +36,7 @@ trait Conversation[D] extends Actor with Domain[D] with Logger {
     }
   }
 
-  private def makeTransition(any: Any): Unit = {
+  private[base] def makeStepTransition(any: Any): Unit = {
     def handle[X](unit: X, fn: PartialFunction[X, NextStep], defaultFn: PartialFunction[X, NextStep]): Unit = {
       try {
         val nextStep = if (fn.isDefinedAt(unit)) fn(unit) else defaultFn(unit)
@@ -74,16 +65,12 @@ trait Conversation[D] extends Actor with Domain[D] with Logger {
     }
   }
 
-  private def init(): Unit = {
+  private[base] def initializeConversation(): Unit = {
     require(initialStep != null, "Entry point must be defined")
     currentStep = initialStep
     currentData = initialData
-    runAfterInit()
   }
 
-  override def preStart(): Unit = {
-    init()
-  }
 
   protected def monologue(answerFn: MessageProcessorFn)(implicit functionName: sourcecode.Name): Monologue = Monologue(functionName.value, answerFn)
 
@@ -100,7 +87,7 @@ trait Conversation[D] extends Actor with Domain[D] with Logger {
   }
 
   protected def goto(step: Step): NextStep = {
-    self ! ContinueConversation
+    continue()
     NextStep(step)
   }
 
@@ -108,10 +95,6 @@ trait Conversation[D] extends Actor with Domain[D] with Logger {
 
   protected def whenUnhandledMsg(receiveMsgFn: MessageProcessorFn): Unit = {
     msgHandler = receiveMsgFn orElse defaultMsgHandler
-  }
-
-  protected def afterInit(fn: => Unit): Unit = {
-    runAfterInit = () => fn
   }
 
   protected def entryPoint(step: Step, data: D): Unit = {
@@ -124,12 +107,3 @@ trait Conversation[D] extends Actor with Domain[D] with Logger {
   }
 }
 
-object Conversation {
-
-  object StartConversation
-
-  object ContinueConversation
-
-  object InitConversation
-
-}

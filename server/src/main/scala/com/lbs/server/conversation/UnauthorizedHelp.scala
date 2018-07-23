@@ -21,27 +21,21 @@
   * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
   * SOFTWARE.
   */
-package com.lbs.server.actor
+package com.lbs.server.conversation
 
-import akka.actor.Props
+import akka.actor.ActorSystem
 import com.lbs.bot.Bot
-import com.lbs.bot.model.Command
-import com.lbs.server.actor.Login.UserId
-import com.lbs.server.actor.conversation.Conversation
-import com.lbs.server.lang.{Localizable, Localization}
+import com.lbs.bot.model.{Command, MessageSource}
+import com.lbs.server.conversation.base.Conversation
+import com.lbs.server.lang.En
 
-class Help(val userId: UserId, bot: Bot, val localization: Localization) extends Conversation[Unit] with Localizable {
-
+class UnauthorizedHelp(source: MessageSource, bot: Bot)(val actorSystem: ActorSystem) extends Conversation[Unit] {
   entryPoint(displayHelp)
 
   def displayHelp: Step =
     monologue {
       case Msg(_: Command, _) =>
-        bot.sendMessage(userId.source, lang.help)
+        bot.sendMessage(source, En.help)
         stay()
     }
-}
-
-object Help {
-  def props(userId: UserId, bot: Bot, localization: Localization): Props = Props(new Help(userId, bot, localization))
 }

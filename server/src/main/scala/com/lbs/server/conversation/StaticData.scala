@@ -21,18 +21,18 @@
   * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
   * SOFTWARE.
   */
-package com.lbs.server.actor
+package com.lbs.server.conversation
 
-import akka.actor.{ActorRef, Props}
+import akka.actor.ActorSystem
 import com.lbs.api.json.model.IdName
 import com.lbs.bot.model.{Button, Command, TaggedButton}
 import com.lbs.bot.{Bot, _}
-import com.lbs.server.actor.Login.UserId
-import com.lbs.server.actor.StaticData._
-import com.lbs.server.actor.conversation.Conversation
+import com.lbs.server.conversation.Login.UserId
+import com.lbs.server.conversation.StaticData._
+import com.lbs.server.conversation.base.{Conversation, Interactional}
 import com.lbs.server.lang.{Localizable, Localization}
 
-class StaticData(val userId: UserId, bot: Bot, val localization: Localization, originator: ActorRef) extends Conversation[List[TaggedButton]] with Localizable {
+class StaticData(val userId: UserId, bot: Bot, val localization: Localization, originator: Interactional)(val actorSystem: ActorSystem) extends Conversation[List[TaggedButton]] with Localizable {
 
   private def anySelectOption: List[TaggedButton] = if (config.isAnyAllowed) List(Button(lang.any, -1L)) else List()
 
@@ -91,8 +91,6 @@ class StaticData(val userId: UserId, bot: Bot, val localization: Localization, o
 }
 
 object StaticData {
-  def props(userId: UserId, bot: Bot, localization: Localization, originator: ActorRef): Props =
-    Props(new StaticData(userId, bot, localization, originator))
 
   case class StaticDataConfig(name: String, example: String, isAnyAllowed: Boolean)
 

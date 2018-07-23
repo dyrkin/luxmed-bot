@@ -21,19 +21,20 @@
   * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
   * SOFTWARE.
   */
-package com.lbs.server.actor
+package com.lbs.server.conversation
 
-import akka.actor.{ActorRef, Props}
+import akka.actor.ActorSystem
 import com.lbs.bot.Bot
 import com.lbs.bot.model.{Command, MessageSource}
-import com.lbs.server.actor.Login._
-import com.lbs.server.actor.conversation.Conversation
+import com.lbs.server.conversation.Login._
+import com.lbs.server.conversation.base.{Conversation, Interactional}
 import com.lbs.server.lang.{Localizable, Localization}
 import com.lbs.server.service.{ApiService, DataService}
 import com.lbs.server.util.MessageExtractors
 import org.jasypt.util.text.TextEncryptor
 
-class Login(source: MessageSource, bot: Bot, dataService: DataService, apiService: ApiService, textEncryptor: TextEncryptor, val localization: Localization, originator: ActorRef) extends Conversation[LoginData] with Localizable {
+class Login(source: MessageSource, bot: Bot, dataService: DataService, apiService: ApiService, textEncryptor: TextEncryptor,
+            val localization: Localization, originator: Interactional)(val actorSystem: ActorSystem) extends Conversation[LoginData] with Localizable {
 
   protected var userId: UserId = _
 
@@ -84,9 +85,6 @@ class Login(source: MessageSource, bot: Bot, dataService: DataService, apiServic
 }
 
 object Login {
-
-  def props(source: MessageSource, bot: Bot, dataService: DataService, apiService: ApiService, textEncryptor: TextEncryptor, localization: Localization, originator: ActorRef): Props =
-    Props(new Login(source, bot, dataService, apiService, textEncryptor, localization, originator))
 
   case class LoginData(username: Option[String] = None, password: Option[String] = None)
 

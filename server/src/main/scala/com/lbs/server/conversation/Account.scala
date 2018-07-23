@@ -21,19 +21,19 @@
   * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
   * SOFTWARE.
   */
-package com.lbs.server.actor
+package com.lbs.server.conversation
 
-import akka.actor.{ActorRef, Props}
-import com.lbs.bot.model.{Button, Command}
+import akka.actor.{ActorRef, ActorSystem}
+import com.lbs.bot.model.Button
 import com.lbs.bot.{Bot, _}
-import com.lbs.server.actor.Account._
-import com.lbs.server.actor.Login._
-import com.lbs.server.actor.conversation.Conversation
+import com.lbs.server.conversation.Account._
+import com.lbs.server.conversation.Login._
+import com.lbs.server.conversation.base.Conversation
 import com.lbs.server.lang.{Localizable, Localization}
 import com.lbs.server.service.DataService
 import com.lbs.server.util.MessageExtractors.CallbackCommand
 
-class Account(val userId: UserId, bot: Bot, dataService: DataService, val localization: Localization, router: ActorRef) extends Conversation[Unit] with Localizable {
+class Account(val userId: UserId, bot: Bot, dataService: DataService, val localization: Localization, router: ActorRef)(val actorSystem: ActorSystem) extends Conversation[Unit] with Localizable {
 
   entryPoint(askAction)
 
@@ -74,8 +74,6 @@ class Account(val userId: UserId, bot: Bot, dataService: DataService, val locali
 }
 
 object Account {
-  def props(userId: UserId, bot: Bot, dataService: DataService, localization: Localization, router: ActorRef): Props =
-    Props(new Account(userId, bot, dataService, localization, router))
 
   case class SwitchUser(userId: UserId)
 

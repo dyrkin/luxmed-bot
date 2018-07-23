@@ -21,18 +21,18 @@
   * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
   * SOFTWARE.
   */
-package com.lbs.server.actor
+package com.lbs.server.conversation
 
-import akka.actor.Props
+import akka.actor.ActorSystem
 import com.lbs.bot.model.{Button, Command}
 import com.lbs.bot.{Bot, _}
-import com.lbs.server.actor.Login.UserId
-import com.lbs.server.actor.Settings._
-import com.lbs.server.actor.conversation.Conversation
+import com.lbs.server.conversation.Login.UserId
+import com.lbs.server.conversation.Settings._
+import com.lbs.server.conversation.base.Conversation
 import com.lbs.server.lang.{Lang, Localizable, Localization}
 import com.lbs.server.service.DataService
 
-class Settings(val userId: UserId, bot: Bot, dataService: DataService, val localization: Localization) extends Conversation[Unit] with Localizable {
+class Settings(val userId: UserId, bot: Bot, dataService: DataService, val localization: Localization)(val actorSystem: ActorSystem) extends Conversation[Unit] with Localizable {
 
   entryPoint(askForAction)
 
@@ -59,8 +59,6 @@ class Settings(val userId: UserId, bot: Bot, dataService: DataService, val local
 }
 
 object Settings {
-  def props(userId: UserId, bot: Bot, dataService: DataService, localization: Localization): Props =
-    Props(new Settings(userId, bot, dataService, localization))
 
   object Tags {
     val Language = "language"

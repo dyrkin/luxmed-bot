@@ -27,8 +27,8 @@ import java.time.{LocalTime, ZonedDateTime}
 import java.util.Locale
 
 import com.lbs.api.json.model.{AvailableVisitsTermPresentation, HistoricVisit, ReservedVisit, ValuationsResponse}
-import com.lbs.server.actor.Book
-import com.lbs.server.actor.StaticData.StaticDataConfig
+import com.lbs.server.conversation.Book
+import com.lbs.server.conversation.StaticData.StaticDataConfig
 import com.lbs.server.repository.model.{Bug, Monitoring}
 import com.lbs.server.util.DateTimeUtil.{formatDate, formatDateTime, formatTime, minutesSinceBeginOf2018}
 

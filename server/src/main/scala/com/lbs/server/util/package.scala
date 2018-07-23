@@ -30,8 +30,8 @@ import java.util.Locale
 import com.lbs.api.json.model._
 import com.lbs.bot.model.Command
 import com.lbs.common.ModelConverters
-import com.lbs.server.actor.Book.BookingData
-import com.lbs.server.actor.Login.UserId
+import com.lbs.server.conversation.Book.BookingData
+import com.lbs.server.conversation.Login.UserId
 import com.lbs.server.repository.model.{History, Monitoring}
 
 import scala.collection.generic.CanBuildFrom
