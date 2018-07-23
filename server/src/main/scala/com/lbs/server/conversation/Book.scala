@@ -194,28 +194,31 @@ class Book(val userId: UserId, bot: Bot, apiService: ApiService, dataService: Da
         apiService.deleteTemporaryReservation(userId.accountId, bookingData.temporaryReservationId.get)
         stay()
       case Msg(CallbackCommand(Tags.Book), bookingData: BookingData) =>
-        val reservationRequestMaybe = for {
-          tmpReservationId <- bookingData.temporaryReservationId
-          valuations <- bookingData.valuations
-          visitTermVariant <- valuations.visitTermVariants.headOption
-          term <- bookingData.term
-        } yield (tmpReservationId, visitTermVariant, term).mapTo[ReservationRequest]
-
-        reservationRequestMaybe match {
-          case Some(reservationRequest) =>
-            apiService.reservation(userId.accountId, reservationRequest) match {
-              case Left(ex) =>
-                error("Error during reservation", ex)
-                bot.sendMessage(userId.source, ex.getMessage)
-                end()
-              case Right(success) =>
-                debug(s"Successfully confirmed: $success")
-                bot.sendMessage(userId.source, lang.appointmentIsConfirmed)
-                end()
-            }
-          case _ => sys.error(s"Can not prepare reservation request using booking data $bookingData")
-        }
+        makeReservation(bookingData)
+        end()
     }
+
+  private def makeReservation(bookingData: BookingData): Unit = {
+    val reservationRequestMaybe = for {
+      tmpReservationId <- bookingData.temporaryReservationId
+      valuations <- bookingData.valuations
+      visitTermVariant <- valuations.visitTermVariants.headOption
+      term <- bookingData.term
+    } yield (tmpReservationId, visitTermVariant, term).mapTo[ReservationRequest]
+
+    reservationRequestMaybe match {
+      case Some(reservationRequest) =>
+        apiService.reservation(userId.accountId, reservationRequest) match {
+          case Left(ex) =>
+            error("Error during reservation", ex)
+            bot.sendMessage(userId.source, ex.getMessage)
+          case Right(success) =>
+            debug(s"Successfully confirmed: $success")
+            bot.sendMessage(userId.source, lang.appointmentIsConfirmed)
+        }
+      case _ => sys.error(s"Can not prepare reservation request using booking data $bookingData")
+    }
+  }
 
   private def askMonitoringOptions: Step =
     ask { _ =>

@@ -64,20 +64,16 @@ class TimePicker(val userId: UserId, val bot: Bot, val localization: Localizatio
       }
       bot.sendMessage(userId.source, message, inlineKeyboard = timeButtons(initialDate))
     } onReply {
-      case Msg(Command(_, msg, Some(Tags.Done)), finalTime) =>
-        val (message, updateTime) = mode match {
+      case Msg(Command(_, msg, Some(Tags.Done)), selectedTime) =>
+        val message = mode match {
           case TimeFromMode =>
-            val startOfTheWorkingDay = LocalTime.of(7, 0)
-            val timeFrom = if (startOfTheWorkingDay.isBefore(LocalTime.now())) finalTime else startOfTheWorkingDay
-            lang.timeFromIs(timeFrom) -> timeFrom
+            lang.timeFromIs(selectedTime)
           case TimeToMode =>
-            val timeTo = finalTime
-            lang.timeToIs(timeTo) -> timeTo
+            lang.timeToIs(selectedTime)
         }
         bot.sendEditMessage(userId.source, msg.messageId, message)
-        originator ! updateTime
-        goto(configure) using null
-
+        originator ! selectedTime
+        end()
       case Msg(Command(_, msg, Some(tag)), time) =>
         val modifiedTime = modifyTime(time, tag)
         bot.sendEditMessage(userId.source, msg.messageId, inlineKeyboard = timeButtons(modifiedTime))
