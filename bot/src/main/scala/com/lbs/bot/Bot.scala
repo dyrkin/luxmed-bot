@@ -40,6 +40,9 @@ class Bot(telegram: TelegramBot /* other bots */) extends Logger {
   def sendEditMessage(source: MessageSource, messageId: String, text: String, inlineKeyboard: Option[InlineKeyboard] = None): Unit =
     resolveAdapter(source).sendEditMessage(source.chatId, messageId, text, inlineKeyboard)
 
+  def sendFile(source: MessageSource, filename: String, contents: Array[Byte], caption: Option[String] = None): Unit =
+    resolveAdapter(source).sendFile(source.chatId, filename, contents, caption)
+
   private def resolveAdapter(source: MessageSource): PollBot[_] =
     source.sourceSystem match {
       case TelegramMessageSourceSystem => telegram
