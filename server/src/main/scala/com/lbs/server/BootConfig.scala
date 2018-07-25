@@ -23,7 +23,7 @@
   */
 package com.lbs.server
 
-import akka.actor.{ActorRef, ActorSystem}
+import akka.actor.ActorSystem
 import com.lbs.api.json.model.{AvailableVisitsTermPresentation, HistoricVisit, ReservedVisit}
 import com.lbs.bot.Bot
 import com.lbs.bot.telegram.TelegramBot
@@ -162,7 +162,7 @@ class BootConfig {
       Some("cancel"), localization, originator)(actorSystem)
 
   @Bean
-  def router: ActorRef = actorSystem.actorOf(Router.props(authFactory))
+  def router: Router = new Router(authFactory)(actorSystem)
 
   @Bean
   def telegram: TelegramBot = new TelegramBot(router ! _, telegramBotToken)

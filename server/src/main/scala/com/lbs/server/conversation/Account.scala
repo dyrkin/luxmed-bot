@@ -23,7 +23,7 @@
   */
 package com.lbs.server.conversation
 
-import akka.actor.{ActorRef, ActorSystem}
+import akka.actor.ActorSystem
 import com.lbs.bot.model.Button
 import com.lbs.bot.{Bot, _}
 import com.lbs.server.conversation.Account._
@@ -33,7 +33,7 @@ import com.lbs.server.lang.{Localizable, Localization}
 import com.lbs.server.service.DataService
 import com.lbs.server.util.MessageExtractors.CallbackCommand
 
-class Account(val userId: UserId, bot: Bot, dataService: DataService, val localization: Localization, router: ActorRef)(val actorSystem: ActorSystem) extends Conversation[Unit] with Localizable {
+class Account(val userId: UserId, bot: Bot, dataService: DataService, val localization: Localization, router: Router)(val actorSystem: ActorSystem) extends Conversation[Unit] with Localizable {
 
   entryPoint(askAction)
 
@@ -49,32 +49,33 @@ class Account(val userId: UserId, bot: Bot, dataService: DataService, val locali
         action match {
           case -1L =>
             router ! cmd.copy(message = cmd.message.copy(text = Some("/login")))
-            stay()
           case -2L =>
             bot.sendMessage(userId.source, "Not implemented yet")
-            stay()
           case accountId =>
-            val accountMaybe = dataService.findUserCredentialsByAccountId(userId.userId, accountId)
-            accountMaybe match {
-              case Some(account) => //account was found
-                val userMaybe = dataService.findUser(userId.userId)
-                userMaybe.foreach { user =>
-                  user.activeAccountId = accountId
-                  dataService.saveUser(user)
-                  router ! SwitchUser(UserId(account.userId, account.accountId, userId.source))
-                  bot.sendMessage(userId.source, lang.accountSwitched(account.username))
-                }
-                stay()
-              case None =>
-                error(s"This is not user [#${userId.userId}] account [#$accountId]")
-                stay()
-            }
+            switchAccount(accountId)
         }
+        end()
     }
+
+  private def switchAccount(accountId: Long): Unit = {
+    val accountMaybe = dataService.findUserCredentialsByAccountId(userId.userId, accountId)
+    accountMaybe match {
+      case Some(account) =>
+        val userMaybe = dataService.findUser(userId.userId)
+        userMaybe.foreach { user =>
+          user.activeAccountId = accountId
+          dataService.saveUser(user)
+          router ! SwitchAccount(UserId(account.userId, account.accountId, userId.source))
+          bot.sendMessage(userId.source, lang.accountSwitched(account.username))
+        }
+      case None =>
+        error(s"This is not user [#${userId.userId}] account [#$accountId]")
+    }
+  }
 }
 
 object Account {
 
-  case class SwitchUser(userId: UserId)
+  case class SwitchAccount(userId: UserId)
 
 }

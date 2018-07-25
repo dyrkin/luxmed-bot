@@ -15,13 +15,13 @@ trait Interactional extends Logger {
 
   protected def actorSystem: ActorSystem
 
-  protected val self: Interactional = this
-
   private[base] def initializeConversation(): Unit
 
   private[base] def executeCurrentStep(): Unit
 
   private[base] def makeStepTransition(any: Any): Unit
+
+  protected val self: Interactional = this
 
   private var onDestroy: () => Unit = () => {}
 

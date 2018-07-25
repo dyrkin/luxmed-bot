@@ -23,17 +23,19 @@
   */
 package com.lbs.server.conversation
 
-import akka.actor.{Actor, Cancellable, Props}
+import akka.actor.{ActorSystem, Cancellable}
 import com.lbs.bot.model.{Command, MessageSource}
 import com.lbs.common.Logger
-import com.lbs.server.conversation.Account.SwitchUser
-import com.lbs.server.conversation.Router.DestroyChat
+import com.lbs.server.conversation.Account.SwitchAccount
+import com.lbs.server.conversation.base.Conversation
 
 import scala.collection.mutable
 import scala.concurrent.ExecutionContextExecutor
 import scala.concurrent.duration.DurationLong
 
-class Router(authFactory: MessageSourceTo[Auth]) extends Actor with Logger {
+class Router(authFactory: MessageSourceTo[Auth])(val actorSystem: ActorSystem) extends Conversation[Unit] with Logger {
+
+  private case class DestroyChat(source: MessageSource)
 
   private val chats = mutable.Map.empty[MessageSource, Auth]
 
@@ -41,38 +43,41 @@ class Router(authFactory: MessageSourceTo[Auth]) extends Actor with Logger {
 
   private val idleTimeout = 1.hour
 
-  private implicit val dispatcher: ExecutionContextExecutor = context.system.dispatcher
+  private implicit val dispatcher: ExecutionContextExecutor = actorSystem.dispatcher
 
-  override def receive: Receive = {
-    case cmd@Command(source, _, _) =>
-      scheduleIdleChatDestroyer(source)
-      val chat = chats.get(source) match {
-        case Some(actor) => actor
-        case None => addNewChat(source)
-      }
-      chat ! cmd
-    case DestroyChat(source) =>
-      destroyChat(source)
-    case SwitchUser(userId) =>
-      switchUser(userId)
-    case what => info(s"Unknown message: $what")
-  }
+  entryPoint(routeMessage)
 
-  private def addNewChat(source: MessageSource): Auth = {
-    val actor = authFactory(source)
-    chats += source -> actor
-    actor
+  private def routeMessage: Step =
+    monologue {
+      case Msg(cmd@Command(source, _, _), _) =>
+        val chat = instantiateChatOrGet(source)
+        chat ! cmd
+        stay()
+      case Msg(DestroyChat(source), _) =>
+        info(s"Destroying chat for $source due to $idleTimeout of inactivity")
+        destroyChat(source)
+        stay()
+      case Msg(SwitchAccount(userId), _) =>
+        switchAccount(userId)
+        stay()
+      case msg: Msg =>
+        info(s"Unknown message received: $msg")
+        stay()
+    }
+
+  private def instantiateChatOrGet(source: MessageSource) = {
+    scheduleIdleChatDestroyer(source)
+    chats.getOrElseUpdate(source, authFactory(source))
   }
 
   private def destroyChat(source: MessageSource): Unit = {
-    info(s"Destroying chat for $source due to $idleTimeout of inactivity")
     timers.remove(source)
     removeChat(source)
   }
 
-  private def switchUser(userId: Login.UserId): Unit = {
+  private def switchAccount(userId: Login.UserId): Unit = {
     removeChat(userId.source)
-    addNewChat(userId.source)
+    chats += userId.source -> authFactory(userId.source)
   }
 
   private def removeChat(source: MessageSource): Unit = {
@@ -81,20 +86,13 @@ class Router(authFactory: MessageSourceTo[Auth]) extends Actor with Logger {
 
   private def scheduleIdleChatDestroyer(source: MessageSource): Unit = {
     timers.remove(source).foreach(_.cancel())
-    val cancellable = context.system.scheduler.scheduleOnce(idleTimeout) {
+    val cancellable = actorSystem.scheduler.scheduleOnce(idleTimeout) {
       self ! DestroyChat(source)
     }
     timers += source -> cancellable
   }
 
-  override def postStop(): Unit = {
-    chats.foreach(chat => removeChat(chat._1))
+  beforeDestroy {
+    chats.foreach(chat => destroyChat(chat._1))
   }
-}
-
-object Router {
-  def props(authFactory: MessageSourceTo[Auth]) = Props(new Router(authFactory))
-
-  case class DestroyChat(source: MessageSource)
-
 }

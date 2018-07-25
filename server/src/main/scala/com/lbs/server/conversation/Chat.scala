@@ -50,64 +50,72 @@ class Chat(val userId: UserId, dataService: DataService, monitoringService: Moni
 
   entryPoint(helpChat)
 
-  private def helpChat: Step = dialogue(help) {
-    case Msg(cmd@TextCommand("/help"), _) =>
-      help ! cmd
-      stay()
-    case Msg(cmd@TextCommand("/start"), _) =>
-      help ! cmd
-      stay()
-  }
+  private def helpChat: Step =
+    dialogue(help) {
+      case Msg(cmd@TextCommand("/help"), _) =>
+        help ! cmd
+        stay()
+      case Msg(cmd@TextCommand("/start"), _) =>
+        help ! cmd
+        stay()
+    }
 
-  private def bookChat: Step = dialogue(book) {
-    case Msg(TextCommand("/book"), _) =>
-      book.restart()
-      stay()
-  }
+  private def bookChat: Step =
+    dialogue(book) {
+      case Msg(TextCommand("/book"), _) =>
+        book.restart()
+        stay()
+    }
 
-  private def historyChat: Step = dialogue(history) {
-    case Msg(TextCommand("/history"), _) =>
-      history.restart()
-      stay()
-  }
+  private def historyChat: Step =
+    dialogue(history) {
+      case Msg(TextCommand("/history"), _) =>
+        history.restart()
+        stay()
+    }
 
-  private def visitsChat: Step = dialogue(visits) {
-    case Msg(TextCommand("/reserved"), _) =>
-      visits.restart()
-      stay()
-  }
+  private def visitsChat: Step =
+    dialogue(visits) {
+      case Msg(TextCommand("/reserved"), _) =>
+        visits.restart()
+        stay()
+    }
 
-  private def bugChat: Step = dialogue(bug) {
-    case Msg(TextCommand("/bug"), _) =>
-      bug.restart()
-      stay()
-  }
+  private def bugChat: Step =
+    dialogue(bug) {
+      case Msg(TextCommand("/bug"), _) =>
+        bug.restart()
+        stay()
+    }
 
-  private def monitoringsChat: Step = dialogue(monitorings) {
-    case Msg(TextCommand("/monitorings"), _) =>
-      monitorings.restart()
-      stay()
-  }
+  private def monitoringsChat: Step =
+    dialogue(monitorings) {
+      case Msg(TextCommand("/monitorings"), _) =>
+        monitorings.restart()
+        stay()
+    }
 
-  private def settingsChat: Step = dialogue(settings) {
-    case Msg(TextCommand("/settings"), _) =>
-      settings.restart()
-      stay()
-  }
+  private def settingsChat: Step =
+    dialogue(settings) {
+      case Msg(TextCommand("/settings"), _) =>
+        settings.restart()
+        stay()
+    }
 
-  private def accountChat: Step = dialogue(account) {
-    case Msg(TextCommand("/accounts"), _) =>
-      account.restart()
-      stay()
-  }
+  private def accountChat: Step =
+    dialogue(account) {
+      case Msg(TextCommand("/accounts"), _) =>
+        account.restart()
+        stay()
+    }
 
-  private def dialogue(interactional: Interactional)(mainStateFunction: MessageProcessorFn): Step =
+  private def dialogue(interactional: Interactional)(mainMessageProcessor: MessageProcessorFn): Step =
     monologue {
       case event: Msg =>
-        if (mainStateFunction.isDefinedAt(event)) mainStateFunction(event)
+        if (mainMessageProcessor.isDefinedAt(event)) mainMessageProcessor(event)
         else {
-          val secondaryStateFunction = secondaryState(interactional)
-          secondaryStateFunction(event)
+          val defaultMessageProcessor = secondaryState(interactional)
+          defaultMessageProcessor(event)
         }
     }
 
@@ -139,7 +147,7 @@ class Chat(val userId: UserId, dataService: DataService, monitoringService: Moni
     case Msg(cmd@TextCommand("/accounts"), _) =>
       self ! cmd
       goto(accountChat)
-    case Msg(cmd@TextCommand(MonitoringId(monitoringIdStr, scheduleIdStr, timeStr)), _) =>
+    case Msg(TextCommand(MonitoringId(monitoringIdStr, scheduleIdStr, timeStr)), _) =>
       val monitoringId = monitoringIdStr.toLong
       val scheduleId = scheduleIdStr.toLong
       val time = timeStr.toLong
