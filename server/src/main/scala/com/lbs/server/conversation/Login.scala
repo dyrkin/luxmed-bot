@@ -38,7 +38,7 @@ class Login(source: MessageSource, bot: Bot, dataService: DataService, apiServic
 
   protected var userId: UserId = _
 
-  entryPoint(logIn)
+  entryPoint(logIn, LoginData())
 
   private var forwardCommand: ForwardCommand = _
 
