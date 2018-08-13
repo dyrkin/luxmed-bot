@@ -109,7 +109,7 @@ object En extends Lang {
 
   override def monitoringHasBeenCreated: String = "👍 Monitoring has been created! List of active /monitorings"
 
-  override def unableToCreateMonitoring: String = s"👎 Unable to create monitoring. Please create a /bug"
+  override def unableToCreateMonitoring(reason: String): String = s"👎 Unable to create monitoring. Reason: $reason."
 
   override def chooseTypeOfMonitoring: String = "<b>➡</b> Please choose type of monitoring you want"
 
@@ -303,9 +303,9 @@ object En extends Lang {
        |${capitalizeFirstLetter(clinic)}: ${term.clinic.name}
        |${capitalizeFirstLetter(city)}: ${monitoring.cityName}""".stripMargin
 
-  override def maximumMonitoringsLimitExceeded: String = "Maximum monitorings per user is 5"
+  override def maximumMonitoringsLimitExceeded: String = "Maximum monitorings per user is 10"
 
-  override def monitoringOfTheSameTypeExists: String = "You already have active monitoring for the same service /monitorings"
+  override def monitoringOfTheSameTypeExists: String = "You already have active monitoring for the same service and doctor /monitorings"
 
   override def termIsOutdated: String =
     s"""❗️ Looks like the term is already booked by someone else

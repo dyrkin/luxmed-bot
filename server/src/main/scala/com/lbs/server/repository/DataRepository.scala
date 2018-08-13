@@ -123,15 +123,17 @@ class DataRepository(@Autowired em: EntityManager) {
       .getResultList.asScala
   }
 
-  def findActiveMonitoring(accountId: Long, cityId: Long, serviceId: Long): Option[Monitoring] = {
+  def findActiveMonitoring(accountId: Long, cityId: Long, serviceId: Long, doctorId: Long): Option[Monitoring] = {
     em.createQuery(
       """select monitoring from Monitoring monitoring where monitoring.active = true
         | and monitoring.accountId = :accountId
         | and monitoring.cityId = :cityId
-        | and monitoring.serviceId = :serviceId""".stripMargin, classOf[Monitoring])
+        | and monitoring.serviceId = :serviceId
+        | and monitoring.doctorId = :doctorId""".stripMargin, classOf[Monitoring])
       .setParameter("accountId", accountId)
       .setParameter("cityId", cityId)
       .setParameter("serviceId", serviceId)
+      .setParameter("doctorId", doctorId)
       .getResultList.asScala.headOption
   }
 

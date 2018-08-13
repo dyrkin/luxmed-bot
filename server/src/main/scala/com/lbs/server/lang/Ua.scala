@@ -109,7 +109,7 @@ object Ua extends Lang {
 
   override def monitoringHasBeenCreated: String = "👍 Моніторинг був створений! Список активних /monitorings"
 
-  override def unableToCreateMonitoring: String = s"👎 Не вдається створити моніторинг. Будь ласка, створіть /bug"
+  override def unableToCreateMonitoring(reason: String): String = s"👎 Не вдається створити моніторинг. Причина: $reason."
 
   override def chooseTypeOfMonitoring: String = "<b>➡</b> Будь ласка, виберіть тип моніторингу"
 
@@ -302,9 +302,9 @@ object Ua extends Lang {
        |${capitalizeFirstLetter(clinic)}: ${term.clinic.name}
        |${capitalizeFirstLetter(city)}: ${monitoring.cityName}""".stripMargin
 
-  override def maximumMonitoringsLimitExceeded: String = "Максимальна кількість моніторінгів 5"
+  override def maximumMonitoringsLimitExceeded: String = "Максимальна кількість моніторінгів 10"
 
-  override def monitoringOfTheSameTypeExists: String = "У вас вже є активний моніторинг на таку ж саму послугу /monitorings"
+  override def monitoringOfTheSameTypeExists: String = "У вас вже є активний моніторинг на таку ж саму послугу i лiкаря /monitorings"
 
   override def termIsOutdated: String =
     s"""❗️ Схоже, що термін вже не є доступним

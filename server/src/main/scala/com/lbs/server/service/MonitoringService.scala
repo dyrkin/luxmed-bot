@@ -204,8 +204,8 @@ class MonitoringService extends Logger {
 
   def createMonitoring(monitoring: Monitoring): Monitoring = {
     val userMonitoringsCount = dataService.getActiveMonitoringsCount(monitoring.accountId)
-    require(userMonitoringsCount + 1 <= 5, lang(monitoring.userId).maximumMonitoringsLimitExceeded)
-    val activeMonitoring = dataService.findActiveMonitoring(monitoring.accountId, monitoring.cityId, monitoring.serviceId)
+    require(userMonitoringsCount + 1 <= 10, lang(monitoring.userId).maximumMonitoringsLimitExceeded)
+    val activeMonitoring = dataService.findActiveMonitoring(monitoring.accountId, monitoring.cityId, monitoring.serviceId, monitoring.doctorId)
     require(activeMonitoring.isEmpty, lang(monitoring.userId).monitoringOfTheSameTypeExists)
     dataService.saveMonitoring(monitoring)
   }

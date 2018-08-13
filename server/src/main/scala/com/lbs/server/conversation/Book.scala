@@ -239,7 +239,7 @@ class Book(val userId: UserId, bot: Bot, apiService: ApiService, dataService: Da
       } catch {
         case ex: Exception =>
           error("Unable to create monitoring", ex)
-          bot.sendMessage(userId.source, lang.unableToCreateMonitoring)
+          bot.sendMessage(userId.source, lang.unableToCreateMonitoring(ex.getMessage))
       }
       end()
     }

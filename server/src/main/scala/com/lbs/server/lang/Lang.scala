@@ -99,7 +99,7 @@ trait Lang {
 
   def monitoringHasBeenCreated: String
 
-  def unableToCreateMonitoring: String
+  def unableToCreateMonitoring(reason: String): String
 
   def chooseTypeOfMonitoring: String
 
