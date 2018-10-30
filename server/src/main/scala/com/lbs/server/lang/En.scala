@@ -67,9 +67,9 @@ object En extends Lang {
        |${capitalizeFirstLetter(clinic)}: ${visit.clinic.name}
        |""".stripMargin
 
-  override def chooseDateFrom(exampleDate: ZonedDateTime): String = s"<b>➡</b> Please choose date from or write it manually using format dd MM, e.g. ${formatDateShort(exampleDate)}"
+  override def chooseDateFrom(exampleDate: ZonedDateTime): String = s"<b>➡</b> Please choose date from or write it manually using format dd-MM, e.g. ${formatDateShort(exampleDate)}"
 
-  override def chooseDateTo(exampleDate: ZonedDateTime): String = s"<b>➡</b> Please choose date to or write it manually using format dd MM, e.g. ${formatDateShort(exampleDate)}"
+  override def chooseDateTo(exampleDate: ZonedDateTime): String = s"<b>➡</b> Please choose date to or write it manually using format dd-MM, e.g. ${formatDateShort(exampleDate)}"
 
   override def findTerms: String = "🔍 Find terms"
 
