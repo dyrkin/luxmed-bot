@@ -30,7 +30,7 @@ import com.lbs.api.json.model.{AvailableVisitsTermPresentation, HistoricVisit, R
 import com.lbs.server.conversation.Book
 import com.lbs.server.conversation.StaticData.StaticDataConfig
 import com.lbs.server.repository.model.{Bug, Monitoring}
-import com.lbs.server.util.DateTimeUtil.{formatDate, formatDateTime, formatTime, minutesSinceBeginOf2018}
+import com.lbs.server.util.DateTimeUtil._
 
 object Ua extends Lang {
 
@@ -67,9 +67,9 @@ object Ua extends Lang {
        |${capitalizeFirstLetter(clinic)}: ${visit.clinic.name}
        |""".stripMargin
 
-  override def chooseDateFrom: String = "<b>➡</b> Будь ласка, виберіть початкову дату або введіть її, використовуючи формат dd MM, наприклад 24 08"
+  override def chooseDateFrom(exampleDate: ZonedDateTime): String = s"<b>➡</b> Будь ласка, виберіть початкову дату або введіть її, використовуючи формат dd-MM, наприклад ${formatDateShort(exampleDate)}"
 
-  override def chooseDateTo: String = "<b>➡</b> Будь ласка, виберіть кінцеву дату або введіть її, використовуючи формат dd MM, наприклад 24 08"
+  override def chooseDateTo(exampleDate: ZonedDateTime): String = s"<b>➡</b> Будь ласка, виберіть кінцеву дату або введіть її, використовуючи формат dd-MM, наприклад ${formatDateShort(exampleDate)}"
 
   override def findTerms: String = "🔍 Знайти терміни"
 
@@ -363,9 +363,9 @@ object Ua extends Lang {
 
   override def moreParameters: String = "🛠 Більше налаштувань"
 
-  override def chooseTimeFrom: String = "<b>➡</b> Будь ласка, виберіть початковий час або введіть час, використовуючи формат HH mm, наприклад 16 30"
+  override def chooseTimeFrom(exampleTime: LocalTime): String = s"<b>➡</b> Будь ласка, виберіть початковий час або введіть час, використовуючи формат HH:mm, наприклад ${formatTime(exampleTime)}"
 
-  override def chooseTimeTo: String = "<b>➡</b> Будь ласка, виберіть кінцевий час або введіть час, використовуючи формат HH mm, наприклад 16 30"
+  override def chooseTimeTo(exampleTime: LocalTime): String = s"<b>➡</b> Будь ласка, виберіть кінцевий час або введіть час, використовуючи формат HH:mm, наприклад ${formatTime(exampleTime)}"
 
   override def timeFromIs(timeFrom: LocalTime): String = s"⏱ Початковий час  ${formatTime(timeFrom)}"
 

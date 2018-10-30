@@ -144,15 +144,15 @@ package object util {
   object DateTimeUtil {
     private val DateFormat: Locale => DateTimeFormatter = locale => DateTimeFormatter.ofPattern("dd MMM yyyy", locale)
 
-    private val DayMonthFormat = DateTimeFormatter.ofPattern("dd MM")
-
-    private val HourMinuteFormat = DateTimeFormatter.ofPattern("HH mm")
+    private val DateShortFormat = DateTimeFormatter.ofPattern("dd-MM")
 
     private val TimeFormat: DateTimeFormatter = DateTimeFormatter.ofPattern("HH:mm")
 
     private val DateTimeFormat: Locale => DateTimeFormatter = locale => DateTimeFormatter.ofPattern("EEE',' dd MMM yyyy',' HH:mm", locale)
 
     def formatDate(date: ZonedDateTime, locale: Locale): String = date.format(DateFormat(locale))
+
+    def formatDateShort(date: ZonedDateTime): String = date.format(DateShortFormat)
 
     def formatTime(time: LocalTime): String = time.format(TimeFormat)
 
@@ -165,14 +165,14 @@ package object util {
     def minutesSinceBeginOf2018(time: ZonedDateTime): Long = epochMinutes(time) - EpochMinutesTillBeginOf2018
 
     def applyDayMonth(dayMonthStr: String, date: ZonedDateTime): ZonedDateTime = {
-      val dayMonth = MonthDay.parse(dayMonthStr, DayMonthFormat)
+      val dayMonth = MonthDay.parse(dayMonthStr, DateShortFormat)
       val newDate = date.withDayOfMonth(dayMonth.getDayOfMonth).withMonth(dayMonth.getMonthValue)
 
       if (newDate.isBefore(date)) newDate.plusYears(1) else newDate
     }
 
     def applyHourMinute(hourMinuteStr: String): LocalTime = {
-      LocalTime.parse(hourMinuteStr, HourMinuteFormat)
+      LocalTime.parse(hourMinuteStr, TimeFormat)
     }
   }
 

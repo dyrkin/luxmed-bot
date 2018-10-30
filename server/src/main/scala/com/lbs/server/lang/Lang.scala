@@ -69,13 +69,13 @@ trait Lang {
 
   def areYouSureToCancelAppointment(visit: ReservedVisit): String
 
-  def chooseDateFrom: String
+  def chooseDateFrom(exampleDate: ZonedDateTime): String
 
-  def chooseDateTo: String
+  def chooseDateTo(exampleDate: ZonedDateTime): String
 
-  def chooseTimeFrom: String
+  def chooseTimeFrom(exampleTime: LocalTime): String
 
-  def chooseTimeTo: String
+  def chooseTimeTo(exampleTime: LocalTime): String
 
   def findTerms: String
 

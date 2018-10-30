@@ -32,6 +32,10 @@ import com.lbs.server.conversation.Login.UserId
 import com.lbs.server.conversation.TimePicker.{Mode, Tags, TimeFromMode, TimeToMode}
 import com.lbs.server.conversation.base.{Conversation, Interactional}
 import com.lbs.server.lang.{Localizable, Localization}
+import com.lbs.server.util.DateTimeUtil.applyHourMinute
+import com.lbs.server.util.MessageExtractors.{CallbackCommand, TextCommand}
+
+import scala.util.control.NonFatal
 
 /**
   * Time picker Inline Keyboard
@@ -57,23 +61,41 @@ class TimePicker(val userId: UserId, val bot: Bot, val localization: Localizatio
     }
 
   def requestTime: Step =
-    ask { initialDate =>
+    ask { initialTime =>
       val message = mode match {
-        case TimeFromMode => lang.chooseTimeFrom
-        case TimeToMode => lang.chooseTimeTo
+        case TimeFromMode => lang.chooseTimeFrom(initialTime)
+        case TimeToMode => lang.chooseTimeTo(initialTime)
       }
-      bot.sendMessage(userId.source, message, inlineKeyboard = timeButtons(initialDate))
+      bot.sendMessage(userId.source, message, inlineKeyboard = timeButtons(initialTime))
     } onReply {
-      case Msg(Command(_, msg, Some(Tags.Done)), selectedTime) =>
+      case Msg(cmd@CallbackCommand(Tags.Done), selectedTime) =>
         val message = mode match {
           case TimeFromMode =>
             lang.timeFromIs(selectedTime)
           case TimeToMode =>
             lang.timeToIs(selectedTime)
         }
-        bot.sendEditMessage(userId.source, msg.messageId, message)
+        bot.sendEditMessage(userId.source, cmd.message.messageId, message)
         originator ! selectedTime
         end()
+      case Msg(TextCommand(hourMinute), _) =>
+        try {
+          val time = applyHourMinute(hourMinute)
+          val message = mode match {
+            case TimeFromMode =>
+              lang.timeFromIs(time)
+            case TimeToMode =>
+              lang.timeToIs(time)
+          }
+          bot.sendMessage(userId.source, message)
+          originator ! time
+          end()
+        } catch {
+          case NonFatal(ex) =>
+            error("Unable to parse time", ex)
+            bot.sendMessage(userId.source, "Incorrect time. Please use format HH:mm")
+            goto(requestTime)
+        }
       case Msg(Command(_, msg, Some(tag)), time) =>
         val modifiedTime = modifyTime(time, tag)
         bot.sendEditMessage(userId.source, msg.messageId, inlineKeyboard = timeButtons(modifiedTime))

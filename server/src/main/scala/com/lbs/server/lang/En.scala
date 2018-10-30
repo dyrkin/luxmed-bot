@@ -30,7 +30,7 @@ import com.lbs.api.json.model.{AvailableVisitsTermPresentation, HistoricVisit, R
 import com.lbs.server.conversation.Book
 import com.lbs.server.conversation.StaticData.StaticDataConfig
 import com.lbs.server.repository.model.{Bug, Monitoring}
-import com.lbs.server.util.DateTimeUtil.{formatDate, formatDateTime, formatTime, minutesSinceBeginOf2018}
+import com.lbs.server.util.DateTimeUtil._
 
 object En extends Lang {
 
@@ -67,9 +67,9 @@ object En extends Lang {
        |${capitalizeFirstLetter(clinic)}: ${visit.clinic.name}
        |""".stripMargin
 
-  override def chooseDateFrom: String = "<b>➡</b> Please choose date from or write it manually using format dd MM, e.g. 24 08"
+  override def chooseDateFrom(exampleDate: ZonedDateTime): String = s"<b>➡</b> Please choose date from or write it manually using format dd MM, e.g. ${formatDateShort(exampleDate)}"
 
-  override def chooseDateTo: String = "<b>➡</b> Please choose date to or write it manually using format dd MM, e.g. 24 08"
+  override def chooseDateTo(exampleDate: ZonedDateTime): String = s"<b>➡</b> Please choose date to or write it manually using format dd MM, e.g. ${formatDateShort(exampleDate)}"
 
   override def findTerms: String = "🔍 Find terms"
 
@@ -364,9 +364,9 @@ object En extends Lang {
 
   override def moreParameters: String = "🛠 More parameters"
 
-  override def chooseTimeFrom: String = "<b>➡</b> Please choose time from or write time using format HH mm, e.g. 16 30"
+  override def chooseTimeFrom(exampleTime: LocalTime): String = s"<b>➡</b> Please choose time from or write time using format HH:mm, e.g. ${formatTime(exampleTime)}"
 
-  override def chooseTimeTo: String = "<b>➡</b> Please choose time to or write time using format HH mm, e.g. 16 30"
+  override def chooseTimeTo(exampleTime: LocalTime): String = s"<b>➡</b> Please choose time to or write time using format HH:mm, e.g. ${formatTime(exampleTime)}"
 
   override def timeFromIs(timeFrom: LocalTime): String = s"⏱ Time from is ${formatTime(timeFrom)}"
 
