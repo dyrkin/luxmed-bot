@@ -128,11 +128,11 @@ package object util {
   object MessageExtractors {
 
     object TextCommand {
-      def unapply(cmd: Command): Option[String] = cmd.message.text.filter(_.nonEmpty)
+      def unapply(cmd: Command): Option[String] = if(cmd.callbackData.isEmpty) cmd.message.text.filter(_.nonEmpty) else None
     }
 
     object OptionalTextCommand {
-      def unapply(cmd: Command): Option[Option[String]] = Some(TextCommand.unapply(cmd))
+      def unapply(cmd: Command): Option[Option[String]] = if(cmd.callbackData.isEmpty) Some(TextCommand.unapply(cmd)) else None
     }
 
     object CallbackCommand {

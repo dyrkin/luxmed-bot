@@ -26,7 +26,7 @@ package com.lbs.server.conversation
 import java.time.LocalTime
 
 import akka.actor.ActorSystem
-import com.lbs.bot.model.{Button, Command}
+import com.lbs.bot.model.Button
 import com.lbs.bot.{Bot, _}
 import com.lbs.server.conversation.Login.UserId
 import com.lbs.server.conversation.TimePicker.{Mode, Tags, TimeFromMode, TimeToMode}
@@ -96,9 +96,9 @@ class TimePicker(val userId: UserId, val bot: Bot, val localization: Localizatio
             bot.sendMessage(userId.source, "Incorrect time. Please use format HH:mm")
             goto(requestTime)
         }
-      case Msg(Command(_, msg, Some(tag)), time) =>
+      case Msg(cmd@CallbackCommand(tag), time) =>
         val modifiedTime = modifyTime(time, tag)
-        bot.sendEditMessage(userId.source, msg.messageId, inlineKeyboard = timeButtons(modifiedTime))
+        bot.sendEditMessage(userId.source, cmd.message.messageId, inlineKeyboard = timeButtons(modifiedTime))
         stay() using modifiedTime
     }
 

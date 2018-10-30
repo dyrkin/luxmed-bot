@@ -27,7 +27,7 @@ import java.time.format.TextStyle
 import java.time.{LocalTime, ZonedDateTime}
 
 import akka.actor.ActorSystem
-import com.lbs.bot.model.{Button, Command}
+import com.lbs.bot.model.Button
 import com.lbs.bot.{Bot, _}
 import com.lbs.server.conversation.DatePicker._
 import com.lbs.server.conversation.Login.UserId
@@ -101,9 +101,9 @@ class DatePicker(val userId: UserId, val bot: Bot, val localization: Localizatio
             bot.sendMessage(userId.source, "Incorrect date. Please use format dd-MM")
             goto(requestDate)
         }
-      case Msg(Command(_, msg, Some(tag)), date) =>
+      case Msg(cmd@CallbackCommand(tag), date) =>
         val modifiedDate = modifyDate(date, tag)
-        bot.sendEditMessage(userId.source, msg.messageId, inlineKeyboard = dateButtons(modifiedDate))
+        bot.sendEditMessage(userId.source, cmd.message.messageId, inlineKeyboard = dateButtons(modifiedDate))
         stay() using modifiedDate
     }
 
