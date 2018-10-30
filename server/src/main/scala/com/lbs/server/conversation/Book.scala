@@ -38,8 +38,11 @@ import com.lbs.server.conversation.base.Conversation
 import com.lbs.server.lang.{Localizable, Localization}
 import com.lbs.server.repository.model.Monitoring
 import com.lbs.server.service.{ApiService, DataService, MonitoringService}
-import com.lbs.server.util.MessageExtractors.CallbackCommand
+import com.lbs.server.util.DateTimeUtil._
+import com.lbs.server.util.MessageExtractors.{CallbackCommand, TextCommand}
 import com.lbs.server.util.ServerModelConverters._
+
+import scala.util.control.NonFatal
 
 class Book(val userId: UserId, bot: Bot, apiService: ApiService, dataService: DataService, monitoringService: MonitoringService,
            val localization: Localization, datePickerFactory: UserIdWithOriginatorTo[DatePicker], timePickerFactory: UserIdWithOriginatorTo[TimePicker],
@@ -90,9 +93,20 @@ class Book(val userId: UserId, bot: Bot, apiService: ApiService, dataService: Da
       datePicker ! DateFromMode
       datePicker ! bookingData.dateFrom
     } onReply {
-      case Msg(cmd: Command, _) =>
+      case Msg(cmd@CallbackCommand(_), _) =>
         datePicker ! cmd
         stay()
+      case Msg(TextCommand(dayMonth), bookingData) =>
+        try {
+          val date = applyDayMonth(dayMonth, bookingData.dateFrom)
+          bot.sendMessage(userId.source, lang.dateFromIs(date))
+          goto(requestDateTo) using bookingData.copy(dateFrom = date)
+        } catch {
+          case NonFatal(ex) =>
+            error("Unable to parse date", ex)
+            bot.sendMessage(userId.source, "Incorrect date. Please use format dd MM")
+            goto(requestDateFrom)
+        }
       case Msg(date: ZonedDateTime, bookingData: BookingData) =>
         goto(requestDateTo) using bookingData.copy(dateFrom = date)
     }
@@ -103,9 +117,20 @@ class Book(val userId: UserId, bot: Bot, apiService: ApiService, dataService: Da
       datePicker ! DateToMode
       datePicker ! bookingData.dateFrom.plusDays(1)
     } onReply {
-      case Msg(cmd: Command, _) =>
+      case Msg(cmd@CallbackCommand(_), _) =>
         datePicker ! cmd
         stay()
+      case Msg(TextCommand(dayMonth), bookingData) =>
+        try {
+          val date = applyDayMonth(dayMonth, bookingData.dateTo)
+          bot.sendMessage(userId.source, lang.dateToIs(date))
+          goto(requestTimeFrom) using bookingData.copy(dateTo = date)
+        } catch {
+          case NonFatal(ex) =>
+            error("Unable to parse date", ex)
+            bot.sendMessage(userId.source, "Incorrect date. Please use format dd MM")
+            goto(requestDateTo)
+        }
       case Msg(date: ZonedDateTime, bookingData: BookingData) =>
         goto(requestTimeFrom) using bookingData.copy(dateTo = date)
     }
@@ -116,9 +141,20 @@ class Book(val userId: UserId, bot: Bot, apiService: ApiService, dataService: Da
       timePicker ! TimeFromMode
       timePicker ! bookingData.timeFrom
     } onReply {
-      case Msg(cmd: Command, _) =>
+      case Msg(cmd@CallbackCommand(_), _) =>
         timePicker ! cmd
         stay()
+      case Msg(TextCommand(hourMinute), bookingData) =>
+        try {
+          val time = applyHourMinute(hourMinute)
+          bot.sendMessage(userId.source, lang.timeFromIs(time))
+          goto(requestTimeTo) using bookingData.copy(timeFrom = time)
+        } catch {
+          case NonFatal(ex) =>
+            error("Unable to parse time", ex)
+            bot.sendMessage(userId.source, "Incorrect time. Please use format HH mm")
+            goto(requestTimeFrom)
+        }
       case Msg(time: LocalTime, bookingData: BookingData) =>
         goto(requestTimeTo) using bookingData.copy(timeFrom = time)
     }
@@ -129,9 +165,20 @@ class Book(val userId: UserId, bot: Bot, apiService: ApiService, dataService: Da
       timePicker ! TimeToMode
       timePicker ! bookingData.timeTo
     } onReply {
-      case Msg(cmd: Command, _) =>
+      case Msg(cmd@CallbackCommand(_), _) =>
         timePicker ! cmd
         stay()
+      case Msg(TextCommand(hourMinute), bookingData) =>
+        try {
+          val time = applyHourMinute(hourMinute)
+          bot.sendMessage(userId.source, lang.timeToIs(time))
+          goto(requestAction) using bookingData.copy(timeTo = time)
+        } catch {
+          case NonFatal(ex) =>
+            error("Unable to parse time", ex)
+            bot.sendMessage(userId.source, "Incorrect time. Please use format HH mm")
+            goto(requestTimeTo)
+        }
       case Msg(time: LocalTime, bookingData: BookingData) =>
         goto(requestAction) using bookingData.copy(timeTo = time)
     }
@@ -147,8 +194,9 @@ class Book(val userId: UserId, bot: Bot, apiService: ApiService, dataService: Da
     } onReply {
       case Msg(CallbackCommand(Tags.FindTerms), _) =>
         goto(requestTerm)
-      case Msg(CallbackCommand(Tags.ModifyDate), _) =>
-        goto(requestDateFrom)
+      case Msg(CallbackCommand(Tags.ModifyDate), bookingData) =>
+        goto(requestDateFrom) using bookingData.copy(dateFrom = ZonedDateTime.now(),
+          dateTo = ZonedDateTime.now().plusDays(1L))
     }
 
   private def requestTerm: Step =

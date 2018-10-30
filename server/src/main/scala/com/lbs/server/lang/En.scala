@@ -67,9 +67,9 @@ object En extends Lang {
        |${capitalizeFirstLetter(clinic)}: ${visit.clinic.name}
        |""".stripMargin
 
-  override def chooseDateFrom: String = "<b>➡</b> Please choose date from"
+  override def chooseDateFrom: String = "<b>➡</b> Please choose date from or write it manually using format dd MM, e.g. 24 08"
 
-  override def chooseDateTo: String = "<b>➡</b> Please choose date to"
+  override def chooseDateTo: String = "<b>➡</b> Please choose date to or write it manually using format dd MM, e.g. 24 08"
 
   override def findTerms: String = "🔍 Find terms"
 
@@ -364,9 +364,9 @@ object En extends Lang {
 
   override def moreParameters: String = "🛠 More parameters"
 
-  override def chooseTimeFrom: String = "<b>➡</b> Please choose time from"
+  override def chooseTimeFrom: String = "<b>➡</b> Please choose time from or write time using format HH mm, e.g. 16 30"
 
-  override def chooseTimeTo: String = "<b>➡</b> Please choose time to"
+  override def chooseTimeTo: String = "<b>➡</b> Please choose time to or write time using format HH mm, e.g. 16 30"
 
   override def timeFromIs(timeFrom: LocalTime): String = s"⏱ Time from is ${formatTime(timeFrom)}"
 

@@ -23,8 +23,8 @@
   */
 package com.lbs.server
 
+import java.time._
 import java.time.format.DateTimeFormatter
-import java.time.{LocalTime, ZoneId, ZonedDateTime}
 import java.util.Locale
 
 import com.lbs.api.json.model._
@@ -128,11 +128,11 @@ package object util {
   object MessageExtractors {
 
     object TextCommand {
-      def unapply(cmd: Command): Option[String] = cmd.message.text
+      def unapply(cmd: Command): Option[String] = cmd.message.text.filter(_.nonEmpty)
     }
 
     object OptionalTextCommand {
-      def unapply(cmd: Command): Option[Option[String]] = Some(cmd.message.text)
+      def unapply(cmd: Command): Option[Option[String]] = Some(TextCommand.unapply(cmd))
     }
 
     object CallbackCommand {
@@ -143,6 +143,10 @@ package object util {
 
   object DateTimeUtil {
     private val DateFormat: Locale => DateTimeFormatter = locale => DateTimeFormatter.ofPattern("dd MMM yyyy", locale)
+
+    private val DayMonthFormat = DateTimeFormatter.ofPattern("dd MM")
+
+    private val HourMinuteFormat = DateTimeFormatter.ofPattern("HH mm")
 
     private val TimeFormat: DateTimeFormatter = DateTimeFormatter.ofPattern("HH:mm")
 
@@ -159,6 +163,17 @@ package object util {
     def epochMinutes(time: ZonedDateTime): Long = time.toInstant.getEpochSecond / 60
 
     def minutesSinceBeginOf2018(time: ZonedDateTime): Long = epochMinutes(time) - EpochMinutesTillBeginOf2018
+
+    def applyDayMonth(dayMonthStr: String, date: ZonedDateTime): ZonedDateTime = {
+      val dayMonth = MonthDay.parse(dayMonthStr, DayMonthFormat)
+      val newDate = date.withDayOfMonth(dayMonth.getDayOfMonth).withMonth(dayMonth.getMonthValue)
+
+      if (newDate.isBefore(date)) newDate.plusYears(1) else newDate
+    }
+
+    def applyHourMinute(hourMinuteStr: String): LocalTime = {
+      LocalTime.parse(hourMinuteStr, HourMinuteFormat)
+    }
   }
 
 }
