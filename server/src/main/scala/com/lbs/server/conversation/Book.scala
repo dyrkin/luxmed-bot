@@ -147,8 +147,9 @@ class Book(val userId: UserId, bot: Bot, apiService: ApiService, dataService: Da
     } onReply {
       case Msg(CallbackCommand(Tags.FindTerms), _) =>
         goto(requestTerm)
-      case Msg(CallbackCommand(Tags.ModifyDate), _) =>
-        goto(requestDateFrom)
+      case Msg(CallbackCommand(Tags.ModifyDate), bookingData) =>
+        goto(requestDateFrom) using bookingData.copy(dateFrom = ZonedDateTime.now(),
+          dateTo = ZonedDateTime.now().plusDays(1L))
     }
 
   private def requestTerm: Step =
@@ -182,8 +183,9 @@ class Book(val userId: UserId, bot: Bot, apiService: ApiService, dataService: Da
       bot.sendMessage(userId.source, lang.noTermsFound, inlineKeyboard =
         createInlineKeyboard(Seq(Button(lang.modifyDate, Tags.ModifyDate), Button(lang.createMonitoring, Tags.CreateMonitoring))))
     } onReply {
-      case Msg(CallbackCommand(Tags.ModifyDate), _) =>
-        goto(requestDateFrom)
+      case Msg(CallbackCommand(Tags.ModifyDate), bookingData) =>
+        goto(requestDateFrom) using bookingData.copy(dateFrom = ZonedDateTime.now(),
+          dateTo = ZonedDateTime.now().plusDays(1L))
       case Msg(CallbackCommand(Tags.CreateMonitoring), _) =>
         goto(askMonitoringOptions)
     }
