@@ -1,8 +1,6 @@
-import org.apache.tools.ant.filters.ReplaceTokens
-
 buildscript {
     ext {
-        springBootVersion = '2.0.2.RELEASE'
+        springBootVersion = '2.1.1.RELEASE'
     }
     repositories {
         mavenCentral()
@@ -34,23 +32,9 @@ dependencies {
     testCompile('com.typesafe.akka:akka-testkit_2.12:2.4.19')
 }
 
-task replaceTokens(type: Copy) {
-    def finalBuildName = project.name + '-' + project.version
-
-    from 'src/main/docker'
-    into 'build/docker'
-    filter(ReplaceTokens, tokens:
-            ['project.build.finalName': finalBuildName,
-             "TELEGRAM_TOKEN"         : System.getenv()['TELEGRAM_TOKEN'],
-             "SECURITY_SECRET"        : System.getenv()['SECURITY_SECRET']
-            ])
-}
-
-task copyJar(type: Copy) {
+task prepare(type: Copy) {
     dependsOn assemble
     from file("${project.buildDir}/libs")
-    into file("${project.buildDir}/docker")
+    into file("${project.rootDir}/docker")
 }
-
-task makeDockerFile(type: Copy, dependsOn: [replaceTokens, copyJar])
 

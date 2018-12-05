@@ -18,7 +18,7 @@ banner:
   location: "classpath:/banner.txt"
 
 logging:
-  file: log/app.log
+  file: /lbs/log/app.log
   level:
     com.lbs: DEBUG
 #    org.hibernate.SQL: DEBUG

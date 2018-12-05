@@ -1,18 +1,25 @@
-version: '3'
+version: '3.4'
 services:
   luxmedbookingservice:
      build: .
      environment:
-       TELEGRAM_TOKEN: ${TELEGRAM_TOKEN}
-       SECURITY_SECRET: ${SECURITY_SECRET}
        DB_HOST: "database"
      volumes:
-        - ./log:/usr/local/luxmedbookingservice/log
+        - lbs:/lbs
+
   database:
-      image: postgres:9.5
+      image: postgres:10.6
+      volumes:
+        - postgres:/var/lib/postgresql/data
       ports:
         - "5432:5432"
       environment:
         - POSTGRES_USER=lbs
         - POSTGRES_PASSWORD=lsb123
         - POSTGRES_DB=lbs
+
+volumes:
+  postgres:
+    name: postgres
+  lbs:
+    name: lbs
