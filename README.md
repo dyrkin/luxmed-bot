@@ -14,15 +14,11 @@ It is available here [@luxmedbot](https://telegram.me/luxmedbot)
 
 1. create telegram bot using [@BotFather](https://telegram.me/botfather)
 2. install **docker** and **docker-compose**
-3. clone repository and build project:
-    ```bash
-    $ ./gradlew prepare
-    ```
-4. create a docker volume and name it **lbs**:
+3. create a docker volume and name it **lbs**:
     ```bash
     $ docker volume create lbs
     ```
-5. find physical location of the volume:
+4. find physical location of the volume:
     ```bash
     docker volume inspect lbs
     ```
@@ -44,15 +40,15 @@ It is available here [@luxmedbot](https://telegram.me/luxmedbot)
         }
     ]
     ```   
-6. using value from **Mountpoint** create **config** folder:
+5. using value from **Mountpoint** create **config** folder:
     ```bash
     mkdir /var/lib/docker/volumes/lbs/_data/config
     ```
-7. create env file in that folder
+6. create env file in that folder
     ```bash
     touch /var/lib/docker/volumes/lbs/_data/config/env
     ```
-8. edit file and add **TELEGRAM_TOKEN** and **SECURITY_SECRET**
+7. edit the file by adding **TELEGRAM_TOKEN** and **SECURITY_SECRET**
     ```bash
     nano /var/lib/docker/volumes/lbs/_data/config/env
     ```
@@ -60,11 +56,12 @@ It is available here [@luxmedbot](https://telegram.me/luxmedbot)
     SECURITY_SECRET=randomly generated string
     TELEGRAM_TOKEN=12345678:telegram token
     ```
-4. go to the **docker** folder inside the project and run command
+8. download [docker-compose.xml](https://raw.githubusercontent.com/dyrkin/luxmed-booking-service/master/docker/docker-compose.yml) 
+9. go to folder with downloaded **docker-compose.xml** and run command:
     ```bash
     $ docker-compose up
     ```
-5. send `/start` command to your bot
+10. send `/start` command to your bot
 
 
 
