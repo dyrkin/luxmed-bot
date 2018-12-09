@@ -1,37 +1,37 @@
 /**
- * MIT License
- *
- * Copyright (c) 2018 Yevhen Zadyra
- *
- * Permission is hereby granted, free of charge, to any person obtaining a copy
- * of this software and associated documentation files (the "Software"), to deal
- * in the Software without restriction, including without limitation the rights
- * to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
- * copies of the Software, and to permit persons to whom the Software is
- * furnished to do so, subject to the following conditions:
- *
- * The above copyright notice and this permission notice shall be included in all
- * copies or substantial portions of the Software.
- *
- * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
- * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
- * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
- * AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
- * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
- * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
- * SOFTWARE.
- */
+  * MIT License
+  *
+  * Copyright (c) 2018 Yevhen Zadyra
+  *
+  * Permission is hereby granted, free of charge, to any person obtaining a copy
+  * of this software and associated documentation files (the "Software"), to deal
+  * in the Software without restriction, including without limitation the rights
+  * to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+  * copies of the Software, and to permit persons to whom the Software is
+  * furnished to do so, subject to the following conditions:
+  *
+  * The above copyright notice and this permission notice shall be included in all
+  * copies or substantial portions of the Software.
+  *
+  * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+  * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+  * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+  * AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+  * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+  * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+  * SOFTWARE.
+  */
 package com.lbs.api
 
 import java.time.ZonedDateTime
 import java.time.format.DateTimeFormatter
 
+import com.lbs.api.ApiResponseMutators._
 import com.lbs.api.http._
 import com.lbs.api.http.headers._
 import com.lbs.api.json.JsonSerializer.extensions._
 import com.lbs.api.json.model._
 import scalaj.http.{HttpRequest, HttpResponse}
-import com.lbs.api.ApiResponseMutators._
 
 object LuxmedApi extends ApiBase {
 
@@ -148,6 +148,42 @@ object LuxmedApi extends ApiBase {
     delete(request)
   }
 
+  //204 means OK?
+  def canTermBeChanged(accessToken: String, tokenType: String, reservationId: Long): Either[Throwable, HttpResponse[String]] = {
+    val request = http(s"visits/reserved/$reservationId/can-term-be-changed").
+      header(`Content-Type`, "application/json").
+      header(Authorization, s"$tokenType $accessToken")
+    get(request)
+  }
+
+  def detailToChangeTerm(accessToken: String, tokenType: String, reservationId: Long): Either[Throwable, ChangeTermDetailsResponse] = {
+    val request = http(s"visits/reserved/$reservationId/details-to-change-term").
+      header(`Content-Type`, "application/json").
+      header(Authorization, s"$tokenType $accessToken")
+    get[ChangeTermDetailsResponse](request)
+  }
+
+  def temporaryReservationToChangeTerm(accessToken: String, tokenType: String, reservationId: Long, temporaryReservationRequest: TemporaryReservationRequest): Either[Throwable, TemporaryReservationResponse] = {
+    val request = http(s"visits/reserved/$reservationId/temporary-reservation-to-change-term").
+      header(`Content-Type`, "application/json").
+      header(Authorization, s"$tokenType $accessToken")
+    post[TemporaryReservationResponse](request, bodyOpt = Some(temporaryReservationRequest))
+  }
+
+  def valuationToChangeTerm(accessToken: String, tokenType: String, reservationId: Long, valuationsRequest: ValuationsRequest): Either[Throwable, ValuationsResponse] = {
+    val request = http(s"visits/reserved/$reservationId/valuations-to-change-term").
+      header(`Content-Type`, "application/json").
+      header(Authorization, s"$tokenType $accessToken")
+    post[ValuationsResponse](request, bodyOpt = Some(valuationsRequest))
+  }
+
+  def changeTerm(accessToken: String, tokenType: String, reservationId: Long, reservationRequest: ReservationRequest): Either[Throwable, ChangeTermResponse] = {
+    val request = http(s"visits/reserved/$reservationId/term").
+      header(`Content-Type`, "application/json").
+      header(Authorization, s"$tokenType $accessToken")
+    put[ChangeTermResponse](request, bodyOpt = Some(reservationRequest))
+  }
+
   private def get[T <: SerializableJsonObject](request: HttpRequest)(implicit mf: scala.reflect.Manifest[T]): Either[Throwable, T] = {
     request.toEither.map(_.body.as[T])
   }
@@ -158,6 +194,14 @@ object LuxmedApi extends ApiBase {
       case None => request.postForm
     }
     postRequest.toEither.map(_.body.as[T])
+  }
+
+  private def put[T <: SerializableJsonObject](request: HttpRequest, bodyOpt: Option[SerializableJsonObject] = None)(implicit mf: scala.reflect.Manifest[T]): Either[Throwable, T] = {
+    val putRequest = bodyOpt match {
+      case Some(body) => request.put(body.asJson)
+      case None => request.method("PUT")
+    }
+    putRequest.toEither.map(_.body.as[T])
   }
 
   private def delete(request: HttpRequest): Either[Throwable, HttpResponse[String]] = {
