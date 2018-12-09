@@ -1,22 +1,22 @@
 version: '3.4'
 services:
   luxmedbookingservice:
-     image: eugenezadyra/luxmed-bot:1.0.0
-     environment:
-       DB_HOST: "database"
-     volumes:
-        - lbs:/lbs
+    image: eugenezadyra/luxmed-bot:1.0.0
+    environment:
+      DB_HOST: "database"
+    volumes:
+    - lbs:/lbs
 
   database:
-      image: postgres:10.6
-      volumes:
-        - postgres:/var/lib/postgresql/data
-      ports:
-        - "5432:5432"
-      environment:
-        - POSTGRES_USER=lbs
-        - POSTGRES_PASSWORD=lsb123
-        - POSTGRES_DB=lbs
+    image: postgres:10.6
+    volumes:
+    - postgres:/var/lib/postgresql/data
+    ports:
+    - "5432:5432"
+    environment:
+    - POSTGRES_USER=lbs
+    - POSTGRES_PASSWORD=lsb123
+    - POSTGRES_DB=lbs
 
 volumes:
   postgres:
