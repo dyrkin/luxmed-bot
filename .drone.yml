@@ -19,3 +19,4 @@ pipeline:
     context: ./docker/
     when:
       branch: master
+      event: push
