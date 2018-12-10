@@ -1,6 +1,7 @@
 # Luxmed Booking Service
 
-[![Build Status](https://travis-ci.org/dyrkin/luxmed-booking-service.svg?branch=master)](https://travis-ci.org/dyrkin/luxmed-booking-service)
+[![Build Status](https://cloud.drone.io/api/badges/dyrkin/luxmed-booking-service/status.svg?branch=master)](https://cloud.drone.io/dyrkin/luxmed-booking-service)
+[![Docker Hub](https://img.shields.io/badge/image-latest-blue.svg?logo=docker&style=flat)](https://hub.docker.com/r/eugenezadyra/luxmed-bot/tags/)
 
 Non official Telegram bot for **Portal Pacjenta LUX MED**.
 
