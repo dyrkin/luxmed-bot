@@ -131,7 +131,7 @@ object LuxmedApi extends ApiBase {
     val request = http(s"visits/reserved/$reservationId/can-term-be-changed").
       header(`Content-Type`, "application/json").
       header(Authorization, s"$tokenType $accessToken")
-    get(request)
+    request.toEither
   }
 
   def detailToChangeTerm(accessToken: String, tokenType: String, reservationId: Long): Either[Throwable, ChangeTermDetailsResponse] = {
