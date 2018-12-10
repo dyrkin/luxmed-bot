@@ -79,6 +79,10 @@ class Monitoring extends RecordId {
   var autobook: Boolean = false
 
   @BeanProperty
+  @Column(name = "rebook_if_exists", nullable = false)
+  var rebookIfExists: Boolean = false
+
+  @BeanProperty
   @Column(nullable = false)
   var created: ZonedDateTime = _
 
@@ -90,7 +94,7 @@ class Monitoring extends RecordId {
 object Monitoring {
   def apply(userId: Long, accountId: Long, chatId: String, sourceSystemId: Long, cityId: Long, cityName: String, clinicId: Option[Long], clinicName: String,
             serviceId: Long, serviceName: String, doctorId: Option[Long], doctorName: String, dateFrom: ZonedDateTime,
-            dateTo: ZonedDateTime, autobook: Boolean = false, created: ZonedDateTime = ZonedDateTime.now(), timeFrom: LocalTime, timeTo: LocalTime,
+            dateTo: ZonedDateTime, autobook: Boolean = false, rebookIfExists: Boolean = false, created: ZonedDateTime = ZonedDateTime.now(), timeFrom: LocalTime, timeTo: LocalTime,
             active: Boolean = true): Monitoring = {
     val monitoring = new Monitoring
     monitoring.userId = userId
@@ -110,6 +114,7 @@ object Monitoring {
     monitoring.timeFrom = timeFrom
     monitoring.timeTo = timeTo
     monitoring.autobook = autobook
+    monitoring.rebookIfExists = rebookIfExists
     monitoring.created = created
     monitoring.active = active
     monitoring

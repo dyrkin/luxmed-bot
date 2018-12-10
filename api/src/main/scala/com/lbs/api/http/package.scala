@@ -56,18 +56,19 @@ package object http extends Logger {
     }
 
     private def luxmedErrorToApiException[T <: LuxmedBaseError](ler: HttpResponse[T]): ApiException = {
-      ler.body match {
+      val genericException = ler.body match {
         case e: LuxmedCompositeError =>
           new GenericException(ler.code, ler.statusLine, e.errors.map(_.message).mkString("; "))
         case e: LuxmedError =>
-          val errorMessage = e.message.toLowerCase
-          if (errorMessage.contains("invalid login or password"))
-            new InvalidLoginOrPasswordException
-          else if (errorMessage.contains("have already booked this service"))
-            new ServiceIsAlreadyBookedException
-          else
-            new GenericException(ler.code, ler.statusLine, e.message)
+          new GenericException(ler.code, ler.statusLine, e.message)
       }
+
+      val errorMessage = genericException.message.toLowerCase
+      if (errorMessage.contains("invalid login or password"))
+        new InvalidLoginOrPasswordException
+      else if (errorMessage.contains("already booked this service"))
+        new ServiceIsAlreadyBookedException
+      else genericException
     }
 
     private def extractLuxmedError(httpResponse: Try[HttpResponse[String]]) = {

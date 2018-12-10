@@ -14,6 +14,7 @@ import com.lbs.server.repository.model.{History, Monitoring}
 
 import scala.collection.generic.CanBuildFrom
 import scala.language.{higherKinds, implicitConversions}
+import scala.util.Try
 
 
 package object util {
@@ -42,7 +43,8 @@ package object util {
             dateTo = bookingData.dateTo,
             timeFrom = bookingData.timeFrom,
             timeTo = bookingData.timeTo,
-            autobook = bookingData.autobook
+            autobook = bookingData.autobook,
+            rebookIfExists = bookingData.rebookIfExists
           )
         }
       }
@@ -117,6 +119,10 @@ package object util {
       def unapply(cmd: Command): Option[String] = cmd.callbackData
     }
 
+    object BooleanString {
+      def unapply(string: String): Option[Boolean] = Try(string.toBoolean).toOption
+    }
+
   }
 
   object DateTimeUtil {
@@ -151,6 +157,13 @@ package object util {
 
     def applyHourMinute(hourMinuteStr: String): LocalTime = {
       LocalTime.parse(hourMinuteStr, TimeFormat)
+    }
+  }
+
+  implicit class RichEither[T](either: Either[Throwable, T]) {
+    def toTry: Try[T] = either match {
+      case Left(ex) => throw ex
+      case Right(v) => Try(v)
     }
   }
 

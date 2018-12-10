@@ -5,6 +5,7 @@ import java.time.{LocalTime, ZonedDateTime}
 
 import com.lbs.api.LuxmedApi
 import com.lbs.api.json.model._
+import com.lbs.server.util.ServerModelConverters._
 import org.jasypt.util.text.TextEncryptor
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.stereotype.Service
@@ -90,6 +91,68 @@ class ApiService extends SessionSupport {
     withSession(accountId) { session =>
       LuxmedApi.reservation(session.accessToken, session.tokenType, reservationRequest)
     }
+
+  def reserveVisit(accountId: Long, term: AvailableVisitsTermPresentation): Either[Throwable, ReservationResponse] = {
+    val temporaryReservationRequest = term.mapTo[TemporaryReservationRequest]
+    val valuationsRequest = term.mapTo[ValuationsRequest]
+    for {
+      okResponse <- temporaryReservation(accountId, temporaryReservationRequest, valuationsRequest)
+      (temporaryReservation, valuations) = okResponse
+      temporaryReservationId = temporaryReservation.id
+      visitTermVariant = valuations.visitTermVariants.head
+      reservationRequest = (temporaryReservationId, visitTermVariant, term).mapTo[ReservationRequest]
+      reservation <- reservation(accountId, reservationRequest)
+    } yield reservation
+  }
+
+  def canTermBeChanged(accountId: Long, reservationId: Long): Either[Throwable, HttpResponse[String]] =
+    withSession(accountId) { session =>
+      LuxmedApi.canTermBeChanged(session.accessToken, session.tokenType, reservationId)
+    }
+
+
+  def detailToChangeTerm(accountId: Long, reservationId: Long): Either[Throwable, ChangeTermDetailsResponse] =
+    withSession(accountId) { session =>
+      LuxmedApi.detailToChangeTerm(session.accessToken, session.tokenType, reservationId)
+    }
+
+  def temporaryReservationToChangeTerm(accountId: Long, reservationId: Long, temporaryReservationRequest: TemporaryReservationRequest, valuationsRequest: ValuationsRequest): Either[Throwable, (TemporaryReservationResponse, ValuationsResponse)] =
+    withSession(accountId) { session =>
+      LuxmedApi.temporaryReservationToChangeTerm(session.accessToken, session.tokenType, reservationId, temporaryReservationRequest) match {
+        case Left(ex) => Left(ex)
+        case Right(temporaryReservation) =>
+          LuxmedApi.valuationToChangeTerm(session.accessToken, session.tokenType, reservationId, valuationsRequest) match {
+            case Left(ex) => Left(ex)
+            case Right(valuationsResponse) => Right(temporaryReservation -> valuationsResponse)
+          }
+      }
+    }
+
+  def valuationToChangeTerm(accountId: Long, reservationId: Long, valuationsRequest: ValuationsRequest): Either[Throwable, ValuationsResponse] =
+    withSession(accountId) { session =>
+      LuxmedApi.valuationToChangeTerm(session.accessToken, session.tokenType, reservationId, valuationsRequest)
+    }
+
+  def changeTerm(accountId: Long, reservationId: Long, reservationRequest: ReservationRequest): Either[Throwable, ChangeTermResponse] =
+    withSession(accountId) { session =>
+      LuxmedApi.changeTerm(session.accessToken, session.tokenType, reservationId, reservationRequest)
+    }
+
+  def updateTerm(accountId: Long, reservationId: Long, term: AvailableVisitsTermPresentation): Either[Throwable, ChangeTermResponse] = {
+    val temporaryReservationRequest = term.mapTo[TemporaryReservationRequest]
+    val valuationsRequest = term.mapTo[ValuationsRequest]
+    val canTermBeChangedResponse = canTermBeChanged(accountId, reservationId)
+    if (canTermBeChangedResponse.exists(_.code == 204)) {
+      for {
+        okResponse <- temporaryReservationToChangeTerm(accountId, reservationId, temporaryReservationRequest, valuationsRequest)
+        (temporaryReservation, valuations) = okResponse
+        temporaryReservationId = temporaryReservation.id
+        visitTermVariant = valuations.visitTermVariants.head
+        reservationRequest = (temporaryReservationId, visitTermVariant, term).mapTo[ReservationRequest]
+        reservation <- changeTerm(accountId, reservationId, reservationRequest)
+      } yield reservation
+    } else Left(new RuntimeException(s"Term for reservation [$reservationId] can't be changed"))
+  }
 
   def visitsHistory(accountId: Long, fromDate: ZonedDateTime = ZonedDateTime.now().minusYears(1),
                     toDate: ZonedDateTime = ZonedDateTime.now(), page: Int = 1, pageSize: Int = 100): Either[Throwable, List[HistoricVisit]] =

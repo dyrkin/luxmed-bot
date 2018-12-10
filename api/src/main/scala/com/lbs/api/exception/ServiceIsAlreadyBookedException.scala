@@ -1,4 +1,4 @@
 
 package com.lbs.api.exception
 
-class ServiceIsAlreadyBookedException extends ApiException("Service is already booked")
+class ServiceIsAlreadyBookedException extends ApiException("You have already booked this service")

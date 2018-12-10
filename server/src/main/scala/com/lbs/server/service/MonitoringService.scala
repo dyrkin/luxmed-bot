@@ -4,22 +4,21 @@ package com.lbs.server.service
 import java.time.ZonedDateTime
 import java.util.concurrent.ScheduledFuture
 
-import com.lbs.api.exception.InvalidLoginOrPasswordException
-import com.lbs.api.json.model.{AvailableVisitsTermPresentation, ReservationRequest, TemporaryReservationRequest, ValuationsRequest}
+import com.lbs.api.exception.{InvalidLoginOrPasswordException, ServiceIsAlreadyBookedException}
+import com.lbs.api.json.model.AvailableVisitsTermPresentation
 import com.lbs.bot.Bot
 import com.lbs.bot.model.{MessageSource, MessageSourceSystem}
 import com.lbs.common.{Logger, Scheduler}
 import com.lbs.server.lang.Localization
 import com.lbs.server.repository.model._
 import com.lbs.server.util.DateTimeUtil._
-import com.lbs.server.util.ServerModelConverters._
 import javax.annotation.PostConstruct
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.stereotype.Service
 
 import scala.collection.mutable
 import scala.concurrent.duration._
-import scala.util.Random
+import scala.util.{Failure, Random}
 
 @Service
 class MonitoringService extends Logger {
@@ -147,25 +146,22 @@ class MonitoringService extends Logger {
   }
 
   private def bookAppointment(term: AvailableVisitsTermPresentation, monitoring: Monitoring): Unit = {
-    val temporaryReservationRequest = term.mapTo[TemporaryReservationRequest]
-    val valuationsRequest = term.mapTo[ValuationsRequest]
-    val reservationMaybe = for {
-      okResponse <- apiService.temporaryReservation(monitoring.accountId, temporaryReservationRequest, valuationsRequest)
-      (temporaryReservation, valuations) = okResponse
-      temporaryReservationId = temporaryReservation.id
-      visitTermVariant = valuations.visitTermVariants.head
-      reservationRequest = (temporaryReservationId, visitTermVariant, term).mapTo[ReservationRequest]
-      reservation <- apiService.reservation(monitoring.accountId, reservationRequest)
-    } yield reservation
-
-    reservationMaybe match {
+    apiService.reserveVisit(monitoring.accountId, term).toTry.recoverWith {
+      case _: ServiceIsAlreadyBookedException if monitoring.rebookIfExists =>
+        info(s"Service [${monitoring.serviceName}] is already booked. Trying to update term")
+        val reservation = apiService.reservedVisits(monitoring.accountId, toDate = ZonedDateTime.now().plusMonths(6)).map(_.head)
+        reservation.toTry.flatMap { r =>
+          val reservationId = r.reservationId
+          apiService.updateTerm(monitoring.accountId, reservationId, term).toTry
+        }
+      case ex => Failure(ex)
+    }.toEither match {
       case Right(_) =>
         bot.sendMessage(monitoring.source, lang(monitoring.userId).appointmentIsBooked(term, monitoring))
         deactivateMonitoring(monitoring.recordId)
       case Left(ex) =>
         error(s"Unable to book appointment by monitoring [${monitoring.recordId}]", ex)
     }
-
   }
 
   def deactivateMonitoring(monitoringId: JLong): Unit = {

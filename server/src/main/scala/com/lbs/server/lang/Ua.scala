@@ -95,6 +95,8 @@ object Ua extends Lang {
 
   override def bookManually: String = "👤 Ручна резервація"
 
+  override def rebookIfExists: String = "<b>➡</b> Чи хотіли би ви змінити термін в разі, якщо резервація вже існує?"
+
   override def city: String = "місто"
 
   override def clinic: String = "клініка"

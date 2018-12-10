@@ -95,6 +95,8 @@ object En extends Lang {
 
   override def bookManually: String = "👤 Book manually"
 
+  override def rebookIfExists: String = "<b>➡</b> Do you want to update term if reservation already exists?"
+
   override def city: String = "city"
 
   override def clinic: String = "clinic"
