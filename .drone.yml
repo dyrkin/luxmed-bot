@@ -1,0 +1,21 @@
+pipeline:
+  build:
+    image: java:openjdk-8
+    environment:
+    - GRADLE_USER_HOME=~/.gradle
+    commands:
+    - ./gradlew test
+    - ./gradlew prepare
+    - echo -n "1.0.$DRONE_BUILD_NUMBER,latest" > .tags
+
+  publish:
+    image: plugins/docker
+    repo: eugenezadyra/luxmed-bot
+    username:
+      from_secret: docker_username
+    password:
+      from_secret: docker_password
+    dockerfile: ./docker/Dockerfile
+    context: ./docker/
+    when:
+      branch: master
