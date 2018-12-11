@@ -147,7 +147,7 @@ class Book(val userId: UserId, bot: Bot, apiService: ApiService, dataService: Da
           case Left(ex) =>
             warn(s"Service [${bookingData.serviceId.name}] is already booked. Ask to update term", ex)
             bot.sendMessage(userId.source, lang.visitAlreadyExists,
-              inlineKeyboard = createInlineKeyboard(Seq(Button(lang.yes, Tags.RebookYes), Button(lang.no, Tags.RebookNo))))
+              inlineKeyboard = createInlineKeyboard(Seq(Button(lang.no, Tags.RebookNo), Button(lang.yes, Tags.RebookYes))))
             goto(awaitRebookDecision) using bookingData.copy(term = Some(term))
           case Right((temporaryReservation, valuations)) =>
             bot.sendMessage(userId.source, lang.confirmAppointment(term, valuations),
@@ -233,7 +233,7 @@ class Book(val userId: UserId, bot: Bot, apiService: ApiService, dataService: Da
   private def askMonitoringRebookOption: Step =
     ask { _ =>
       bot.sendMessage(userId.source, lang.rebookIfExists,
-        inlineKeyboard = createInlineKeyboard(Seq(Button(lang.yes, Tags.RebookYes), Button(lang.no, Tags.RebookNo))))
+        inlineKeyboard = createInlineKeyboard(Seq(Button(lang.no, Tags.RebookNo), Button(lang.yes, Tags.RebookYes))))
     } onReply {
       case Msg(CallbackCommand(BooleanString(rebookIfExists)), bookingData: BookingData) =>
         goto(createMonitoring) using bookingData.copy(rebookIfExists = rebookIfExists)

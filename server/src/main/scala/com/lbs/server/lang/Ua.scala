@@ -323,14 +323,6 @@ object Ua extends Lang {
 
   override def bugHasBeenCreated(bugId: Long): String = s"✅ Дякуємо за відправлений баг <b>#$bugId</b>!"
 
-  override def afterFive: String = "Після 17:00"
-
-  override def nineToFive: String = "Від 09:00 до 17:00"
-
-  override def beforeNine: String = "До 09:00"
-
-  override def allDay: String = "Весь день"
-
   override def deleteAccount: String = "➖ Видалити акаунт"
 
   override def addAccount: String = "➕ Додати акаунт"

@@ -324,14 +324,6 @@ object En extends Lang {
 
   override def bugHasBeenCreated(bugId: Long): String = s"✅ Thank you for submitting bug <b>#$bugId</b>!"
 
-  override def afterFive: String = "After 17:00"
-
-  override def nineToFive: String = "From 09:00 to 17:00"
-
-  override def beforeNine: String = "Before 09:00"
-
-  override def allDay: String = "All day"
-
   override def deleteAccount: String = "➖ Delete account"
 
   override def addAccount: String = "➕ Add account"

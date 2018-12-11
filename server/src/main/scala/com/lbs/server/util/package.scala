@@ -160,11 +160,4 @@ package object util {
     }
   }
 
-  implicit class RichEither[T](either: Either[Throwable, T]) {
-    def toTry: Try[T] = either match {
-      case Left(ex) => throw ex
-      case Right(v) => Try(v)
-    }
-  }
-
 }

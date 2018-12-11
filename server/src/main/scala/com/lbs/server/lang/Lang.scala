@@ -212,14 +212,6 @@ trait Lang {
 
   def enterIssueDetails: String
 
-  def afterFive: String
-
-  def nineToFive: String
-
-  def beforeNine: String
-
-  def allDay: String
-
   def deleteAccount: String
 
   def addAccount: String
