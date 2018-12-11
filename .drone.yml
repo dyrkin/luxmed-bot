@@ -1,5 +1,5 @@
 pipeline:
-  build:
+  verify_and_prepare:
     image: java:openjdk-8
     environment:
     - GRADLE_USER_HOME=~/.gradle
@@ -8,7 +8,7 @@ pipeline:
     - ./gradlew prepare
     - echo -n "1.0.$DRONE_BUILD_NUMBER,latest" > .tags
 
-  publish:
+  publish_to_docker_hub:
     image: plugins/docker
     repo: eugenezadyra/luxmed-bot
     username:
@@ -17,6 +17,20 @@ pipeline:
       from_secret: docker_password
     dockerfile: ./docker/Dockerfile
     context: ./docker/
+    when:
+      branch: master
+      event: push
+
+  restart_bot:
+    image: appleboy/drone-ssh
+    host:
+      from_secret: digitalocean_host
+    username:
+      from_secret: digitalocean_user
+    key:
+      from_secret: digitalocean_key
+    script:
+    - service luxmed-bot restart
     when:
       branch: master
       event: push
