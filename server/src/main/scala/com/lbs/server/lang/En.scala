@@ -166,7 +166,7 @@ object En extends Lang {
   override def visitsHistoryIsEmpty: String = "ℹ No visits in your history"
 
   override def help: String =
-    s"""ℹ This is non official bot for <b>Portal Pacjenta LUX MED</b>.
+    s"""ℹ This is non official bot for <b>Portal Pacjenta LUX MED (v.${Lang.version})</b>.
        |With its help you can book a visit to the doctor, create term monitorings, view upcoming visits and visit history.
        |
        |Ping @dyrkin_me if you have any questions.

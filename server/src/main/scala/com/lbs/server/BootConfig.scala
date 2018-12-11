@@ -14,6 +14,9 @@ import org.jasypt.util.text.{StrongTextEncryptor, TextEncryptor}
 import org.springframework.beans.factory.annotation.{Autowired, Value}
 import org.springframework.context.annotation.{Bean, Configuration}
 
+import scala.io.Source
+import scala.util.Try
+
 @Configuration
 class BootConfig {
   @Value("${security.secret}")

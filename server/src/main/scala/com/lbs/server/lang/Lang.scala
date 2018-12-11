@@ -10,6 +10,9 @@ import com.lbs.server.conversation.StaticData.StaticDataConfig
 import com.lbs.server.repository.model
 import com.lbs.server.repository.model.Monitoring
 
+import scala.io.Source
+import scala.util.Try
+
 object Lang {
 
   val Langs: Seq[Lang] = Seq(En, Ua)
@@ -19,6 +22,8 @@ object Lang {
   def apply(id: Int): Lang = {
     LangsMap.getOrElse(id, sys.error(s"Unknown language id $id"))
   }
+
+  val version: String = Try(Source.fromFile("version").getLines.mkString).getOrElse("Unknown")
 }
 
 trait Lang {

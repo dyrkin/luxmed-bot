@@ -120,3 +120,4 @@ gradle-app.setting
 
 /.idea/
 /**/*.iml
+/docker/version
