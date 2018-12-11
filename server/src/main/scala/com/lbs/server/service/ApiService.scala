@@ -138,20 +138,29 @@ class ApiService extends SessionSupport {
       LuxmedApi.changeTerm(session.accessToken, session.tokenType, reservationId, reservationRequest)
     }
 
-  def updateTerm(accountId: Long, reservationId: Long, term: AvailableVisitsTermPresentation): Either[Throwable, ChangeTermResponse] = {
-    val temporaryReservationRequest = term.mapTo[TemporaryReservationRequest]
-    val valuationsRequest = term.mapTo[ValuationsRequest]
-    val canTermBeChangedResponse = canTermBeChanged(accountId, reservationId)
-    if (canTermBeChangedResponse.exists(_.code == 204)) {
-      for {
-        okResponse <- temporaryReservationToChangeTerm(accountId, reservationId, temporaryReservationRequest, valuationsRequest)
-        (temporaryReservation, valuations) = okResponse
-        temporaryReservationId = temporaryReservation.id
-        visitTermVariant = valuations.visitTermVariants.head
-        reservationRequest = (temporaryReservationId, visitTermVariant, term).mapTo[ReservationRequest]
-        reservation <- changeTerm(accountId, reservationId, reservationRequest)
-      } yield reservation
-    } else Left(new RuntimeException(s"Term for reservation [$reservationId] can't be changed"))
+  def updateReservedVisit(accountId: Long, term: AvailableVisitsTermPresentation): Either[Throwable, ChangeTermResponse] = {
+    val reservedVisitEither = reservedVisits(accountId, toDate = ZonedDateTime.now().plusMonths(6)).map(_.find(_.service.id == term.serviceId))
+    reservedVisitEither match {
+      case Right(Some(reservedVisit: ReservedVisit)) =>
+        val reservationId = reservedVisit.reservationId
+        val temporaryReservationRequest = term.mapTo[TemporaryReservationRequest]
+        val valuationsRequest = term.mapTo[ValuationsRequest]
+        val canTermBeChangedResponse = canTermBeChanged(accountId, reservationId)
+        if (canTermBeChangedResponse.exists(_.code == 204)) {
+          for {
+            okResponse <- temporaryReservationToChangeTerm(accountId, reservationId, temporaryReservationRequest, valuationsRequest)
+            (temporaryReservation, valuations) = okResponse
+            temporaryReservationId = temporaryReservation.id
+            visitTermVariant = valuations.visitTermVariants.head
+            reservationRequest = (temporaryReservationId, visitTermVariant, term).mapTo[ReservationRequest]
+            reservation <- changeTerm(accountId, reservationId, reservationRequest)
+          } yield reservation
+        } else left(s"Term for reservation [$reservationId] can't be changed")
+      case Left(ex) =>
+        Left(ex)
+      case _ =>
+        left(s"Existing reservation for service [${term.serviceId}] not found. Nothing to update")
+    }
   }
 
   def visitsHistory(accountId: Long, fromDate: ZonedDateTime = ZonedDateTime.now().minusYears(1),
@@ -174,5 +183,7 @@ class ApiService extends SessionSupport {
   def login(username: String, password: String): Either[Throwable, LoginResponse] = {
     LuxmedApi.login(username, textEncryptor.decrypt(password))
   }
+
+  private def left(msg: String) = Left(new RuntimeException(msg))
 
 }
