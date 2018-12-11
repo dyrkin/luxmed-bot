@@ -87,6 +87,8 @@ trait Lang {
 
   def rebookIfExists: String
 
+  def visitAlreadyExists: String
+
   def city: String
 
   def clinic: String

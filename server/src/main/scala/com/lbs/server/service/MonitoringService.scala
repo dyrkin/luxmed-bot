@@ -149,11 +149,7 @@ class MonitoringService extends Logger {
     apiService.reserveVisit(monitoring.accountId, term).toTry.recoverWith {
       case _: ServiceIsAlreadyBookedException if monitoring.rebookIfExists =>
         info(s"Service [${monitoring.serviceName}] is already booked. Trying to update term")
-        val reservation = apiService.reservedVisits(monitoring.accountId, toDate = ZonedDateTime.now().plusMonths(6)).map(_.head)
-        reservation.toTry.flatMap { r =>
-          val reservationId = r.reservationId
-          apiService.updateTerm(monitoring.accountId, reservationId, term).toTry
-        }
+        apiService.updateReservedVisit(monitoring.accountId, term).toTry
       case ex => Failure(ex)
     }.toEither match {
       case Right(_) =>

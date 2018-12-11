@@ -97,6 +97,8 @@ object Ua extends Lang {
 
   override def rebookIfExists: String = "<b>➡</b> Чи хотіли би ви змінити термін в разі, якщо резервація вже існує?"
 
+  override def visitAlreadyExists: String = "<b>➡</b> Резервація для такого сервісу вже існує. Чі хотіли би ви змінити термін?"
+
   override def city: String = "місто"
 
   override def clinic: String = "клініка"

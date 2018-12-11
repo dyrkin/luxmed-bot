@@ -145,8 +145,10 @@ class Book(val userId: UserId, bot: Bot, apiService: ApiService, dataService: Da
         val response = apiService.temporaryReservation(userId.accountId, term.mapTo[TemporaryReservationRequest], term.mapTo[ValuationsRequest])
         response match {
           case Left(ex) =>
-            bot.sendMessage(userId.source, ex.getMessage)
-            end()
+            warn(s"Service [${bookingData.serviceId.name}] is already booked. Ask to update term", ex)
+            bot.sendMessage(userId.source, lang.visitAlreadyExists,
+              inlineKeyboard = createInlineKeyboard(Seq(Button(lang.yes, Tags.RebookYes), Button(lang.no, Tags.RebookNo)), columns = 1))
+            goto(awaitRebookDecision) using bookingData.copy(term = Some(term))
           case Right((temporaryReservation, valuations)) =>
             bot.sendMessage(userId.source, lang.confirmAppointment(term, valuations),
               inlineKeyboard = createInlineKeyboard(Seq(Button(lang.cancel, Tags.Cancel), Button(lang.book, Tags.Book))))
@@ -166,6 +168,23 @@ class Book(val userId: UserId, bot: Bot, apiService: ApiService, dataService: Da
           dateTo = ZonedDateTime.now().plusDays(1L))
       case Msg(CallbackCommand(Tags.CreateMonitoring), _) =>
         goto(askMonitoringAutobookOption)
+    }
+
+  private def awaitRebookDecision: Step =
+    monologue {
+      case Msg(CallbackCommand(Tags.RebookYes), bookingData: BookingData) =>
+        apiService.updateReservedVisit(userId.accountId, bookingData.term.get) match {
+          case Right(success) =>
+            debug(s"Successfully confirmed: $success")
+            bot.sendMessage(userId.source, lang.appointmentIsConfirmed)
+          case Left(ex) =>
+            error("Error during reservation", ex)
+            bot.sendMessage(userId.source, ex.getMessage)
+        }
+        end()
+      case Msg(CallbackCommand(Tags.RebookNo), _) =>
+        info("User doesn't want to change term")
+        end()
     }
 
   private def awaitReservation: Step =
@@ -207,7 +226,7 @@ class Book(val userId: UserId, bot: Bot, apiService: ApiService, dataService: Da
     } onReply {
       case Msg(CallbackCommand(BooleanString(autobook)), bookingData: BookingData) =>
         val data = bookingData.copy(autobook = autobook)
-        if(autobook) goto(askMonitoringRebookOption) using data
+        if (autobook) goto(askMonitoringRebookOption) using data
         else goto(createMonitoring) using data
     }
 
