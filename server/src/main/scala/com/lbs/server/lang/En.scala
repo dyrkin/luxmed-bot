@@ -170,6 +170,7 @@ object En extends Lang {
        |With its help you can book a visit to the doctor, create term monitorings, view upcoming visits and visit history.
        |
        |Ping @dyrkin_me if you have any questions.
+       |<b>Github</b>: https://github.com/dyrkin/luxmed-bot
        |
        |<b>➡</b> Supported commands
        |/book - reserve a visit or create monitoring
