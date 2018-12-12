@@ -17,6 +17,7 @@ services:
     - POSTGRES_USER=lbs
     - POSTGRES_PASSWORD=lsb123
     - POSTGRES_DB=lbs
+    - TZ=Europe/Warsaw
 
 volumes:
   postgres:
