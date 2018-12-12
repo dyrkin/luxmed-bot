@@ -31,7 +31,9 @@ pipeline:
     key:
       from_secret: digitalocean_key
     script:
-    - service luxmed-bot restart
+    - service luxmed-bot stop
+    - (cd ~/luxmed-bot && rm -f docker-compose.yml && wget https://raw.githubusercontent.com/dyrkin/luxmed-booking-service/master/docker/docker-compose.yml)
+    - service luxmed-bot start
     when:
       branch: master
       event: push
