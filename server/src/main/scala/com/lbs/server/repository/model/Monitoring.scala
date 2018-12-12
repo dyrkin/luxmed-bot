@@ -90,9 +90,8 @@ class Monitoring extends RecordId {
   @Column(nullable = false)
   var active: Boolean = true
 
-
   @BeanProperty
-  @Column(nullable = false)
+  @Column(name = "time_offset",nullable = false)
   var offset: Int = 0
 }
 

@@ -200,6 +200,12 @@ trait Lang {
 
   def configureOffset: String
 
+  def pleaseEnterOffset(current: Int): String
+
+  def alwaysAskOffset(enabled: Boolean): String
+
+  def changeDefaultOffset(current: Int): String
+
   def languageUpdated: String
 
   def appointmentWasNotCancelled: String

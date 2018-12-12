@@ -19,6 +19,6 @@ databaseChangeLog:
 
         - addNotNullConstraint:
             tableName: monitoring
-            columnName: offset
-            columnDataType: int
-            defaultNullValue: 0
+            columnName: rebook_if_exists
+            columnDataType: boolean
+            defaultNullValue: false

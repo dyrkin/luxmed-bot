@@ -9,7 +9,7 @@ import com.lbs.server.conversation.Settings._
 import com.lbs.server.conversation.base.Conversation
 import com.lbs.server.lang.{Lang, Localizable, Localization}
 import com.lbs.server.service.DataService
-import com.lbs.server.util.MessageExtractors.{CallbackCommand, IntString}
+import com.lbs.server.util.MessageExtractors.{CallbackCommand, IntString, TextCommand}
 import com.lbs.server.repository.model
 
 class Settings(val userId: UserId, bot: Bot, dataService: DataService, val localization: Localization)(val actorSystem: ActorSystem) extends Conversation[Unit] with Localizable {
@@ -41,22 +41,39 @@ class Settings(val userId: UserId, bot: Bot, dataService: DataService, val local
 
   def showOffsetOptions: Step = {
     ask { _ =>
-      val settingsMaybe = dataService.findSettings(userId.userId)
-      val (defaultOffset, askOffset) = settingsMaybe match {
-        case Some(settings) => (settings.defaultOffset, settings.alwaysAskOffset)
-        case None => (0, false)
-      }
+      val settings = getSettings
       bot.sendMessage(userId.source, lang.configureOffset,
-        inlineKeyboard = createInlineKeyboard(Seq(Button(s"${if(askOffset) "✅" else " "} Always ask offset", Tags.AskOffset)), columns = 1))
+        inlineKeyboard = createInlineKeyboard(Seq(Button(lang.alwaysAskOffset(settings.alwaysAskOffset), Tags.AlwaysAskOffset),
+          Button(lang.changeDefaultOffset(settings.defaultOffset), Tags.ChangeDefaultOffset)), columns = 1))
     } onReply {
-      case Msg(cmd@CallbackCommand(Tags.AskOffset), _) =>
-        val settings = dataService.findSettings(userId.userId).getOrElse(model.Settings(userId.userId, lang.id, 0, alwaysAskOffset = false))
+      case Msg(cmd@CallbackCommand(Tags.AlwaysAskOffset), _) =>
+        val settings = getSettings
         settings.alwaysAskOffset = !settings.alwaysAskOffset
         dataService.saveSettings(settings)
         bot.sendEditMessage(userId.source, cmd.message.messageId,
-          inlineKeyboard = createInlineKeyboard(Seq(Button(s"${if(settings.alwaysAskOffset) "✅" else " "} Always ask offset", Tags.AskOffset)), columns = 1))
+          inlineKeyboard = createInlineKeyboard(Seq(Button(lang.alwaysAskOffset(settings.alwaysAskOffset), Tags.AlwaysAskOffset),
+            Button(lang.changeDefaultOffset(settings.defaultOffset), Tags.ChangeDefaultOffset)), columns = 1))
         stay()
+      case Msg(CallbackCommand(Tags.ChangeDefaultOffset), _) =>
+        goto(askDefaultOffset)
     }
+  }
+
+  def askDefaultOffset: Step = {
+    ask { _ =>
+      val settings = getSettings
+      bot.sendMessage(userId.source, lang.pleaseEnterOffset(settings.defaultOffset))
+    } onReply {
+      case Msg(TextCommand(IntString(offset)), _) =>
+        val settings = getSettings
+        settings.defaultOffset = offset
+        dataService.saveSettings(settings)
+        goto(showOffsetOptions)
+    }
+  }
+
+  private def getSettings = {
+    dataService.findSettings(userId.userId).getOrElse(model.Settings(userId.userId, lang.id, 0, alwaysAskOffset = false))
   }
 }
 
@@ -65,7 +82,8 @@ object Settings {
   object Tags {
     val Language = "language"
     val Offset = "offset"
-    val AskOffset = "ask_offset"
+    val AlwaysAskOffset = "always_ask_offset"
+    val ChangeDefaultOffset = "change_default_offset"
   }
 
 }

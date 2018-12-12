@@ -172,7 +172,7 @@ object En extends Lang {
        |With its help you can book a visit to the doctor, create term monitorings, view upcoming visits and visit history.
        |
        |Ping @dyrkin_me if you have any questions.
-       |<b>Github</b>: https://github.com/dyrkin/luxmed-bot
+       |<a href='https://github.com/dyrkin/luxmed-bot'>Clone</a>
        |
        |<b>➡</b> Supported commands
        |/book - reserve a visit or create monitoring
@@ -305,13 +305,19 @@ object En extends Lang {
 
   override def settingsHeader: String = "<b>➡</b> Please choose an action"
 
-  override def language: String = "🌐 Change language"
+  override def language: String = "🌐 Language"
 
   override def offset: String = "⏱ Offset"
 
   override def chooseLanguage: String = "<b>➡</b> Please choose a language"
 
   override def configureOffset: String = "<b>➡</b> Please specify offset options"
+
+  override def pleaseEnterOffset(current: Int): String = s"<b>➡</b> Please enter default offset. Current: <b>$current</b>"
+
+  override def alwaysAskOffset(enabled: Boolean): String = s"${if (enabled) "✅ " else ""}Always ask offset"
+
+  override def changeDefaultOffset(current: Int): String = s"Change default offset ($current)"
 
   override def languageUpdated: String = "👍 Language was successfully changed!"
 

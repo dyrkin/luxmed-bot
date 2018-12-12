@@ -7,12 +7,12 @@ databaseChangeLog:
             tableName: monitoring
             columns:
               - column:
-                  name: offset
+                  name: time_offset
                   type: int
                   defaultValue: 0
 
         - addNotNullConstraint:
             tableName: monitoring
-            columnName: offset
+            columnName: time_offset
             columnDataType: int
             defaultNullValue: 0
