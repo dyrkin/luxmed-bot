@@ -6,4 +6,5 @@ ADD server.jar /app
 ADD run.sh run.sh
 ADD version /app/version
 RUN chmod +x run.sh
+RUN sudo echo "Europe/Warsaw" > /etc/timezone
 CMD ./run.sh
