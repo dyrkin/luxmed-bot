@@ -1,0 +1,18 @@
+databaseChangeLog:
+  - changeSet:
+      id: 02
+      author: dyrkin
+      changes:
+        - addColumn:
+            tableName: monitoring
+            columns:
+              - column:
+                  name: offset
+                  type: int
+                  defaultValue: 0
+
+        - addNotNullConstraint:
+            tableName: monitoring
+            columnName: offset
+            columnDataType: int
+            defaultNullValue: 0

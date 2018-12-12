@@ -25,6 +25,7 @@ dependencies {
 
     compile('org.springframework.boot:spring-boot-starter')
     compile('org.springframework.boot:spring-boot-starter-data-jpa')
+    compile('org.liquibase:liquibase-core')
 
     compile('org.jasypt:jasypt:1.9.2')
     compile('org.postgresql:postgresql:42.2.1.jre7')

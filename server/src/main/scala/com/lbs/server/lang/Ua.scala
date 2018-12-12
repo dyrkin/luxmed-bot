@@ -97,6 +97,8 @@ object Ua extends Lang {
 
   override def rebookIfExists: String = "<b>➡</b> Чи хотіли би ви змінити термін в разі, якщо резервація вже існує?"
 
+  override def pleaseSpecifyOffset: String = "<b>➡</b> Будь ласка, надішліть мені зміщення в годинах, або натисніть Ні"
+
   override def visitAlreadyExists: String = "<b>➡</b> Резервація для такого сервісу вже існує. Чі хотіли би ви змінити термін?"
 
   override def city: String = "місто"
@@ -304,7 +306,11 @@ object Ua extends Lang {
 
   override def language: String = "🌐 Змінити мову"
 
+  override def offset: String = "⏱ Зміщення"
+
   override def chooseLanguage: String = "<b>➡</b> Будь ласка, оберіть мову"
+
+  override def configureOffset: String = "<b>➡</b> Будь ласка, сконфігуруйте зміщення"
 
   override def languageUpdated: String = "👍 Мову успішно змінено!"
 

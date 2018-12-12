@@ -1,0 +1,24 @@
+databaseChangeLog:
+  - changeSet:
+      id: 03
+      author: dyrkin
+      preConditions:
+          onFail: MARK_RAN
+          not:
+            columnExists:
+              tableName: monitoring
+              columnName: rebook_if_exists
+      changes:
+        - addColumn:
+            tableName: monitoring
+            columns:
+              - column:
+                  name: rebook_if_exists
+                  type: boolean
+                  defaultValue: false
+
+        - addNotNullConstraint:
+            tableName: monitoring
+            columnName: offset
+            columnDataType: int
+            defaultNullValue: 0

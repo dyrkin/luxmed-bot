@@ -97,6 +97,8 @@ object En extends Lang {
 
   override def rebookIfExists: String = "<b>➡</b> Do you want to update term if reservation already exists?"
 
+  override def pleaseSpecifyOffset: String = "<b>➡</b> Please send me offset in hours or press No button"
+
   override def visitAlreadyExists: String = "<b>➡</b> The same service is already booked. Do you want to update term?"
 
   override def city: String = "city"
@@ -305,7 +307,11 @@ object En extends Lang {
 
   override def language: String = "🌐 Change language"
 
+  override def offset: String = "⏱ Offset"
+
   override def chooseLanguage: String = "<b>➡</b> Please choose a language"
+
+  override def configureOffset: String = "<b>➡</b> Please specify offset options"
 
   override def languageUpdated: String = "👍 Language was successfully changed!"
 

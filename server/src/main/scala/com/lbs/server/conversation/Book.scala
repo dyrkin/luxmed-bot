@@ -16,7 +16,7 @@ import com.lbs.server.conversation.base.Conversation
 import com.lbs.server.lang.{Localizable, Localization}
 import com.lbs.server.repository.model.Monitoring
 import com.lbs.server.service.{ApiService, DataService, MonitoringService}
-import com.lbs.server.util.MessageExtractors.{BooleanString, CallbackCommand}
+import com.lbs.server.util.MessageExtractors.{BooleanString, CallbackCommand, IntString, TextCommand}
 import com.lbs.server.util.ServerModelConverters._
 
 class Book(val userId: UserId, bot: Bot, apiService: ApiService, dataService: DataService, monitoringService: MonitoringService,
@@ -147,7 +147,7 @@ class Book(val userId: UserId, bot: Bot, apiService: ApiService, dataService: Da
           case Left(ex) =>
             warn(s"Service [${bookingData.serviceId.name}] is already booked. Ask to update term", ex)
             bot.sendMessage(userId.source, lang.visitAlreadyExists,
-              inlineKeyboard = createInlineKeyboard(Seq(Button(lang.no, Tags.RebookNo), Button(lang.yes, Tags.RebookYes))))
+              inlineKeyboard = createInlineKeyboard(Seq(Button(lang.no, Tags.No), Button(lang.yes, Tags.Yes))))
             goto(awaitRebookDecision) using bookingData.copy(term = Some(term))
           case Right((temporaryReservation, valuations)) =>
             bot.sendMessage(userId.source, lang.confirmAppointment(term, valuations),
@@ -166,13 +166,20 @@ class Book(val userId: UserId, bot: Bot, apiService: ApiService, dataService: Da
       case Msg(CallbackCommand(Tags.ModifyDate), bookingData) =>
         goto(requestDateFrom) using bookingData.copy(dateFrom = ZonedDateTime.now(),
           dateTo = ZonedDateTime.now().plusDays(1L))
-      case Msg(CallbackCommand(Tags.CreateMonitoring), _) =>
-        goto(askMonitoringAutobookOption)
+      case Msg(CallbackCommand(Tags.CreateMonitoring), bookingData) =>
+        val settingsMaybe = dataService.findSettings(userId.userId)
+        val (defaultOffset, askOffset) = settingsMaybe match {
+          case Some(settings) => (settings.defaultOffset, settings.alwaysAskOffset)
+          case None => (0, false)
+        }
+        val newData = bookingData.copy(offset = defaultOffset)
+        if(askOffset) goto(askMonitoringOffsetOption) using newData
+        else goto(askMonitoringAutobookOption) using newData
     }
 
   private def awaitRebookDecision: Step =
     monologue {
-      case Msg(CallbackCommand(Tags.RebookYes), bookingData: BookingData) =>
+      case Msg(CallbackCommand(Tags.Yes), bookingData: BookingData) =>
         apiService.updateReservedVisit(userId.accountId, bookingData.term.get) match {
           case Right(success) =>
             debug(s"Successfully confirmed: $success")
@@ -182,7 +189,7 @@ class Book(val userId: UserId, bot: Bot, apiService: ApiService, dataService: Da
             bot.sendMessage(userId.source, ex.getMessage)
         }
         end()
-      case Msg(CallbackCommand(Tags.RebookNo), _) =>
+      case Msg(CallbackCommand(Tags.No), _) =>
         info("User doesn't want to change term")
         end()
     }
@@ -219,6 +226,17 @@ class Book(val userId: UserId, bot: Bot, apiService: ApiService, dataService: Da
     }
   }
 
+  private def askMonitoringOffsetOption: Step =
+    ask { _ =>
+      bot.sendMessage(userId.source, lang.pleaseSpecifyOffset,
+        inlineKeyboard = createInlineKeyboard(Seq(Button(lang.no, Tags.No))))
+    } onReply {
+      case Msg(TextCommand(IntString(offset)), bookingData: BookingData) =>
+        goto(askMonitoringAutobookOption) using bookingData.copy(offset = offset)
+      case Msg(CallbackCommand(BooleanString(false)), _) =>
+        goto(askMonitoringAutobookOption)
+    }
+
   private def askMonitoringAutobookOption: Step =
     ask { _ =>
       bot.sendMessage(userId.source, lang.chooseTypeOfMonitoring,
@@ -233,7 +251,7 @@ class Book(val userId: UserId, bot: Bot, apiService: ApiService, dataService: Da
   private def askMonitoringRebookOption: Step =
     ask { _ =>
       bot.sendMessage(userId.source, lang.rebookIfExists,
-        inlineKeyboard = createInlineKeyboard(Seq(Button(lang.no, Tags.RebookNo), Button(lang.yes, Tags.RebookYes))))
+        inlineKeyboard = createInlineKeyboard(Seq(Button(lang.no, Tags.No), Button(lang.yes, Tags.Yes))))
     } onReply {
       case Msg(CallbackCommand(BooleanString(rebookIfExists)), bookingData: BookingData) =>
         goto(createMonitoring) using bookingData.copy(rebookIfExists = rebookIfExists)
@@ -276,7 +294,7 @@ object Book {
                          dateTo: ZonedDateTime = ZonedDateTime.now().plusDays(1L), timeFrom: LocalTime = LocalTime.of(7, 0),
                          timeTo: LocalTime = LocalTime.of(21, 0), autobook: Boolean = false, rebookIfExists: Boolean = false,
                          term: Option[AvailableVisitsTermPresentation] = None, temporaryReservationId: Option[Long] = None,
-                         valuations: Option[ValuationsResponse] = None)
+                         valuations: Option[ValuationsResponse] = None, offset: Int = 0)
 
   object Tags {
     val Cancel = "cancel"
@@ -286,8 +304,8 @@ object Book {
     val CreateMonitoring = "create_monitoring"
     val BookManually = "false"
     val BookByApplication = "true"
-    val RebookYes = "true"
-    val RebookNo = "false"
+    val Yes = "true"
+    val No = "false"
   }
 
 }

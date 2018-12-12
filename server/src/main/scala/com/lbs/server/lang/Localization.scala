@@ -31,10 +31,10 @@ class Localization {
   def updateLanguage(userId: Long, lang: Lang): Unit = {
     cachedLangs.put(userId, lang)
     val settings = dataService.findSettings(userId) match {
-      case Some(exists) =>
-        exists.setLang(lang.id)
-        exists
-      case None => model.Settings(userId, lang.id)
+      case Some(existingSettings) =>
+        existingSettings.setLang(lang.id)
+        existingSettings
+      case None => model.Settings(userId, lang.id, 0, alwaysAskOffset = false)
     }
     dataService.saveSettings(settings)
   }

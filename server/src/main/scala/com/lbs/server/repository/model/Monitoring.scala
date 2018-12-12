@@ -89,13 +89,18 @@ class Monitoring extends RecordId {
   @BeanProperty
   @Column(nullable = false)
   var active: Boolean = true
+
+
+  @BeanProperty
+  @Column(nullable = false)
+  var offset: Int = 0
 }
 
 object Monitoring {
   def apply(userId: Long, accountId: Long, chatId: String, sourceSystemId: Long, cityId: Long, cityName: String, clinicId: Option[Long], clinicName: String,
             serviceId: Long, serviceName: String, doctorId: Option[Long], doctorName: String, dateFrom: ZonedDateTime,
             dateTo: ZonedDateTime, autobook: Boolean = false, rebookIfExists: Boolean = false, created: ZonedDateTime = ZonedDateTime.now(), timeFrom: LocalTime, timeTo: LocalTime,
-            active: Boolean = true): Monitoring = {
+            active: Boolean = true, offset: Int): Monitoring = {
     val monitoring = new Monitoring
     monitoring.userId = userId
     monitoring.accountId = accountId
@@ -117,6 +122,7 @@ object Monitoring {
     monitoring.rebookIfExists = rebookIfExists
     monitoring.created = created
     monitoring.active = active
+    monitoring.offset = offset
     monitoring
   }
 }

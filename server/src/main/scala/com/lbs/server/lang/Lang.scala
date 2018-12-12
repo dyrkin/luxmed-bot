@@ -92,6 +92,8 @@ trait Lang {
 
   def rebookIfExists: String
 
+  def pleaseSpecifyOffset: String
+
   def visitAlreadyExists: String
 
   def city: String
@@ -192,7 +194,11 @@ trait Lang {
 
   def language: String
 
+  def offset: String
+
   def chooseLanguage: String
+
+  def configureOffset: String
 
   def languageUpdated: String
 
