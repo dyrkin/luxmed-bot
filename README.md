@@ -74,6 +74,7 @@ It is available here [@luxmedbot](https://telegram.me/luxmedbot)
 9. download [docker-compose.xml](https://raw.githubusercontent.com/dyrkin/luxmed-booking-service/master/docker/docker-compose.yml) 
 10. go to folder with downloaded **docker-compose.xml** and run command:
     ```bash
+    $ docker-compose pull
     $ docker-compose up
     ```
 11. send `/start` command to your bot
