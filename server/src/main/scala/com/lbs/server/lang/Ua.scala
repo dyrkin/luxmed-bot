@@ -97,6 +97,8 @@ object Ua extends Lang {
 
   override def rebookIfExists: String = "<b>➡</b> Чи хотіли би ви змінити термін в разі, якщо резервація вже існує?"
 
+  override def pleaseSpecifyOffset: String = "<b>➡</b> Будь ласка, надішліть мені зміщення в годинах, або натисніть Ні"
+
   override def visitAlreadyExists: String = "<b>➡</b> Резервація для такого сервісу вже існує. Чі хотіли би ви змінити термін?"
 
   override def city: String = "місто"
@@ -169,7 +171,7 @@ object Ua extends Lang {
        |Завдяки йому ви можете зарезервувати візит до лікаря, створити моніторинг доступних термінів, переглянути історію та майбутні візити.
        |
        |Пінгани @dyrkin_me у разі питань.
-       |<b>Github</b>: https://github.com/dyrkin/luxmed-bot
+       |<a href='https://github.com/dyrkin/luxmed-bot'>Клонувати</a>
        |
        |<b>➡</b> Підтримувані команди
        |/book - зарезервувати візит або створити моніторинг
@@ -302,9 +304,19 @@ object Ua extends Lang {
 
   override def settingsHeader: String = "<b>➡</b> Оберіть дію"
 
-  override def language: String = "🌐 Змінити мову"
+  override def language: String = "🌐 Мова"
+
+  override def offset: String = "⏱ Зміщення"
 
   override def chooseLanguage: String = "<b>➡</b> Будь ласка, оберіть мову"
+
+  override def configureOffset: String = "<b>➡</b> Будь ласка, сконфігуруйте зміщення"
+
+  override def pleaseEnterOffset(current: Int): String = s"<b>➡</b> Будь ласка, введіть зміщення за замовчуванням. Поточне: <b>$current</b>"
+
+  override  def alwaysAskOffset(enabled: Boolean): String = s"${if(enabled) "✅ " else ""}Завжди питати зміщення"
+
+  override def changeDefaultOffset(current: Int): String = s"Змінити дефолтне зміщення ($current)"
 
   override def languageUpdated: String = "👍 Мову успішно змінено!"
 

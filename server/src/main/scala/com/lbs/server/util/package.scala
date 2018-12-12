@@ -44,7 +44,8 @@ package object util {
             timeFrom = bookingData.timeFrom,
             timeTo = bookingData.timeTo,
             autobook = bookingData.autobook,
-            rebookIfExists = bookingData.rebookIfExists
+            rebookIfExists = bookingData.rebookIfExists,
+            offset = bookingData.offset
           )
         }
       }
@@ -121,6 +122,10 @@ package object util {
 
     object BooleanString {
       def unapply(string: String): Option[Boolean] = Try(string.toBoolean).toOption
+    }
+
+    object IntString {
+      def unapply(string: String): Option[Int] = Try(string.toInt).toOption
     }
 
   }

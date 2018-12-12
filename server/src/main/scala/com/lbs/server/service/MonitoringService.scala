@@ -66,7 +66,7 @@ class MonitoringService extends Logger {
 
   private def monitor(monitoring: Monitoring): Unit = {
     debug(s"Looking for available terms. Monitoring [#${monitoring.recordId}]")
-    val dateFrom = optimizeDateFrom(monitoring.dateFrom)
+    val dateFrom = optimizeDateFrom(monitoring.dateFrom, monitoring.offset)
     val termsEither = apiService.getAvailableTerms(monitoring.accountId, monitoring.cityId, monitoring.clinicId, monitoring.serviceId,
       monitoring.doctorId, dateFrom, Some(monitoring.dateTo), timeFrom = monitoring.timeFrom, timeTo = monitoring.timeTo)
     termsEither match {
@@ -93,9 +93,10 @@ class MonitoringService extends Logger {
     }
   }
 
-  private def optimizeDateFrom(date: ZonedDateTime) = {
+  private def optimizeDateFrom(date: ZonedDateTime, offset: Int) = {
+    val dateWithOffset = date.plusHours(offset)
     val now = ZonedDateTime.now()
-    if (date.isBefore(now)) now else date
+    if (dateWithOffset.isBefore(now)) now else dateWithOffset
   }
 
   private def initializeMonitorings(allMonitorings: Seq[Monitoring]): Unit = {

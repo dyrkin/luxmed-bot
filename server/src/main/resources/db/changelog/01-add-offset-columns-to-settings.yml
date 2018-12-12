@@ -1,0 +1,28 @@
+databaseChangeLog:
+  - changeSet:
+      id: 01
+      author: dyrkin
+      changes:
+        - addColumn:
+            tableName: settings
+            columns:
+              - column:
+                  name: default_offset
+                  type: int
+                  defaultValue: 0
+              - column:
+                  name: always_ask_offset
+                  type: boolean
+                  defaultValue: false
+
+        - addNotNullConstraint:
+            tableName: settings
+            columnName: default_offset
+            columnDataType: int
+            defaultNullValue: 0
+
+        - addNotNullConstraint:
+            tableName: settings
+            columnName: always_ask_offset
+            columnDataType: boolean
+            defaultNullValue: false

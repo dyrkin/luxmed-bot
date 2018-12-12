@@ -6,13 +6,13 @@ spring:
   jpa:
     properties:
       hibernate:
+        ddl-auto: none
         temp:
           use_jdbc_metadata_defaults: "false"
     database-platform: "org.hibernate.dialect.PostgreSQL9Dialect"
-    generate-ddl: "true"
-#    hibernate:
-#      ddl-auto: "create-update"
-#      ddl-auto: "create-drop"
+    generate-ddl: "false"
+  liquibase:
+    change-log: classpath:db/liquibase-changelog.yml
 
 banner:
   location: "classpath:/banner.txt"
@@ -21,8 +21,6 @@ logging:
   file: /lbs/log/app.log
   level:
     com.lbs: DEBUG
-  #    org.hibernate.SQL: DEBUG
-  #    org.hibernate.type.descriptor.sql.BasicBinder: TRACE
   pattern:
     file: "%d{yyyy-MM-dd HH:mm:ss} %logger{25} - %msg%n"
     console: "%d{yyyy-MM-dd HH:mm:ss} %logger{25} - %msg%n"
