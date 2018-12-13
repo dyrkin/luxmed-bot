@@ -1,10 +1,13 @@
 databaseChangeLog:
-  - include:
-      file: changelog/01-add-offset-columns-to-settings.yml
-      relativeToChangelogFile: true
-  - include:
-      file: changelog/02-add-offset-columns-to-monitoring.yml
-      relativeToChangelogFile: true
-  - include:
-      file: changelog/03-add-rebook-column-to-monitoring.yml
-      relativeToChangelogFile: true
+- include:
+    file: changelog/00-init-database.yml
+    relativeToChangelogFile: true
+- include:
+    file: changelog/01-add-offset-columns-to-settings.yml
+    relativeToChangelogFile: true
+- include:
+    file: changelog/02-add-offset-columns-to-monitoring.yml
+    relativeToChangelogFile: true
+- include:
+    file: changelog/03-add-rebook-column-to-monitoring.yml
+    relativeToChangelogFile: true

@@ -1,0 +1,491 @@
+databaseChangeLog:
+- changeSet:
+    id: 1544693090805-1
+    author: dyrkin
+    preConditions:
+      onFail: MARK_RAN
+      not:
+        tableExists:
+          tableName: account
+    changes:
+    - createTable:
+        columns:
+        - column:
+            autoIncrement: true
+            constraints:
+              primaryKey: true
+              primaryKeyName: account_pkey
+            name: record_id
+            type: BIGSERIAL
+        tableName: account
+- changeSet:
+    id: 1544693090805-2
+    author: dyrkin
+    preConditions:
+      onFail: MARK_RAN
+      not:
+        tableExists:
+          tableName: bug
+    changes:
+    - createTable:
+        columns:
+        - column:
+            autoIncrement: true
+            constraints:
+              primaryKey: true
+              primaryKeyName: bug_pkey
+            name: record_id
+            type: BIGSERIAL
+        - column:
+            constraints:
+              nullable: false
+            name: details
+            type: VARCHAR(255)
+        - column:
+            constraints:
+              nullable: false
+            name: resolved
+            type: BOOLEAN
+        - column:
+            constraints:
+              nullable: false
+            name: source_system_id
+            type: BIGINT
+        - column:
+            constraints:
+              nullable: false
+            name: submitted
+            type: TIMESTAMP WITHOUT TIME ZONE
+        - column:
+            constraints:
+              nullable: false
+            name: user_id
+            type: BIGINT
+        tableName: bug
+- changeSet:
+    id: 1544693090805-3
+    author: dyrkin
+    preConditions:
+      onFail: MARK_RAN
+      not:
+        tableExists:
+          tableName: city_history
+    changes:
+    - createTable:
+        columns:
+        - column:
+            autoIncrement: true
+            constraints:
+              primaryKey: true
+              primaryKeyName: city_history_pkey
+            name: record_id
+            type: BIGSERIAL
+        - column:
+            constraints:
+              nullable: false
+            name: account_id
+            type: BIGINT
+        - column:
+            constraints:
+              nullable: false
+            name: id
+            type: BIGINT
+        - column:
+            constraints:
+              nullable: false
+            name: name
+            type: VARCHAR(255)
+        - column:
+            constraints:
+              nullable: false
+            name: time
+            type: TIMESTAMP WITHOUT TIME ZONE
+        tableName: city_history
+- changeSet:
+    id: 1544693090805-4
+    author: dyrkin
+    preConditions:
+      onFail: MARK_RAN
+      not:
+        tableExists:
+          tableName: clinic_history
+    changes:
+    - createTable:
+        columns:
+        - column:
+            autoIncrement: true
+            constraints:
+              primaryKey: true
+              primaryKeyName: clinic_history_pkey
+            name: record_id
+            type: BIGSERIAL
+        - column:
+            constraints:
+              nullable: false
+            name: account_id
+            type: BIGINT
+        - column:
+            constraints:
+              nullable: false
+            name: city_id
+            type: BIGINT
+        - column:
+            constraints:
+              nullable: false
+            name: id
+            type: BIGINT
+        - column:
+            constraints:
+              nullable: false
+            name: name
+            type: VARCHAR(255)
+        - column:
+            constraints:
+              nullable: false
+            name: time
+            type: TIMESTAMP WITHOUT TIME ZONE
+        tableName: clinic_history
+- changeSet:
+    id: 1544693090805-5
+    author: dyrkin
+    preConditions:
+      onFail: MARK_RAN
+      not:
+        tableExists:
+          tableName: credentials
+    changes:
+    - createTable:
+        columns:
+        - column:
+            autoIncrement: true
+            constraints:
+              primaryKey: true
+              primaryKeyName: credentials_pkey
+            name: record_id
+            type: BIGSERIAL
+        - column:
+            constraints:
+              nullable: false
+            name: account_id
+            type: BIGINT
+        - column:
+            constraints:
+              nullable: false
+            name: password
+            type: VARCHAR(255)
+        - column:
+            constraints:
+              nullable: false
+            name: user_id
+            type: BIGINT
+        - column:
+            constraints:
+              nullable: false
+            name: username
+            type: VARCHAR(255)
+        tableName: credentials
+- changeSet:
+    id: 1544693090805-6
+    author: dyrkin
+    preConditions:
+      onFail: MARK_RAN
+      not:
+        tableExists:
+          tableName: doctor_history
+    changes:
+    - createTable:
+        columns:
+        - column:
+            autoIncrement: true
+            constraints:
+              primaryKey: true
+              primaryKeyName: doctor_history_pkey
+            name: record_id
+            type: BIGSERIAL
+        - column:
+            constraints:
+              nullable: false
+            name: account_id
+            type: BIGINT
+        - column:
+            constraints:
+              nullable: false
+            name: city_id
+            type: BIGINT
+        - column:
+            name: clinic_id
+            type: BIGINT
+        - column:
+            constraints:
+              nullable: false
+            name: id
+            type: BIGINT
+        - column:
+            constraints:
+              nullable: false
+            name: name
+            type: VARCHAR(255)
+        - column:
+            constraints:
+              nullable: false
+            name: service_id
+            type: BIGINT
+        - column:
+            constraints:
+              nullable: false
+            name: time
+            type: TIMESTAMP WITHOUT TIME ZONE
+        tableName: doctor_history
+- changeSet:
+    id: 1544693090805-7
+    author: dyrkin
+    preConditions:
+      onFail: MARK_RAN
+      not:
+        tableExists:
+          tableName: monitoring
+    changes:
+    - createTable:
+        columns:
+        - column:
+            autoIncrement: true
+            constraints:
+              primaryKey: true
+              primaryKeyName: monitoring_pkey
+            name: record_id
+            type: BIGSERIAL
+        - column:
+            constraints:
+              nullable: false
+            name: account_id
+            type: BIGINT
+        - column:
+            constraints:
+              nullable: false
+            name: active
+            type: BOOLEAN
+        - column:
+            constraints:
+              nullable: false
+            name: autobook
+            type: BOOLEAN
+        - column:
+            constraints:
+              nullable: false
+            name: chat_id
+            type: VARCHAR(255)
+        - column:
+            constraints:
+              nullable: false
+            name: city_id
+            type: BIGINT
+        - column:
+            constraints:
+              nullable: false
+            name: city_name
+            type: VARCHAR(255)
+        - column:
+            name: clinic_id
+            type: BIGINT
+        - column:
+            constraints:
+              nullable: false
+            name: clinic_name
+            type: VARCHAR(255)
+        - column:
+            constraints:
+              nullable: false
+            name: created
+            type: TIMESTAMP WITHOUT TIME ZONE
+        - column:
+            constraints:
+              nullable: false
+            name: date_from
+            type: TIMESTAMP WITHOUT TIME ZONE
+        - column:
+            constraints:
+              nullable: false
+            name: date_to
+            type: TIMESTAMP WITHOUT TIME ZONE
+        - column:
+            name: doctor_id
+            type: BIGINT
+        - column:
+            constraints:
+              nullable: false
+            name: doctor_name
+            type: VARCHAR(255)
+        - column:
+            constraints:
+              nullable: false
+            name: service_id
+            type: BIGINT
+        - column:
+            constraints:
+              nullable: false
+            name: service_name
+            type: VARCHAR(255)
+        - column:
+            constraints:
+              nullable: false
+            name: source_system_id
+            type: BIGINT
+        - column:
+            name: time_of_day
+            type: INTEGER
+        - column:
+            constraints:
+              nullable: false
+            name: user_id
+            type: BIGINT
+        - column:
+            constraints:
+              nullable: false
+            name: time_from
+            type: TIME WITHOUT TIME ZONE
+        - column:
+            constraints:
+              nullable: false
+            name: time_to
+            type: TIME WITHOUT TIME ZONE
+        tableName: monitoring
+- changeSet:
+    id: 1544693090805-8
+    author: dyrkin
+    preConditions:
+      onFail: MARK_RAN
+      not:
+        tableExists:
+          tableName: service_history
+    changes:
+    - createTable:
+        columns:
+        - column:
+            autoIncrement: true
+            constraints:
+              primaryKey: true
+              primaryKeyName: service_history_pkey
+            name: record_id
+            type: BIGSERIAL
+        - column:
+            constraints:
+              nullable: false
+            name: account_id
+            type: BIGINT
+        - column:
+            constraints:
+              nullable: false
+            name: city_id
+            type: BIGINT
+        - column:
+            name: clinic_id
+            type: BIGINT
+        - column:
+            constraints:
+              nullable: false
+            name: id
+            type: BIGINT
+        - column:
+            constraints:
+              nullable: false
+            name: name
+            type: VARCHAR(255)
+        - column:
+            constraints:
+              nullable: false
+            name: time
+            type: TIMESTAMP WITHOUT TIME ZONE
+        tableName: service_history
+- changeSet:
+    id: 1544693090805-9
+    author: dyrkin
+    preConditions:
+      onFail: MARK_RAN
+      not:
+        tableExists:
+          tableName: settings
+    changes:
+    - createTable:
+        columns:
+        - column:
+            autoIncrement: true
+            constraints:
+              primaryKey: true
+              primaryKeyName: settings_pkey
+            name: record_id
+            type: BIGSERIAL
+        - column:
+            constraints:
+              nullable: false
+            name: lang
+            type: INTEGER
+        - column:
+            constraints:
+              nullable: false
+            name: user_id
+            type: BIGINT
+        tableName: settings
+    - addUniqueConstraint:
+        columnNames: user_id
+        constraintName: settings_user_id_user_id
+        tableName: settings
+- changeSet:
+    id: 1544693090805-10
+    author: dyrkin
+    preConditions:
+      onFail: MARK_RAN
+      not:
+        tableExists:
+          tableName: source
+    changes:
+    - createTable:
+        columns:
+        - column:
+            autoIncrement: true
+            constraints:
+              primaryKey: true
+              primaryKeyName: source_pkey
+            name: record_id
+            type: BIGSERIAL
+        - column:
+            constraints:
+              nullable: false
+            name: chat_id
+            type: VARCHAR(255)
+        - column:
+            constraints:
+              nullable: false
+            name: source_system_id
+            type: BIGINT
+        - column:
+            constraints:
+              nullable: false
+            name: user_id
+            type: BIGINT
+        tableName: source
+- changeSet:
+    id: 1544693090805-11
+    author: dyrkin
+    preConditions:
+      onFail: MARK_RAN
+      not:
+        tableExists:
+          tableName: system_user
+    changes:
+    - createTable:
+        columns:
+        - column:
+            autoIncrement: true
+            constraints:
+              primaryKey: true
+              primaryKeyName: system_user_pkey
+            name: record_id
+            type: BIGSERIAL
+        - column:
+            constraints:
+              nullable: false
+            name: active_account_id
+            type: BIGINT
+        tableName: system_user
+
+

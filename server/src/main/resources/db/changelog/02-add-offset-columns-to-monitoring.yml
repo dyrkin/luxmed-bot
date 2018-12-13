@@ -1,18 +1,18 @@
 databaseChangeLog:
-  - changeSet:
-      id: 02
-      author: dyrkin
-      changes:
-        - addColumn:
-            tableName: monitoring
-            columns:
-              - column:
-                  name: time_offset
-                  type: int
-                  defaultValue: 0
+- changeSet:
+    id: 02
+    author: dyrkin
+    changes:
+    - addColumn:
+        tableName: monitoring
+        columns:
+        - column:
+            name: time_offset
+            type: int
+            defaultValue: 0
 
-        - addNotNullConstraint:
-            tableName: monitoring
-            columnName: time_offset
-            columnDataType: int
-            defaultNullValue: 0
+    - addNotNullConstraint:
+        tableName: monitoring
+        columnName: time_offset
+        columnDataType: int
+        defaultNullValue: 0
