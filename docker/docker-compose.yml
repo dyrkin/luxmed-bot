@@ -2,6 +2,7 @@ version: '3.4'
 services:
   luxmedbookingservice:
     image: eugenezadyra/luxmed-bot:latest
+    env_file: secrets.env
     environment:
       DB_HOST: "database"
     volumes:

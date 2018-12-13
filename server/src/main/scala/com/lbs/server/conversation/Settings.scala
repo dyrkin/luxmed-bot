@@ -43,15 +43,15 @@ class Settings(val userId: UserId, bot: Bot, dataService: DataService, val local
     ask { _ =>
       val settings = getSettings
       bot.sendMessage(userId.source, lang.configureOffset,
-        inlineKeyboard = createInlineKeyboard(Seq(Button(lang.alwaysAskOffset(settings.alwaysAskOffset), Tags.AlwaysAskOffset),
+        inlineKeyboard = createInlineKeyboard(Seq(Button(lang.alwaysAskOffset(settings.alwaysAskOffset), Tags.ToggleAskOffsetOnOff),
           Button(lang.changeDefaultOffset(settings.defaultOffset), Tags.ChangeDefaultOffset)), columns = 1))
     } onReply {
-      case Msg(cmd@CallbackCommand(Tags.AlwaysAskOffset), _) =>
+      case Msg(cmd@CallbackCommand(Tags.ToggleAskOffsetOnOff), _) =>
         val settings = getSettings
         settings.alwaysAskOffset = !settings.alwaysAskOffset
         dataService.saveSettings(settings)
         bot.sendEditMessage(userId.source, cmd.message.messageId,
-          inlineKeyboard = createInlineKeyboard(Seq(Button(lang.alwaysAskOffset(settings.alwaysAskOffset), Tags.AlwaysAskOffset),
+          inlineKeyboard = createInlineKeyboard(Seq(Button(lang.alwaysAskOffset(settings.alwaysAskOffset), Tags.ToggleAskOffsetOnOff),
             Button(lang.changeDefaultOffset(settings.defaultOffset), Tags.ChangeDefaultOffset)), columns = 1))
         stay()
       case Msg(CallbackCommand(Tags.ChangeDefaultOffset), _) =>
@@ -82,7 +82,7 @@ object Settings {
   object Tags {
     val Language = "language"
     val Offset = "offset"
-    val AlwaysAskOffset = "always_ask_offset"
+    val ToggleAskOffsetOnOff = "always_ask_offset"
     val ChangeDefaultOffset = "change_default_offset"
   }
 
