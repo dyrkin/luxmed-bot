@@ -51,7 +51,7 @@ class MonitoringService extends Logger {
   private var checkedOn: ZonedDateTime = _
 
   def notifyUserAboutTerms(terms: Seq[AvailableVisitsTermPresentation], monitoring: Monitoring): Unit = {
-    deactivateMonitoring(monitoring.recordId)
+    deactivateMonitoring(monitoring.accountId, monitoring.recordId)
 
     val fiveTerms = terms.take(5).zipWithIndex //send only 5 closest terms
     val messages = lang(monitoring.userId)
@@ -87,7 +87,7 @@ class MonitoringService extends Logger {
         bot.sendMessage(monitoring.source, lang(monitoring.userId).invalidLoginOrPassword)
         val activeUserMonitorings = dataService.getActiveMonitorings(monitoring.accountId)
         activeUserMonitorings.foreach { m =>
-          deactivateMonitoring(m.recordId)
+          deactivateMonitoring(m.accountId, m.recordId)
         }
       case Left(ex) => error(s"Unable to receive terms by monitoring [#${monitoring.recordId}]", ex)
     }
@@ -133,7 +133,7 @@ class MonitoringService extends Logger {
     toDisable.foreach { case (id, monitoring) =>
       debug(s"Monitoring [#$id] is going to be disable as outdated")
       notifyChatAboutDisabledMonitoring(monitoring)
-      deactivateMonitoring(id)
+      deactivateMonitoring(monitoring.accountId, id)
     }
   }
 
@@ -155,21 +155,28 @@ class MonitoringService extends Logger {
     }.toEither match {
       case Right(_) =>
         bot.sendMessage(monitoring.source, lang(monitoring.userId).appointmentIsBooked(term, monitoring))
-        deactivateMonitoring(monitoring.recordId)
+        deactivateMonitoring(monitoring.accountId, monitoring.recordId)
       case Left(ex) =>
         error(s"Unable to book appointment by monitoring [${monitoring.recordId}]", ex)
     }
   }
 
-  def deactivateMonitoring(monitoringId: JLong): Unit = {
-    activeMonitorings.remove(monitoringId).foreach {
-      case (monitoring, future) =>
-        debug(s"Deactivating monitoring [#$monitoringId]")
+  def deactivateMonitoring(accountId: JLong, monitoringId: JLong): Unit = {
+    val activeMonitoringMaybe = activeMonitorings.remove(monitoringId)
+    activeMonitoringMaybe match {
+      case Some((monitoring, future)) =>
+        debug(s"Deactivating scheduled monitoring [#$monitoringId]")
         if (!future.isCancelled) {
           future.cancel(true)
         }
         monitoring.active = false
         dataService.saveMonitoring(monitoring)
+      case None =>
+        debug(s"Deactivating unscheduled monitoring [#$monitoringId]")
+        dataService.findMonitoring(accountId, monitoringId).foreach { monitoring =>
+          monitoring.active = false
+          dataService.saveMonitoring(monitoring)
+        }
     }
   }
 

@@ -46,7 +46,7 @@ class Monitorings(val userId: UserId, bot: Bot, monitoringService: MonitoringSer
         bot.sendMessage(userId.source, lang.monitoringWasNotDeactivated)
         end()
       case Msg(Command(_, _, Some(Tags.Yes)), monitoring: Monitoring) =>
-        monitoringService.deactivateMonitoring(monitoring.recordId)
+        monitoringService.deactivateMonitoring(monitoring.accountId, monitoring.recordId)
         bot.sendMessage(userId.source, lang.deactivated)
         end()
     }
