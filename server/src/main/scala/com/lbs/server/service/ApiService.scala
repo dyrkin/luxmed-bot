@@ -44,31 +44,29 @@ class ApiService extends SessionSupport {
         clinicId = clinicId, serviceId = Some(serviceId)).map(_.doctors)
     }
 
-  def getDefaultPayer(accountId: Long, cityId: Long, clinicId: Option[Long], serviceId: Long): Either[Throwable, Option[IdName]] =
+  def getPayers(accountId: Long, cityId: Long, clinicId: Option[Long], serviceId: Long): Either[Throwable, (Option[IdName], Seq[IdName])] =
     withSession(accountId) { session =>
-      LuxmedApi.reservationFilter(session.accessToken,
+      val reservationFilterResponse = LuxmedApi.reservationFilter(session.accessToken,
         session.tokenType, cityId = Some(cityId),
-        clinicId = clinicId, serviceId = Some(serviceId)).map(_.defaultPayer)
+        clinicId = clinicId, serviceId = Some(serviceId))
+      reservationFilterResponse.map { response =>
+        response.defaultPayer -> response.payers
+      }
     }
 
-  def getAvailableTerms(accountId: Long, cityId: Long, clinicId: Option[Long], serviceId: Long, doctorId: Option[Long],
+  def getAvailableTerms(accountId: Long, payerId: Long, cityId: Long, clinicId: Option[Long], serviceId: Long, doctorId: Option[Long],
                         fromDate: ZonedDateTime = ZonedDateTime.now(), toDate: Option[ZonedDateTime] = None, timeFrom: LocalTime, timeTo: LocalTime,
                         languageId: Long = 10, findFirstFreeTerm: Boolean = false): Either[Throwable, List[AvailableVisitsTermPresentation]] =
-    getDefaultPayer(accountId, cityId, clinicId, serviceId).flatMap {
-      case Some(payerId) =>
-        withSession(accountId) { session =>
-          val termsEither = LuxmedApi.availableTerms(session.accessToken, session.tokenType, payerId.id, cityId, clinicId, serviceId, doctorId,
-            fromDate, toDate, languageId = languageId, findFirstFreeTerm = findFirstFreeTerm).map(_.availableVisitsTermPresentation)
-          termsEither.map { terms =>
-            terms.filter { term =>
-              val time = term.visitDate.startDateTime.toLocalTime
-              time == timeFrom || time == timeTo || (time.isAfter(timeFrom) && time.isBefore(timeTo))
-            }
-          }
+    withSession(accountId) { session =>
+      val termsEither = LuxmedApi.availableTerms(session.accessToken, session.tokenType, payerId, cityId, clinicId, serviceId, doctorId,
+        fromDate, toDate, languageId = languageId, findFirstFreeTerm = findFirstFreeTerm).map(_.availableVisitsTermPresentation)
+      termsEither.map { terms =>
+        terms.filter { term =>
+          val time = term.visitDate.startDateTime.toLocalTime
+          time == timeFrom || time == timeTo || (time.isAfter(timeFrom) && time.isBefore(timeTo))
         }
-      case None => sys.error(s"Can't determine payer id by user: $accountId, city: $cityId, clinic: $clinicId, service: $serviceId")
+      }
     }
-
 
   def temporaryReservation(accountId: Long, temporaryReservationRequest: TemporaryReservationRequest, valuationsRequest: ValuationsRequest): Either[Throwable, (TemporaryReservationResponse, ValuationsResponse)] =
     withSession(accountId) { session =>

@@ -1,0 +1,23 @@
+databaseChangeLog:
+- changeSet:
+    id: 04
+    author: dyrkin
+    preConditions:
+      onFail: MARK_RAN
+      not:
+        columnExists:
+          tableName: monitoring
+          columnName: payer_id
+    changes:
+    - addColumn:
+        tableName: monitoring
+        columns:
+        - column:
+            name: payer_id
+            type: BIGINT
+
+    - addNotNullConstraint:
+        tableName: monitoring
+        columnName: payer_id
+        columnDataType: BIGINT
+        defaultNullValue: 0

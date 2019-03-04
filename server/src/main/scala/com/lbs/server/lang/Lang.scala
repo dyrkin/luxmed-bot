@@ -27,6 +27,7 @@ object Lang {
 }
 
 trait Lang {
+
   def id: Int
 
   def locale: Locale
@@ -95,6 +96,10 @@ trait Lang {
   def pleaseSpecifyOffset: String
 
   def visitAlreadyExists: String
+
+  def canNotDetectPayer(error: String): String
+
+  def pleaseChoosePayer: String
 
   def city: String
 

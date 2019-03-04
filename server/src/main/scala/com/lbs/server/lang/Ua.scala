@@ -314,7 +314,7 @@ object Ua extends Lang {
 
   override def pleaseEnterOffset(current: Int): String = s"<b>➡</b> Будь ласка, введіть зміщення за замовчуванням. Поточне: <b>$current</b>"
 
-  override  def alwaysAskOffset(enabled: Boolean): String = s"${if(enabled) "✅ " else ""}Завжди питати зміщення"
+  override def alwaysAskOffset(enabled: Boolean): String = s"${if (enabled) "✅ " else ""}Завжди питати зміщення"
 
   override def changeDefaultOffset(current: Int): String = s"Змінити дефолтне зміщення ($current)"
 
@@ -357,4 +357,8 @@ object Ua extends Lang {
   override def timeFromIs(timeFrom: LocalTime): String = s"⏱ Початковий час  ${formatTime(timeFrom)}"
 
   override def timeToIs(timeTo: LocalTime): String = s"⏱ Кінцевий час ${formatTime(timeTo)}"
+
+  override def canNotDetectPayer(error: String): String = s"Не можу визначити платника. Причина: $error"
+
+  override def pleaseChoosePayer: String = "<b>➡</b> Не можу визначити платника за замовчуванням. Будь ласка, виберіть платника"
 }

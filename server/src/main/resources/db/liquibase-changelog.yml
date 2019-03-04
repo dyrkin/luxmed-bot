@@ -11,3 +11,6 @@ databaseChangeLog:
 - include:
     file: changelog/03-add-rebook-column-to-monitoring.yml
     relativeToChangelogFile: true
+- include:
+    file: changelog/04-add-payerid-column-to-monitoring.yml
+    relativeToChangelogFile: true

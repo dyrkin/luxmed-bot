@@ -31,6 +31,7 @@ package object util {
             accountId = userId.accountId,
             chatId = userId.source.chatId,
             sourceSystemId = userId.source.sourceSystem.id,
+            payerId = bookingData.payerId,
             cityId = bookingData.cityId.id,
             cityName = bookingData.cityId.name,
             clinicId = bookingData.clinicId.optionalId,
@@ -126,6 +127,10 @@ package object util {
 
     object IntString {
       def unapply(string: String): Option[Int] = Try(string.toInt).toOption
+    }
+
+    object LongString {
+      def unapply(string: String): Option[Long] = Try(string.toLong).toOption
     }
 
   }

@@ -27,6 +27,10 @@ class Monitoring extends RecordId {
   var sourceSystemId: JLong = _
 
   @BeanProperty
+  @Column(name = "payer_id", nullable = false)
+  var payerId: JLong = _
+
+  @BeanProperty
   @Column(name = "city_id", nullable = false)
   var cityId: JLong = _
 
@@ -91,12 +95,12 @@ class Monitoring extends RecordId {
   var active: Boolean = true
 
   @BeanProperty
-  @Column(name = "time_offset",nullable = false)
+  @Column(name = "time_offset", nullable = false)
   var offset: Int = 0
 }
 
 object Monitoring {
-  def apply(userId: Long, accountId: Long, chatId: String, sourceSystemId: Long, cityId: Long, cityName: String, clinicId: Option[Long], clinicName: String,
+  def apply(userId: Long, accountId: Long, chatId: String, sourceSystemId: Long, payerId: Long, cityId: Long, cityName: String, clinicId: Option[Long], clinicName: String,
             serviceId: Long, serviceName: String, doctorId: Option[Long], doctorName: String, dateFrom: ZonedDateTime,
             dateTo: ZonedDateTime, autobook: Boolean = false, rebookIfExists: Boolean = false, created: ZonedDateTime = ZonedDateTime.now(), timeFrom: LocalTime, timeTo: LocalTime,
             active: Boolean = true, offset: Int): Monitoring = {
@@ -105,6 +109,7 @@ object Monitoring {
     monitoring.accountId = accountId
     monitoring.chatId = chatId
     monitoring.sourceSystemId = sourceSystemId
+    monitoring.payerId = payerId
     monitoring.cityId = cityId
     monitoring.cityName = cityName
     monitoring.clinicId = clinicId

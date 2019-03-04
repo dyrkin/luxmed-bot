@@ -67,7 +67,7 @@ class MonitoringService extends Logger {
   private def monitor(monitoring: Monitoring): Unit = {
     debug(s"Looking for available terms. Monitoring [#${monitoring.recordId}]")
     val dateFrom = optimizeDateFrom(monitoring.dateFrom, monitoring.offset)
-    val termsEither = apiService.getAvailableTerms(monitoring.accountId, monitoring.cityId, monitoring.clinicId, monitoring.serviceId,
+    val termsEither = apiService.getAvailableTerms(monitoring.accountId, monitoring.payerId, monitoring.cityId, monitoring.clinicId, monitoring.serviceId,
       monitoring.doctorId, dateFrom, Some(monitoring.dateTo), timeFrom = monitoring.timeFrom, timeTo = monitoring.timeTo)
     termsEither match {
       case Right(terms) =>
@@ -196,7 +196,7 @@ class MonitoringService extends Logger {
     val monitoringMaybe = dataService.findMonitoring(accountId, monitoringId)
     monitoringMaybe match {
       case Some(monitoring) =>
-        val termsEither = apiService.getAvailableTerms(monitoring.accountId, monitoring.cityId, monitoring.clinicId, monitoring.serviceId,
+        val termsEither = apiService.getAvailableTerms(monitoring.accountId, monitoring.payerId, monitoring.cityId, monitoring.clinicId, monitoring.serviceId,
           monitoring.doctorId, monitoring.dateFrom, Some(monitoring.dateTo), timeFrom = monitoring.timeFrom, timeTo = monitoring.timeTo)
         termsEither match {
           case Right(terms) =>

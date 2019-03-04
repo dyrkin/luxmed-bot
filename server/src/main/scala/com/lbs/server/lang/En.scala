@@ -358,4 +358,8 @@ object En extends Lang {
   override def timeFromIs(timeFrom: LocalTime): String = s"⏱ Time from is ${formatTime(timeFrom)}"
 
   override def timeToIs(timeTo: LocalTime): String = s"⏱ Date to is ${formatTime(timeTo)}"
+
+  override def canNotDetectPayer(error: String): String = s"Can't determine payer. Reason: $error"
+
+  override def pleaseChoosePayer: String = "<b>➡</b> Can't determine default payer. Please choose one"
 }

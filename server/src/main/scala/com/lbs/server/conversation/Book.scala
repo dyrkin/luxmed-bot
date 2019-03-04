@@ -16,7 +16,7 @@ import com.lbs.server.conversation.base.Conversation
 import com.lbs.server.lang.{Localizable, Localization}
 import com.lbs.server.repository.model.Monitoring
 import com.lbs.server.service.{ApiService, DataService, MonitoringService}
-import com.lbs.server.util.MessageExtractors.{BooleanString, CallbackCommand, IntString, TextCommand}
+import com.lbs.server.util.MessageExtractors._
 import com.lbs.server.util.ServerModelConverters._
 
 class Book(val userId: UserId, bot: Bot, apiService: ApiService, dataService: DataService, monitoringService: MonitoringService,
@@ -60,7 +60,38 @@ class Book(val userId: UserId, bot: Bot, apiService: ApiService, dataService: Da
         latestOptions = dataService.getLatestDoctorsByCityIdAndClinicIdAndServiceId(userId.accountId, bd.cityId.id, bd.clinicId.optionalId, bd.serviceId.id),
         staticOptions = apiService.getAllDoctors(userId.accountId, bd.cityId.id, bd.clinicId.optionalId, bd.serviceId.id),
         applyId = id => bd.copy(doctorId = id))
-    }(requestNext = requestDateFrom)
+    }(requestNext = determinePayer)
+
+  private def determinePayer: Step =
+    process { bookingData =>
+      val response = apiService.getPayers(userId.accountId, bookingData.cityId.id, bookingData.clinicId.optionalId, bookingData.serviceId.id)
+      response match {
+        case Left(ex) =>
+          warn(s"Can't determine payers for account ${userId.accountId}, city ${bookingData.cityId.id}, " +
+            s"clinic ${bookingData.clinicId.optionalId} and service ${bookingData.serviceId.id}", ex)
+          bot.sendMessage(userId.source, lang.canNotDetectPayer(ex.getMessage))
+          end()
+        case Right((defaultPayerMaybe, payers)) =>
+          defaultPayerMaybe match {
+            case Some(defaultPayer) =>
+              goto(requestDateFrom) using bookingData.copy(payerId = defaultPayer.id)
+            case None =>
+              goto(askPayer) using bookingData.copy(payers = payers)
+          }
+      }
+    }
+
+  private def askPayer: Step =
+    ask { bookingData =>
+      bot.sendMessage(
+        userId.source,
+        lang.pleaseChoosePayer,
+        inlineKeyboard = createInlineKeyboard(bookingData.payers.map(payer => Button(payer.name, payer.id)))
+      )
+    } onReply {
+      case Msg(CallbackCommand(LongString(payerId)), bookingData) =>
+        goto(requestDateFrom) using bookingData.copy(payerId = payerId)
+    }
 
   private def requestDateFrom: Step =
     ask { bookingData =>
@@ -132,7 +163,7 @@ class Book(val userId: UserId, bot: Bot, apiService: ApiService, dataService: Da
 
   private def requestTerm: Step =
     ask { bookingData =>
-      val availableTerms = apiService.getAvailableTerms(userId.accountId, bookingData.cityId.id,
+      val availableTerms = apiService.getAvailableTerms(userId.accountId, bookingData.payerId, bookingData.cityId.id,
         bookingData.clinicId.optionalId, bookingData.serviceId.id, bookingData.doctorId.optionalId,
         bookingData.dateFrom, Some(bookingData.dateTo), timeFrom = bookingData.timeFrom, timeTo = bookingData.timeTo)
       termsPager.restart()
@@ -173,7 +204,7 @@ class Book(val userId: UserId, bot: Bot, apiService: ApiService, dataService: Da
           case None => (0, false)
         }
         val newData = bookingData.copy(offset = defaultOffset)
-        if(askOffset) goto(askMonitoringOffsetOption) using newData
+        if (askOffset) goto(askMonitoringOffsetOption) using newData
         else goto(askMonitoringAutobookOption) using newData
     }
 
@@ -294,7 +325,7 @@ object Book {
                          dateTo: ZonedDateTime = ZonedDateTime.now().plusDays(1L), timeFrom: LocalTime = LocalTime.of(7, 0),
                          timeTo: LocalTime = LocalTime.of(21, 0), autobook: Boolean = false, rebookIfExists: Boolean = false,
                          term: Option[AvailableVisitsTermPresentation] = None, temporaryReservationId: Option[Long] = None,
-                         valuations: Option[ValuationsResponse] = None, offset: Int = 0)
+                         valuations: Option[ValuationsResponse] = None, offset: Int = 0, payerId: Long = 0, payers: Seq[IdName] = Seq())
 
   object Tags {
     val Cancel = "cancel"
