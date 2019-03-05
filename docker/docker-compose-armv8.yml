@@ -1,0 +1,27 @@
+version: '3.4'
+services:
+  luxmedbookingservice:
+    image: eugenezadyra/luxmed-bot-armv8:latest
+    env_file: secrets.env
+    environment:
+      DB_HOST: "database"
+    volumes:
+    - lbs:/lbs
+
+  database:
+    image: arm64v8/postgres:10.7
+    volumes:
+    - postgres:/var/lib/postgresql/data
+    ports:
+    - "5432:5432"
+    environment:
+    - POSTGRES_USER=lbs
+    - POSTGRES_PASSWORD=lsb123
+    - POSTGRES_DB=lbs
+    - TZ=Europe/Warsaw
+
+volumes:
+  postgres:
+    name: postgres
+  lbs:
+    name: lbs

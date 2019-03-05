@@ -22,6 +22,32 @@ pipeline:
       branch: master
       event: push
 
+  publish_to_docker_hub_armv6:
+    image: plugins/docker
+    repo: eugenezadyra/luxmed-bot-armv6
+    username:
+      from_secret: docker_username
+    password:
+      from_secret: docker_password
+    dockerfile: ./docker/Dockerfile-armv6
+    context: ./docker/
+    when:
+      branch: master
+      event: push
+
+  publish_to_docker_hub_armv8:
+    image: plugins/docker
+    repo: eugenezadyra/luxmed-bot-armv8
+    username:
+      from_secret: docker_username
+    password:
+      from_secret: docker_password
+    dockerfile: ./docker/Dockerfile-armv8
+    context: ./docker/
+    when:
+      branch: master
+      event: push
+
   restart_bot:
     image: appleboy/drone-ssh
     host:
