@@ -1,7 +1,7 @@
 version: '3.4'
 services:
   luxmedbookingservice:
-    image: eugenezadyra/luxmed-bot-armv8:latest
+    image: eugenezadyra/luxmed-bot:latest-arm64
     env_file: secrets.env
     environment:
       DB_HOST: "database"

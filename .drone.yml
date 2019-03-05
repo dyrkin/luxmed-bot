@@ -1,54 +1,37 @@
-pipeline:
-  verify_and_prepare:
+---
+kind: pipeline
+name: amd64
+
+platform:
+  os: linux
+  arch: amd64
+
+steps:
+  - name: build
     image: java:openjdk-8
     environment:
-    - GRADLE_USER_HOME=~/.gradle
+      GRADLE_USER_HOME: ~/.gradle
     commands:
-    - ./gradlew test
-    - ./gradlew prepare
-    - echo -n "1.0.$DRONE_BUILD_NUMBER,latest" > .tags
-    - echo -n "1.0.$DRONE_BUILD_NUMBER" > ./docker/version
+      - ./gradlew test
+      - ./gradlew prepare
+      - echo -n "1.0.$DRONE_BUILD_NUMBER,latest" > .tags
+      - echo -n "1.0.$DRONE_BUILD_NUMBER" > ./docker/version
 
-  publish_to_docker_hub:
+  - name: publish
     image: plugins/docker
-    repo: eugenezadyra/luxmed-bot
-    username:
-      from_secret: docker_username
-    password:
-      from_secret: docker_password
-    dockerfile: ./docker/Dockerfile
-    context: ./docker/
-    when:
-      branch: master
-      event: push
+    settings:
+      repo: eugenezadyra/luxmed-bot
+      username:
+        from_secret: docker_username
+      password:
+        from_secret: docker_password
+      dockerfile: docker/Dockerfile
+      context: docker/
+      when:
+        branch: master
+        event: push
 
-  publish_to_docker_hub_armv6:
-    image: plugins/docker
-    repo: eugenezadyra/luxmed-bot-armv6
-    username:
-      from_secret: docker_username
-    password:
-      from_secret: docker_password
-    dockerfile: ./docker/Dockerfile-armv6
-    context: ./docker/
-    when:
-      branch: master
-      event: push
-
-  publish_to_docker_hub_armv8:
-    image: plugins/docker
-    repo: eugenezadyra/luxmed-bot-armv8
-    username:
-      from_secret: docker_username
-    password:
-      from_secret: docker_password
-    dockerfile: ./docker/Dockerfile-armv8
-    context: ./docker/
-    when:
-      branch: master
-      event: push
-
-  restart_bot:
+  - name: deploy_and_restart
     image: appleboy/drone-ssh
     host:
       from_secret: digitalocean_host
@@ -57,9 +40,75 @@ pipeline:
     key:
       from_secret: digitalocean_key
     script:
-    - service luxmed-bot stop
-    - (cd ~/luxmed-bot && rm -f docker-compose.yml && wget https://raw.githubusercontent.com/dyrkin/luxmed-booking-service/master/docker/docker-compose.yml)
-    - service luxmed-bot start
+      - service luxmed-bot stop
+      - (cd ~/luxmed-bot && rm -f docker-compose.yml && wget https://raw.githubusercontent.com/dyrkin/luxmed-booking-service/master/docker/docker-compose.yml)
+      - service luxmed-bot start
+    when:
+      branch: master
+      event: push
+
+---
+kind: pipeline
+name: arm
+
+platform:
+  os: linux
+  arch: arm
+
+steps:
+  - name: build
+    image: arm32v6/openjdk:8-alpine
+    environment:
+      GRADLE_USER_HOME: ~/.gradle
+    commands:
+      - ./gradlew test
+      - ./gradlew prepare
+      - echo -n "1.0.$DRONE_BUILD_NUMBER-arm,latest-arm" > .tags
+      - echo -n "1.0.$DRONE_BUILD_NUMBER" > ./docker/version
+
+  - name: publish
+    image: plugins/docker
+    settings:
+      repo: eugenezadyra/luxmed-bot
+      username:
+        from_secret: docker_username
+      password:
+        from_secret: docker_password
+      dockerfile: docker/Dockerfile.arm
+      context: docker/
+    when:
+      branch: master
+      event: push
+
+---
+kind: pipeline
+name: arm64
+
+platform:
+  os: linux
+  arch: arm64
+
+steps:
+  - name: build
+    image: arm64v8/openjdk:8-alpine
+    environment:
+      GRADLE_USER_HOME: ~/.gradle
+    commands:
+      - ./gradlew test
+      - ./gradlew prepare
+      - echo -n "1.0.$DRONE_BUILD_NUMBER-arm64,latest-arm64" > .tags
+      - echo -n "1.0.$DRONE_BUILD_NUMBER" > ./docker/version
+
+  - name: publish
+    image: plugins/docker
+    settings:
+      repo: eugenezadyra/luxmed-bot
+      username:
+        from_secret: docker_username
+      password:
+        from_secret: docker_password
+      dockerfile: docker/Dockerfile.arm64
+      context: docker/
     when:
       branch: master
       event: push
