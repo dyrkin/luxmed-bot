@@ -15,7 +15,10 @@ It is available here [@luxmedbot](https://telegram.me/luxmedbot)
 
 1. create telegram bot using [@BotFather](https://telegram.me/botfather)
 2. install **docker** and **docker-compose** (install **docker-machine** if you are on Mac)
-3. download [docker-compose.xml](https://raw.githubusercontent.com/dyrkin/luxmed-booking-service/master/docker/docker-compose.yml) 
+3. depending on your platform download
+    - [docker-compose.xml](https://raw.githubusercontent.com/dyrkin/luxmed-booking-service/master/docker/docker-compose.yml) 
+    - [docker-compose-arm.xml](https://raw.githubusercontent.com/dyrkin/luxmed-booking-service/master/docker/docker-compose-arm.yml)
+    - [docker-compose-arm64.xml](https://raw.githubusercontent.com/dyrkin/luxmed-booking-service/master/docker/docker-compose-arm64.yml)
 4. download [secrets.env.template](https://raw.githubusercontent.com/dyrkin/luxmed-booking-service/master/docker/secrets.env.template) 
 to the same folder and rename it to **secrets.env**
 5. edit **secrets.env** by specifying your **TELEGRAM_TOKEN** and **SECURITY_SECRET**
