@@ -10,4 +10,4 @@ echo "********************************************************"
 echo "Starting Luxmed Booking Service  "
 echo "********************************************************"
 
-cd /app && java -jar server.jar
+cd /app && java -Xmx128m -jar server.jar
