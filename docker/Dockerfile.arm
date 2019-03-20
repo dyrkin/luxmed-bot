@@ -1,6 +1,6 @@
 FROM arm32v6/openjdk:8-alpine
 
-RUN apk update && apk upgrade && apk add netcat-openbsd tzdata
+RUN apk update && apk upgrade && apk add netcat-openbsd tzdata && apk add --no-cache nss
 RUN mkdir -p /app
 ENV TZ Europe/Warsaw
 RUN echo "Europe/Warsaw" > /etc/timezone
