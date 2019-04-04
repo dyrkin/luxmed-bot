@@ -3,7 +3,7 @@ package com.lbs.api
 
 import com.lbs.api.exception.{ApiException, GenericException, InvalidLoginOrPasswordException, ServiceIsAlreadyBookedException}
 import com.lbs.api.json.JsonSerializer.extensions._
-import com.lbs.api.json.model.{LuxmedBaseError, LuxmedCompositeError, LuxmedError, SerializableJsonObject}
+import com.lbs.api.json.model.{LuxmedBaseError, LuxmedErrors, LuxmedError, SerializableJsonObject}
 import com.lbs.common.Logger
 import scalaj.http.{HttpRequest, HttpResponse}
 
@@ -57,8 +57,8 @@ package object http extends Logger {
 
     private def luxmedErrorToApiException[T <: LuxmedBaseError](ler: HttpResponse[T]): ApiException = {
       val genericException = ler.body match {
-        case e: LuxmedCompositeError =>
-          new GenericException(ler.code, ler.statusLine, e.errors.map(_.message).mkString("; "))
+        case e: LuxmedErrors =>
+          new GenericException(ler.code, ler.statusLine, e.errors.values.mkString("; "))
         case e: LuxmedError =>
           new GenericException(ler.code, ler.statusLine, e.message)
       }
@@ -72,7 +72,7 @@ package object http extends Logger {
     }
 
     private def extractLuxmedError(httpResponse: Try[HttpResponse[String]]) = {
-      httpResponse.flatMap(response => Try(response.asEntity[LuxmedCompositeError]).map(luxmedErrorToApiException).
+      httpResponse.flatMap(response => Try(response.asEntity[LuxmedErrors]).map(luxmedErrorToApiException).
         orElse(Try(response.asEntity[LuxmedError]).map(luxmedErrorToApiException))).toOption
     }
 
