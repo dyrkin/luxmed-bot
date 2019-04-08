@@ -5,29 +5,30 @@
 
 Non official Telegram bot for **Portal Pacjenta LUX MED**.
 
-With its help user can book a visit to a doctor, create term monitoring, view upcoming visits and visit history.
+### Overview 
+Luxmed Bot can help you to book a visit to a doctor, create term monitoring, view upcoming appointments and visit history.
 
-It is available here [@luxmedbot](https://telegram.me/luxmedbot)
+It is available here [@luxmedbot](https://telegram.me/luxmedbot), but you can install your instance.
 
 ![Screenshot](screenshot.png)
 
-#### To setup your own telegram bot
+### Installation
 
-1. create telegram bot using [@BotFather](https://telegram.me/botfather)
-2. install **docker** and **docker-compose** (install **docker-machine** if you are on Mac)
-3. depending on your platform download:
+1. Create telegram bot using [@BotFather](https://telegram.me/botfather)
+2. Install **docker** and **docker-compose** (install **docker-machine** if you are on Mac)
+3. Depending on your platform download:
     - [docker-compose.xml](https://raw.githubusercontent.com/dyrkin/luxmed-booking-service/master/docker/docker-compose.yml) 
     - [docker-compose-arm.xml](https://raw.githubusercontent.com/dyrkin/luxmed-booking-service/master/docker/docker-compose-arm.yml)
     - [docker-compose-arm64.xml](https://raw.githubusercontent.com/dyrkin/luxmed-booking-service/master/docker/docker-compose-arm64.yml)
-4. download [secrets.env.template](https://raw.githubusercontent.com/dyrkin/luxmed-booking-service/master/docker/secrets.env.template) 
+4. Download [secrets.env.template](https://raw.githubusercontent.com/dyrkin/luxmed-booking-service/master/docker/secrets.env.template) 
 to the same folder and rename it to **secrets.env**
-5. edit **secrets.env** by specifying your **TELEGRAM_TOKEN** and **SECURITY_SECRET**
-6. start the application by running commands:
+5. Edit **secrets.env** by specifying your **TELEGRAM_TOKEN** and **SECURITY_SECRET**
+6. Start the application by running commands:
     ```bash
     $ docker-compose pull
     $ docker-compose up
     ```
-11. send `/start` command to your bot
+11. Send `/start` command to your bot
 
 
 

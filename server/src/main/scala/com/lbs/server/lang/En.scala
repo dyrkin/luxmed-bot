@@ -27,7 +27,7 @@ object En extends Lang {
     s"⚠ Unable to cancel upcoming visit! Reason: $reason"
 
   override def appointmentHasBeenCancelled: String =
-    s"👍 Your appointment has been cancelled!"
+    s"👍 Your appointment has canceled!"
 
   override def yes: String = "Yes"
 
@@ -91,7 +91,7 @@ object En extends Lang {
 
   override def chooseTypeOfMonitoring: String = "<b>➡</b> Please choose type of monitoring you want"
 
-  override def bookByApplication: String = "👾 Book by application"
+  override def bookByApplication: String = "👾 Book by the application"
 
   override def bookManually: String = "👤 Book manually"
 
@@ -99,7 +99,7 @@ object En extends Lang {
 
   override def pleaseSpecifyOffset: String = "<b>➡</b> Please send me offset in hours or press No button"
 
-  override def visitAlreadyExists: String = "<b>➡</b> The same service is already booked. Do you want to update term?"
+  override def visitAlreadyExists: String = "<b>➡</b> The same service is already booked. Do you want to update the term?"
 
   override def city: String = "city"
 
@@ -174,7 +174,7 @@ object En extends Lang {
        |Ping @dyrkin_me if you have any questions.
        |
        |<b>➡</b> Supported commands
-       |/book - reserve a visit or create monitoring
+       |/book - reserve a visit, or create a monitoring
        |/monitorings - available terms monitoring
        |/reserved - upcoming visits
        |/history - visits history
@@ -247,7 +247,7 @@ object En extends Lang {
     s"<b>➡</b> Active monitorings."
 
   override def invalidLoginOrPassword: String =
-    """❗ You have entered invalid login or password or changed it via site.
+    """❗ You have entered invalid login or password or changed it via the site.
       |Your monitorings were removed. Please /login again and create new monitorings.
     """.stripMargin
 
@@ -279,7 +279,7 @@ object En extends Lang {
        |<b>➡</b> Create new monitoring /book""".stripMargin
 
   override def appointmentIsBooked(term: AvailableVisitsTermPresentation, monitoring: Monitoring): String =
-    s"""👍 We just booked appointment for you!
+    s"""👍 We just booked an appointment for you!
        |
        |⏱ <b>${formatDateTime(term.visitDate.startDateTime, locale)}</b>
        |${capitalizeFirstLetter(doctor)}: ${term.doctor.name}
