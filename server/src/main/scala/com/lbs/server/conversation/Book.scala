@@ -308,7 +308,7 @@ class Book(val userId: UserId, bot: Bot, apiService: ApiService, dataService: Da
 
   private def serviceConfig = StaticDataConfig(lang.service, "Stomatolog", isAnyAllowed = false)
 
-  private def doctorConfig = StaticDataConfig(lang.doctor, "Bartniak", isAnyAllowed = true)
+  private def doctorConfig = StaticDataConfig(lang.doctor, "Kowalski", isAnyAllowed = true)
 
   beforeDestroy {
     datePicker.destroy()
