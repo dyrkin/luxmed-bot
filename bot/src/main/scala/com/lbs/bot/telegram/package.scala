@@ -1,10 +1,9 @@
 
 package com.lbs.bot
 
+import com.bot4s.telegram.models.{InlineKeyboardButton, InlineKeyboardMarkup, Message => BMessage}
 import com.lbs.bot.model._
 import com.lbs.common.ModelConverters
-import info.mukel.telegrambot4s.models
-import info.mukel.telegrambot4s.models.{InlineKeyboardButton, InlineKeyboardMarkup}
 
 package object telegram {
 
@@ -24,9 +23,9 @@ package object telegram {
       }
 
     implicit val TelegramMessageToMessageConverter:
-      ObjectConverter[models.Message, Message] =
-      new ObjectConverter[models.Message, Message] {
-        override def convert[Z <: models.Message](data: Z): Message = {
+      ObjectConverter[BMessage, Message] =
+      new ObjectConverter[BMessage, Message] {
+        override def convert[Z <: BMessage](data: Z): Message = {
           Message(data.messageId.toString, data.text)
         }
       }

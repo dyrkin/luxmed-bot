@@ -1,17 +1,18 @@
 
 package com.lbs.bot.telegram
 
+import com.bot4s.telegram.api.declarative.{Callbacks, Commands}
+import com.bot4s.telegram.api.{AkkaTelegramBot, Polling}
+import com.bot4s.telegram.clients.AkkaHttpClient
+import com.bot4s.telegram.methods._
+import com.bot4s.telegram.models.{InlineKeyboardMarkup, InputFile, Message}
 import com.lbs.common.Logger
-import info.mukel.telegrambot4s.api.declarative.{Callbacks, Commands}
-import info.mukel.telegrambot4s.api.{Polling, TelegramBot => TelegramBotBase}
-import info.mukel.telegrambot4s.methods._
-import info.mukel.telegrambot4s.models._
 
 import scala.concurrent.Future
 
-class TelegramClient(onReceive: TelegramEvent => Unit, botToken: String) extends TelegramBotBase with Polling with Commands with Callbacks with Logger {
+class TelegramClient(onReceive: TelegramEvent => Unit, botToken: String) extends AkkaTelegramBot with Polling with Commands with Callbacks with Logger {
 
-  override def token: String = botToken
+  val client = new AkkaHttpClient(botToken)
 
   def sendMessage(chatId: Long, text: String): Future[Message] =
     loggingRequest(SendMessage(chatId, text, parseMode = Some(ParseMode.HTML)))
@@ -28,7 +29,7 @@ class TelegramClient(onReceive: TelegramEvent => Unit, botToken: String) extends
   def sendFile(chatId: Long, filename: String, contents: Array[Byte], caption: Option[String] = None): Future[Message] =
     loggingRequest(SendDocument(chatId, InputFile(filename, contents), caption))
 
-  private def loggingRequest[R: Manifest](req: ApiRequest[R]): Future[R] = {
+  private def loggingRequest[R: Manifest](req: Request[R]): Future[R] = {
     debug(s"Sending telegram request: $req")
     request(req)
   }

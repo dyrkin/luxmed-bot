@@ -1,5 +1,6 @@
 dependencies {
     compile project(':common')
 
-    compile group: "info.mukel", name: "telegrambot4s_2.12", version: "3.0.14"
+    compile group: "com.bot4s", name: "telegram-core_2.12", version: "4.0.0-RC2"
+    compile group: "com.bot4s", name: "telegram-akka_2.12", version: "4.0.0-RC2"
 }
