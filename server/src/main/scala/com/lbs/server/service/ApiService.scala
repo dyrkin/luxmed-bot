@@ -70,14 +70,10 @@ class ApiService extends SessionSupport {
 
   def temporaryReservation(accountId: Long, temporaryReservationRequest: TemporaryReservationRequest, valuationsRequest: ValuationsRequest): Either[Throwable, (TemporaryReservationResponse, ValuationsResponse)] =
     withSession(accountId) { session =>
-      LuxmedApi.temporaryReservation(session.accessToken, session.tokenType, temporaryReservationRequest) match {
-        case Left(ex) => Left(ex)
-        case Right(temporaryReservation) =>
-          LuxmedApi.valuations(session.accessToken, session.tokenType, valuationsRequest) match {
-            case Left(ex) => Left(ex)
-            case Right(valuationsResponse) => Right(temporaryReservation -> valuationsResponse)
-          }
-      }
+      for {
+        temporaryReservation <- LuxmedApi.temporaryReservation(session.accessToken, session.tokenType, temporaryReservationRequest)
+        valuationsResponse <- LuxmedApi.valuations(session.accessToken, session.tokenType, valuationsRequest)
+      } yield temporaryReservation -> valuationsResponse
     }
 
   def deleteTemporaryReservation(accountId: Long, temporaryReservationId: Long): Either[Throwable, HttpResponse[String]] =
@@ -116,14 +112,10 @@ class ApiService extends SessionSupport {
 
   def temporaryReservationToChangeTerm(accountId: Long, reservationId: Long, temporaryReservationRequest: TemporaryReservationRequest, valuationsRequest: ValuationsRequest): Either[Throwable, (TemporaryReservationResponse, ValuationsResponse)] =
     withSession(accountId) { session =>
-      LuxmedApi.temporaryReservationToChangeTerm(session.accessToken, session.tokenType, reservationId, temporaryReservationRequest) match {
-        case Left(ex) => Left(ex)
-        case Right(temporaryReservation) =>
-          LuxmedApi.valuationToChangeTerm(session.accessToken, session.tokenType, reservationId, valuationsRequest) match {
-            case Left(ex) => Left(ex)
-            case Right(valuationsResponse) => Right(temporaryReservation -> valuationsResponse)
-          }
-      }
+      for {
+        temporaryReservation <- LuxmedApi.temporaryReservationToChangeTerm(session.accessToken, session.tokenType, reservationId, temporaryReservationRequest)
+        valuationsResponse <- LuxmedApi.valuationToChangeTerm(session.accessToken, session.tokenType, reservationId, valuationsRequest)
+      } yield temporaryReservation -> valuationsResponse
     }
 
   def valuationToChangeTerm(accountId: Long, reservationId: Long, valuationsRequest: ValuationsRequest): Either[Throwable, ValuationsResponse] =
