@@ -14,19 +14,24 @@ class TelegramClient(onReceive: TelegramEvent => Unit, botToken: String) extends
   override def token: String = botToken
 
   def sendMessage(chatId: Long, text: String): Future[Message] =
-    request(SendMessage(chatId, text, parseMode = Some(ParseMode.HTML)))
+    loggingRequest(SendMessage(chatId, text, parseMode = Some(ParseMode.HTML)))
 
   def sendMessage(chatId: Long, text: String, replyMarkup: Option[InlineKeyboardMarkup] = None): Future[Message] =
-    request(SendMessage(chatId, text, parseMode = Some(ParseMode.HTML), replyMarkup = replyMarkup))
+    loggingRequest(SendMessage(chatId, text, parseMode = Some(ParseMode.HTML), replyMarkup = replyMarkup))
 
   def sendEditMessage(chatId: Long, messageId: Int, replyMarkup: Option[InlineKeyboardMarkup]): Future[Either[Boolean, Message]] =
-    request(EditMessageReplyMarkup(Some(chatId), Some(messageId), replyMarkup = replyMarkup))
+    loggingRequest(EditMessageReplyMarkup(Some(chatId), Some(messageId), replyMarkup = replyMarkup))
 
   def sendEditMessage(chatId: Long, messageId: Int, text: String, replyMarkup: Option[InlineKeyboardMarkup] = None): Future[Either[Boolean, Message]] =
-    request(EditMessageText(Some(chatId), Some(messageId), text = text, parseMode = Some(ParseMode.HTML), replyMarkup = replyMarkup))
+    loggingRequest(EditMessageText(Some(chatId), Some(messageId), text = text, parseMode = Some(ParseMode.HTML), replyMarkup = replyMarkup))
 
   def sendFile(chatId: Long, filename: String, contents: Array[Byte], caption: Option[String] = None): Future[Message] =
-    request(SendDocument(chatId, InputFile(filename, contents), caption))
+    loggingRequest(SendDocument(chatId, InputFile(filename, contents), caption))
+
+  private def loggingRequest[R: Manifest](req: ApiRequest[R]): Future[R] = {
+    debug(s"Sending telegram request: $req")
+    request(req)
+  }
 
 
   override def receiveMessage(msg: Message): Unit = {
