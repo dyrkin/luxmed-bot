@@ -2,6 +2,7 @@
 package com.lbs
 
 import com.lbs.api.json.model.{AvailableTermsResponse, ReservationFilterResponse, ReservedVisitsResponse, VisitsHistoryResponse}
+import com.softwaremill.quicklens._
 
 import scala.util.matching.Regex
 
@@ -24,20 +25,19 @@ package object api {
     }
 
     implicit val ReservedVisitsResponseMutator: ResponseMutator[ReservedVisitsResponse] = (response: ReservedVisitsResponse) => {
-      response.copy(reservedVisits = response.reservedVisits.map(rv => rv.copy(doctorName = cleanupDoctorName(rv.doctorName))))
+      response.modify(_.reservedVisits.each.doctorName).using(cleanupDoctorName)
     }
 
     implicit val VisitsHistoryResponseMutator: ResponseMutator[VisitsHistoryResponse] = (response: VisitsHistoryResponse) => {
-      response.copy(historicVisits = response.historicVisits.map(hv => hv.copy(doctorName = cleanupDoctorName(hv.doctorName))))
+      response.modify(_.historicVisits.each.doctorName).using(cleanupDoctorName)
     }
 
     implicit val ReservationFilterResponseMutator: ResponseMutator[ReservationFilterResponse] = (response: ReservationFilterResponse) => {
-      response.copy(doctors = response.doctors.map(d => d.copy(name = cleanupDoctorName(d.name))))
+      response.modify(_.doctors.each.name).using(cleanupDoctorName)
     }
 
     implicit val AvailableTermsResponseMutator: ResponseMutator[AvailableTermsResponse] = (response: AvailableTermsResponse) => {
-      response.copy(availableVisitsTermPresentation =
-        response.availableVisitsTermPresentation.map(atp => atp.copy(doctor = atp.doctor.copy(name = cleanupDoctorName(atp.doctor.name)))))
+      response.modify(_.availableVisitsTermPresentation.each.doctor.name).using(cleanupDoctorName)
     }
   }
 
