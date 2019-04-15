@@ -36,7 +36,7 @@ class ValuationsRequestSpec extends FunSuiteLike with Matchers with CommonSpec {
 
     val request = ValuationsRequest(clinicId = 6L, doctorId = 38275L, payerDetailsList = List(
       PayerDetails(brandId = Some(2L), contractId = 1111111L, payerId = 22222L, payerName = "FIRMA",
-        productElementId = 3333333L, productId = 44444L, productInContractId = 555555L, servaAppId = 0L, servaId = 6666L)
+        productElementId = Some(3333333L), productId = 44444L, productInContractId = 555555L, servaAppId = 0L, servaId = 6666L)
     ), referralRequiredByService = false, roomId = 543L, serviceId = 6666L,
       startDateTime = ZonedDateTime.parse("2018-02-23T11:30:00+02:00", DateTimeFormatter.ISO_OFFSET_DATE_TIME))
 
