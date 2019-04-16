@@ -44,20 +44,22 @@ class Login(source: MessageSource, bot: Bot, dataService: DataService, apiServic
     }
 
   def processLoginInformation: Step = {
-    process { case LoginData(Some(username), Some(password)) =>
-      val loginResult = apiService.login(username, password)
-      loginResult match {
-        case Left(error) =>
-          bot.sendMessage(source, error.getMessage)
-          goto(requestUsername)
-        case Right(loggedIn) =>
-          val credentials = dataService.saveCredentials(source, username, password)
-          userId = UserId(credentials.userId, credentials.accountId, source)
-          apiService.addSession(credentials.accountId, loggedIn.accessToken, loggedIn.tokenType)
-          bot.sendMessage(source, lang.loginAndPasswordAreOk)
-          originator ! LoggedIn(forwardCommand, credentials.userId, credentials.accountId)
-          end()
-      }
+    process {
+      case LoginData(Some(username), Some(password)) =>
+        val loginResult = apiService.login(username, password)
+        loginResult match {
+          case Left(error) =>
+            bot.sendMessage(source, error.getMessage)
+            goto(requestUsername)
+          case Right(loggedIn) =>
+            val credentials = dataService.saveCredentials(source, username, password)
+            userId = UserId(credentials.userId, credentials.accountId, source)
+            apiService.addSession(credentials.accountId, loggedIn.accessToken, loggedIn.tokenType)
+            bot.sendMessage(source, lang.loginAndPasswordAreOk)
+            originator ! LoggedIn(forwardCommand, credentials.userId, credentials.accountId)
+            end()
+        }
+      case _ => end()
     }
   }
 }
