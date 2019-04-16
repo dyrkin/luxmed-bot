@@ -12,33 +12,27 @@ package object telegram {
   object TelegramModelConverters extends ModelConverters {
     implicit val TelegramCommandToCommandConverter:
       ObjectConverter[TelegramEvent, Command] =
-      new ObjectConverter[TelegramEvent, Command] {
-        override def convert[Z <: TelegramEvent](data: Z): Command = {
-          Command(
-            source = MessageSource(TelegramMessageSourceSystem, data.msg.chat.id.toString),
-            message = Message(data.msg.messageId.toString, data.msg.text),
-            callbackData = data.callbackData
-          )
-        }
+      (data: TelegramEvent) => {
+        Command(
+          source = MessageSource(TelegramMessageSourceSystem, data.msg.chat.id.toString),
+          message = Message(data.msg.messageId.toString, data.msg.text),
+          callbackData = data.callbackData
+        )
       }
 
     implicit val TelegramMessageToMessageConverter:
       ObjectConverter[BMessage, Message] =
-      new ObjectConverter[BMessage, Message] {
-        override def convert[Z <: BMessage](data: Z): Message = {
-          Message(data.messageId.toString, data.text)
-        }
+      (data: BMessage) => {
+        Message(data.messageId.toString, data.text)
       }
 
     implicit val InlineKeyboardToInlineKeyboardMarkup:
       ObjectConverter[InlineKeyboard, InlineKeyboardMarkup] =
-      new ObjectConverter[InlineKeyboard, InlineKeyboardMarkup] {
-        override def convert[Z <: InlineKeyboard](inlineKeyboard: Z): InlineKeyboardMarkup = {
-          val buttons = inlineKeyboard.buttons.map { row =>
-            row.map(createInlineKeyboardButton)
-          }
-          InlineKeyboardMarkup(buttons)
+      (inlineKeyboard: InlineKeyboard) => {
+        val buttons = inlineKeyboard.buttons.map { row =>
+          row.map(createInlineKeyboardButton)
         }
+        InlineKeyboardMarkup(buttons)
       }
 
     private def createInlineKeyboardButton(button: Button) = {

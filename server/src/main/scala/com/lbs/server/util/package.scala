@@ -12,7 +12,6 @@ import com.lbs.server.conversation.Book.BookingData
 import com.lbs.server.conversation.Login.UserId
 import com.lbs.server.repository.model.{History, Monitoring}
 
-import scala.collection.generic.CanBuildFrom
 import scala.language.{higherKinds, implicitConversions}
 import scala.util.Try
 
@@ -23,88 +22,77 @@ package object util {
 
     implicit val BookingDataToMonitoringConverter:
       ObjectConverter[(UserId, BookingData), Monitoring] =
-      new ObjectConverter[(UserId, BookingData), Monitoring] {
-        override def convert[Z <: (UserId, BookingData)](data: Z): Monitoring = {
-          val (userId, bookingData) = data.asInstanceOf[(UserId, BookingData)]
-          Monitoring(
-            userId = userId.userId,
-            accountId = userId.accountId,
-            chatId = userId.source.chatId,
-            sourceSystemId = userId.source.sourceSystem.id,
-            payerId = bookingData.payerId,
-            cityId = bookingData.cityId.id,
-            cityName = bookingData.cityId.name,
-            clinicId = bookingData.clinicId.optionalId,
-            clinicName = bookingData.clinicId.name,
-            serviceId = bookingData.serviceId.id,
-            serviceName = bookingData.serviceId.name,
-            doctorId = bookingData.doctorId.optionalId,
-            doctorName = bookingData.doctorId.name,
-            dateFrom = bookingData.dateFrom,
-            dateTo = bookingData.dateTo,
-            timeFrom = bookingData.timeFrom,
-            timeTo = bookingData.timeTo,
-            autobook = bookingData.autobook,
-            rebookIfExists = bookingData.rebookIfExists,
-            offset = bookingData.offset
-          )
-        }
+      (data: (UserId, BookingData)) => {
+        val (userId, bookingData) = data
+        Monitoring(
+          userId = userId.userId,
+          accountId = userId.accountId,
+          chatId = userId.source.chatId,
+          sourceSystemId = userId.source.sourceSystem.id,
+          payerId = bookingData.payerId,
+          cityId = bookingData.cityId.id,
+          cityName = bookingData.cityId.name,
+          clinicId = bookingData.clinicId.optionalId,
+          clinicName = bookingData.clinicId.name,
+          serviceId = bookingData.serviceId.id,
+          serviceName = bookingData.serviceId.name,
+          doctorId = bookingData.doctorId.optionalId,
+          doctorName = bookingData.doctorId.name,
+          dateFrom = bookingData.dateFrom,
+          dateTo = bookingData.dateTo,
+          timeFrom = bookingData.timeFrom,
+          timeTo = bookingData.timeTo,
+          autobook = bookingData.autobook,
+          rebookIfExists = bookingData.rebookIfExists,
+          offset = bookingData.offset
+        )
       }
 
     implicit val AvailableVisitsTermPresentationToTemporaryReservationRequestConverter:
       ObjectConverter[AvailableVisitsTermPresentation, TemporaryReservationRequest] =
-      new ObjectConverter[AvailableVisitsTermPresentation, TemporaryReservationRequest] {
-        override def convert[Z <: AvailableVisitsTermPresentation](term: Z): TemporaryReservationRequest = {
-          TemporaryReservationRequest(
-            clinicId = term.clinic.id,
-            doctorId = term.doctor.id,
-            payerDetailsList = term.payerDetailsList,
-            referralRequiredByService = term.referralRequiredByService,
-            roomId = term.roomId,
-            serviceId = term.serviceId,
-            startDateTime = term.visitDate.startDateTime
-          )
-        }
+      (term: AvailableVisitsTermPresentation) => {
+        TemporaryReservationRequest(
+          clinicId = term.clinic.id,
+          doctorId = term.doctor.id,
+          payerDetailsList = term.payerDetailsList,
+          referralRequiredByService = term.referralRequiredByService,
+          roomId = term.roomId,
+          serviceId = term.serviceId,
+          startDateTime = term.visitDate.startDateTime
+        )
       }
 
     implicit val TmpReservationIdWithValuationsToReservationRequestConverter:
       ObjectConverter[(Long, VisitTermVariant, AvailableVisitsTermPresentation), ReservationRequest] =
-      new ObjectConverter[(Long, VisitTermVariant, AvailableVisitsTermPresentation), ReservationRequest] {
-        override def convert[Z <: (Long, VisitTermVariant, AvailableVisitsTermPresentation)](any: Z): ReservationRequest = {
-          val (tmpReservationId, valuations, term) = any.asInstanceOf[(Long, VisitTermVariant, AvailableVisitsTermPresentation)]
-          ReservationRequest(
-            clinicId = term.clinic.id,
-            doctorId = term.doctor.id,
-            payerData = valuations.valuationDetail.payerData,
-            roomId = term.roomId,
-            serviceId = term.serviceId,
-            startDateTime = term.visitDate.startDateTime,
-            temporaryReservationId = tmpReservationId
-          )
-        }
+      (any: (Long, VisitTermVariant, AvailableVisitsTermPresentation)) => {
+        val (tmpReservationId, valuations, term) = any
+        ReservationRequest(
+          clinicId = term.clinic.id,
+          doctorId = term.doctor.id,
+          payerData = valuations.valuationDetail.payerData,
+          roomId = term.roomId,
+          serviceId = term.serviceId,
+          startDateTime = term.visitDate.startDateTime,
+          temporaryReservationId = tmpReservationId
+        )
       }
 
     implicit val AvailableVisitsTermPresentationToValuationRequestConverter:
       ObjectConverter[AvailableVisitsTermPresentation, ValuationsRequest] =
-      new ObjectConverter[AvailableVisitsTermPresentation, ValuationsRequest] {
-        override def convert[Z <: AvailableVisitsTermPresentation](term: Z): ValuationsRequest = {
-          ValuationsRequest(
-            clinicId = term.clinic.id,
-            doctorId = term.doctor.id,
-            payerDetailsList = term.payerDetailsList,
-            referralRequiredByService = term.referralRequiredByService,
-            roomId = term.roomId,
-            serviceId = term.serviceId,
-            startDateTime = term.visitDate.startDateTime
-          )
-        }
+      (term: AvailableVisitsTermPresentation) => {
+        ValuationsRequest(
+          clinicId = term.clinic.id,
+          doctorId = term.doctor.id,
+          payerDetailsList = term.payerDetailsList,
+          referralRequiredByService = term.referralRequiredByService,
+          roomId = term.roomId,
+          serviceId = term.serviceId,
+          startDateTime = term.visitDate.startDateTime
+        )
       }
 
-    implicit val HistoryToIdNameConverter: CollectionConverter[History, IdName] = new CollectionConverter[History, IdName] {
-      override def convert[Z <: History, Col[X] <: Iterable[X]](col: Col[Z])(implicit bf: CanBuildFrom[Col[Z], IdName, Col[IdName]]): Col[IdName] = {
-        col.map(history => IdName(history.id, history.name))(collection.breakOut)
-      }
-    }
+    implicit val HistoryToIdNameConverter: ObjectConverter[History, IdName] =
+      (history: History) => IdName(history.id, history.name)
   }
 
   object MessageExtractors {
