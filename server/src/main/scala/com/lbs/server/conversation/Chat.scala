@@ -125,7 +125,7 @@ class Chat(val userId: UserId, dataService: DataService, monitoringService: Moni
     case Msg(cmd@TextCommand("/accounts"), _) =>
       self ! cmd
       goto(accountChat)
-    case Msg(TextCommand(MonitoringId(monitoringIdStr, scheduleIdStr, timeStr)), _) =>
+    case Msg(TextCommand(ReserveTerm(monitoringIdStr, scheduleIdStr, timeStr)), _) =>
       val monitoringId = monitoringIdStr.toLong
       val scheduleId = scheduleIdStr.toLong
       val time = timeStr.toLong
@@ -149,6 +149,5 @@ class Chat(val userId: UserId, dataService: DataService, monitoringService: Moni
 }
 
 object Chat {
-  val MonitoringId: Regex = s"/reserve_(\\d+)_(\\d+)_(\\d+)".r
-
+  val ReserveTerm: Regex = s"/reserve_(\\d+)_(\\d+)_(\\d+)".r
 }

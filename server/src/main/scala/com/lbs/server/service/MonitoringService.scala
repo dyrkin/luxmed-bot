@@ -75,7 +75,7 @@ class MonitoringService extends Logger {
           debug(s"Found ${terms.length} terms by monitoring [#${monitoring.recordId}]")
           if (monitoring.autobook) {
             val term = terms.head
-            bookAppointment(term, monitoring)
+            bookAppointment(term, monitoring, monitoring.rebookIfExists)
           } else {
             notifyUserAboutTerms(terms, monitoring)
           }
@@ -146,9 +146,9 @@ class MonitoringService extends Logger {
     dbChecker.schedule(updateMonitorings(), 1.minute)
   }
 
-  private def bookAppointment(term: AvailableVisitsTermPresentation, monitoring: Monitoring): Unit = {
+  private def bookAppointment(term: AvailableVisitsTermPresentation, monitoring: Monitoring, rebookIfExists: Boolean): Unit = {
     apiService.reserveVisit(monitoring.accountId, term).toTry.recoverWith {
-      case _: ServiceIsAlreadyBookedException if monitoring.rebookIfExists =>
+      case _: ServiceIsAlreadyBookedException if rebookIfExists =>
         info(s"Service [${monitoring.serviceName}] is already booked. Trying to update term")
         apiService.updateReservedVisit(monitoring.accountId, term).toTry
       case ex => Failure(ex)
@@ -203,7 +203,7 @@ class MonitoringService extends Logger {
             val termMaybe = terms.find(term => term.scheduleId == scheduleId && minutesSinceBeginOf2018(term.visitDate.startDateTime) == time)
             termMaybe match {
               case Some(term) =>
-                bookAppointment(term, monitoring)
+                bookAppointment(term, monitoring, rebookIfExists = true)
               case None =>
                 bot.sendMessage(monitoring.source, lang(monitoring.userId).termIsOutdated)
             }
