@@ -3,7 +3,7 @@ package com.lbs.api
 
 import com.lbs.api.exception.{ApiException, GenericException, InvalidLoginOrPasswordException, ServiceIsAlreadyBookedException}
 import com.lbs.api.json.JsonSerializer.extensions._
-import com.lbs.api.json.model.{LuxmedBaseError, LuxmedErrors, LuxmedError, SerializableJsonObject}
+import com.lbs.api.json.model._
 import com.lbs.common.Logger
 import scalaj.http.{HttpRequest, HttpResponse}
 
@@ -56,24 +56,23 @@ package object http extends Logger {
     }
 
     private def luxmedErrorToApiException[T <: LuxmedBaseError](ler: HttpResponse[T]): ApiException = {
-      val genericException = ler.body match {
-        case e: LuxmedErrors =>
-          new GenericException(ler.code, ler.statusLine, e.errors.values.mkString("; "))
-        case e: LuxmedError =>
-          new GenericException(ler.code, ler.statusLine, e.message)
-      }
-
-      val errorMessage = genericException.message.toLowerCase
+      val message = ler.body.message
+      val errorMessage = message.toLowerCase
       if (errorMessage.contains("invalid login or password"))
         new InvalidLoginOrPasswordException
       else if (errorMessage.contains("already booked this service"))
         new ServiceIsAlreadyBookedException
-      else genericException
+      else
+        new GenericException(ler.code, ler.statusLine, message)
     }
 
     private def extractLuxmedError(httpResponse: Try[HttpResponse[String]]) = {
-      httpResponse.flatMap(response => Try(response.asEntity[LuxmedErrors]).map(luxmedErrorToApiException).
-        orElse(Try(response.asEntity[LuxmedError]).map(luxmedErrorToApiException))).toOption
+      httpResponse.flatMap { response =>
+        Try(response.asEntity[LuxmedErrorsMap])
+          .orElse(Try(response.asEntity[LuxmedErrorsList]))
+          .orElse(Try(response.asEntity[LuxmedError]))
+          .map(e => luxmedErrorToApiException(e.asInstanceOf[HttpResponse[LuxmedBaseError]]))
+      }.toOption
     }
 
     private def hidePasswords(httpRequest: HttpRequest) = {

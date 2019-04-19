@@ -1,4 +1,6 @@
 
 package com.lbs.api.json.model
 
-trait LuxmedBaseError
+trait LuxmedBaseError {
+  def message: String
+}
