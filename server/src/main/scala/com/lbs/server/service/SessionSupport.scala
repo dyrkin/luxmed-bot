@@ -1,6 +1,7 @@
 
 package com.lbs.server.service
 
+import com.lbs.api.exception.SessionExpiredException
 import com.lbs.api.json.model.LoginResponse
 import com.lbs.common.{Logger, ParametrizedLock}
 import com.lbs.server.exception.UserNotFoundException
@@ -32,32 +33,37 @@ trait SessionSupport extends Logger {
         }
       }
 
-      def session: Either[Throwable, Session] = {
+      def getSession: Either[Throwable, Session] = {
         sessions.get(accountId) match {
           case Some(sess) => Right(sess)
           case None =>
-            auth match {
-              case Right(sess) =>
-                sessions.put(accountId, sess)
-                Right(sess)
-              case left => left
+            for {
+              session <- auth
+            } yield {
+              sessions.put(accountId, session)
+              session
             }
         }
       }
 
-      session match {
-        case Right(s) =>
-          fn(s) match {
-            case Left(ex) if ex.getMessage.contains("session has expired") =>
-              debug(s"The session for account [#$accountId] has expired. Try to relogin")
-              sessions.remove(accountId)
-              session.flatMap(fn)
-            case another =>
-              debug(s"Call to remote api function has completed with result:\n$another")
-              another
-          }
-        case Left(ex) => Left(ex)
+      def doApiCall = {
+        for {
+          session <- getSession
+          result <- fn(session)
+        } yield result
       }
+
+      for {
+        result <- doApiCall match {
+          case Left(_: SessionExpiredException) =>
+            debug(s"The session for account [#$accountId] has expired. Try to relogin")
+            sessions.remove(accountId)
+            doApiCall
+          case another =>
+            debug(s"Call to remote api function has completed with result:\n$another")
+            another
+        }
+      } yield result
     }
 
   def addSession(accountId: Long, accessToken: String, tokenType: String): Unit =

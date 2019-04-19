@@ -1,14 +1,14 @@
 
 package com.lbs.api
 
-import com.lbs.api.exception.{ApiException, GenericException, InvalidLoginOrPasswordException, ServiceIsAlreadyBookedException}
+import com.lbs.api.exception.{ApiException, GenericException, InvalidLoginOrPasswordException, ServiceIsAlreadyBookedException, SessionExpiredException}
 import com.lbs.api.json.JsonSerializer.extensions._
 import com.lbs.api.json.model._
 import com.lbs.common.Logger
 import scalaj.http.{HttpRequest, HttpResponse}
 
 import scala.concurrent.{ExecutionContext, Future}
-import scala.util.Try
+import scala.util.{Failure, Try}
 
 package object http extends Logger {
 
@@ -46,7 +46,7 @@ package object http extends Logger {
       val httpResponse = Try(httpRequest.asString)
       debug(s"Received response:\n$httpResponse")
       extractLuxmedError(httpResponse) match {
-        case Some(error) => Try(throw error)
+        case Some(error) => Failure(error)
         case None => httpResponse.map(_.throwError)
       }
     }
@@ -62,6 +62,8 @@ package object http extends Logger {
         new InvalidLoginOrPasswordException
       else if (errorMessage.contains("already booked this service"))
         new ServiceIsAlreadyBookedException
+      else if (errorMessage.contains("session has expired"))
+        new SessionExpiredException
       else
         new GenericException(ler.code, ler.statusLine, message)
     }
