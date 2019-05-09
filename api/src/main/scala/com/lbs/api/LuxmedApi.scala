@@ -4,18 +4,21 @@ package com.lbs.api
 import java.time.ZonedDateTime
 import java.time.format.DateTimeFormatter
 
+import cats.implicits.toFunctorOps
 import com.lbs.api.ApiResponseMutators._
 import com.lbs.api.http._
 import com.lbs.api.http.headers._
 import com.lbs.api.json.JsonSerializer.extensions._
-import com.lbs.api.json.model._
+import com.lbs.api.json.model.{AvailableTermsResponse, ReservationFilterResponse, ReservedVisitsResponse, VisitsHistoryResponse, _}
 import scalaj.http.{HttpRequest, HttpResponse}
 
-object LuxmedApi extends ApiBase {
+import scala.language.higherKinds
+
+class LuxmedApi[F[_] : ThrowableMonad] extends ApiBase {
 
   private val dateFormat = DateTimeFormatter.ofPattern("yyyy-MM-dd'T'HH:mm:ss.SSS'Z'")
 
-  def login(username: String, password: String, clientId: String = "iPhone"): Either[Throwable, LoginResponse] = {
+  def login(username: String, password: String, clientId: String = "iPhone"): F[LoginResponse] = {
     val request = http("token").
       header(`Content-Type`, "application/x-www-form-urlencoded").
       header(`x-api-client-identifier`, clientId).
@@ -26,7 +29,7 @@ object LuxmedApi extends ApiBase {
     post[LoginResponse](request)
   }
 
-  def refreshToken(refreshToken: String, clientId: String = "iPhone"): Either[Throwable, LoginResponse] = {
+  def refreshToken(refreshToken: String, clientId: String = "iPhone"): F[LoginResponse] = {
     val request = http("token").
       header(`Content-Type`, "application/x-www-form-urlencoded").
       header(`x-api-client-identifier`, clientId).
@@ -37,7 +40,7 @@ object LuxmedApi extends ApiBase {
   }
 
   def reservedVisits(accessToken: String, tokenType: String, fromDate: ZonedDateTime = ZonedDateTime.now(),
-                     toDate: ZonedDateTime = ZonedDateTime.now().plusMonths(3)): Either[Throwable, ReservedVisitsResponse] = {
+                     toDate: ZonedDateTime = ZonedDateTime.now().plusMonths(3)): F[ReservedVisitsResponse] = {
     val request = http("visits/reserved").
       header(`Content-Type`, "application/json").
       header(Authorization, s"$tokenType $accessToken").
@@ -47,7 +50,7 @@ object LuxmedApi extends ApiBase {
   }
 
   def visitsHistory(accessToken: String, tokenType: String, fromDate: ZonedDateTime = ZonedDateTime.now().minusYears(1),
-                    toDate: ZonedDateTime = ZonedDateTime.now(), page: Int = 1, pageSize: Int = 100): Either[Throwable, VisitsHistoryResponse] = {
+                    toDate: ZonedDateTime = ZonedDateTime.now(), page: Int = 1, pageSize: Int = 100): F[VisitsHistoryResponse] = {
     val request = http("visits/history").
       header(`Content-Type`, "application/json").
       header(Authorization, s"$tokenType $accessToken").
@@ -60,7 +63,7 @@ object LuxmedApi extends ApiBase {
 
   def reservationFilter(accessToken: String, tokenType: String, fromDate: ZonedDateTime = ZonedDateTime.now(),
                         toDate: Option[ZonedDateTime] = None, cityId: Option[Long] = None, clinicId: Option[Long] = None,
-                        serviceId: Option[Long] = None): Either[Throwable, ReservationFilterResponse] = {
+                        serviceId: Option[Long] = None): F[ReservationFilterResponse] = {
     val request = http("visits/available-terms/reservation-filter").
       header(`Content-Type`, "application/json").
       header(Authorization, s"$tokenType $accessToken").
@@ -74,7 +77,7 @@ object LuxmedApi extends ApiBase {
 
   def availableTerms(accessToken: String, tokenType: String, payerId: Long, cityId: Long, clinicId: Option[Long], serviceId: Long, doctorId: Option[Long],
                      fromDate: ZonedDateTime = ZonedDateTime.now(), toDate: Option[ZonedDateTime] = None, timeOfDay: Int = 0,
-                     languageId: Long = 10, findFirstFreeTerm: Boolean = false): Either[Throwable, AvailableTermsResponse] = {
+                     languageId: Long = 10, findFirstFreeTerm: Boolean = false): F[AvailableTermsResponse] = {
     val request = http("visits/available-terms").
       header(`Content-Type`, "application/json").
       header(Authorization, s"$tokenType $accessToken").
@@ -91,35 +94,35 @@ object LuxmedApi extends ApiBase {
     get[AvailableTermsResponse](request).mutate
   }
 
-  def temporaryReservation(accessToken: String, tokenType: String, temporaryReservationRequest: TemporaryReservationRequest): Either[Throwable, TemporaryReservationResponse] = {
+  def temporaryReservation(accessToken: String, tokenType: String, temporaryReservationRequest: TemporaryReservationRequest): F[TemporaryReservationResponse] = {
     val request = http("visits/temporary-reservation").
       header(`Content-Type`, "application/json").
       header(Authorization, s"$tokenType $accessToken")
     post[TemporaryReservationResponse](request, bodyOpt = Some(temporaryReservationRequest))
   }
 
-  def deleteTemporaryReservation(accessToken: String, tokenType: String, temporaryReservationId: Long): Either[Throwable, HttpResponse[String]] = {
+  def deleteTemporaryReservation(accessToken: String, tokenType: String, temporaryReservationId: Long): F[HttpResponse[String]] = {
     val request = http(s"visits/temporary-reservation/$temporaryReservationId").
       header(`Content-Type`, "application/json").
       header(Authorization, s"$tokenType $accessToken")
     delete(request)
   }
 
-  def valuations(accessToken: String, tokenType: String, valuationsRequest: ValuationsRequest): Either[Throwable, ValuationsResponse] = {
+  def valuations(accessToken: String, tokenType: String, valuationsRequest: ValuationsRequest): F[ValuationsResponse] = {
     val request = http("visits/available-terms/valuations").
       header(`Content-Type`, "application/json").
       header(Authorization, s"$tokenType $accessToken")
     post[ValuationsResponse](request, bodyOpt = Some(valuationsRequest))
   }
 
-  def reservation(accessToken: String, tokenType: String, reservationRequest: ReservationRequest): Either[Throwable, ReservationResponse] = {
+  def reservation(accessToken: String, tokenType: String, reservationRequest: ReservationRequest): F[ReservationResponse] = {
     val request = http("visits/reserved").
       header(`Content-Type`, "application/json").
       header(Authorization, s"$tokenType $accessToken")
     post[ReservationResponse](request, bodyOpt = Some(reservationRequest))
   }
 
-  def deleteReservation(accessToken: String, tokenType: String, reservationId: Long): Either[Throwable, HttpResponse[String]] = {
+  def deleteReservation(accessToken: String, tokenType: String, reservationId: Long): F[HttpResponse[String]] = {
     val request = http(s"visits/reserved/$reservationId").
       header(`Content-Type`, "application/json").
       header(Authorization, s"$tokenType $accessToken")
@@ -127,63 +130,63 @@ object LuxmedApi extends ApiBase {
   }
 
   //204 means OK?
-  def canTermBeChanged(accessToken: String, tokenType: String, reservationId: Long): Either[Throwable, HttpResponse[String]] = {
+  def canTermBeChanged(accessToken: String, tokenType: String, reservationId: Long): F[HttpResponse[String]] = {
     val request = http(s"visits/reserved/$reservationId/can-term-be-changed").
       header(`Content-Type`, "application/json").
       header(Authorization, s"$tokenType $accessToken")
-    request.toEither
+    request.invoke
   }
 
-  def detailToChangeTerm(accessToken: String, tokenType: String, reservationId: Long): Either[Throwable, ChangeTermDetailsResponse] = {
+  def detailToChangeTerm(accessToken: String, tokenType: String, reservationId: Long): F[ChangeTermDetailsResponse] = {
     val request = http(s"visits/reserved/$reservationId/details-to-change-term").
       header(`Content-Type`, "application/json").
       header(Authorization, s"$tokenType $accessToken")
     get[ChangeTermDetailsResponse](request)
   }
 
-  def temporaryReservationToChangeTerm(accessToken: String, tokenType: String, reservationId: Long, temporaryReservationRequest: TemporaryReservationRequest): Either[Throwable, TemporaryReservationResponse] = {
+  def temporaryReservationToChangeTerm(accessToken: String, tokenType: String, reservationId: Long, temporaryReservationRequest: TemporaryReservationRequest): F[TemporaryReservationResponse] = {
     val request = http(s"visits/reserved/$reservationId/temporary-reservation-to-change-term").
       header(`Content-Type`, "application/json").
       header(Authorization, s"$tokenType $accessToken")
     post[TemporaryReservationResponse](request, bodyOpt = Some(temporaryReservationRequest))
   }
 
-  def valuationToChangeTerm(accessToken: String, tokenType: String, reservationId: Long, valuationsRequest: ValuationsRequest): Either[Throwable, ValuationsResponse] = {
+  def valuationToChangeTerm(accessToken: String, tokenType: String, reservationId: Long, valuationsRequest: ValuationsRequest): F[ValuationsResponse] = {
     val request = http(s"visits/reserved/$reservationId/valuations-to-change-term").
       header(`Content-Type`, "application/json").
       header(Authorization, s"$tokenType $accessToken")
     post[ValuationsResponse](request, bodyOpt = Some(valuationsRequest))
   }
 
-  def changeTerm(accessToken: String, tokenType: String, reservationId: Long, reservationRequest: ReservationRequest): Either[Throwable, ChangeTermResponse] = {
+  def changeTerm(accessToken: String, tokenType: String, reservationId: Long, reservationRequest: ReservationRequest): F[ChangeTermResponse] = {
     val request = http(s"visits/reserved/$reservationId/term").
       header(`Content-Type`, "application/json").
       header(Authorization, s"$tokenType $accessToken")
     put[ChangeTermResponse](request, bodyOpt = Some(reservationRequest))
   }
 
-  private def get[T <: SerializableJsonObject](request: HttpRequest)(implicit mf: scala.reflect.Manifest[T]): Either[Throwable, T] = {
-    request.toEither.map(_.body.as[T])
+  private def get[T <: SerializableJsonObject](request: HttpRequest)(implicit mf: scala.reflect.Manifest[T]): F[T] = {
+    request.invoke.map(_.body.as[T])
   }
 
-  private def post[T <: SerializableJsonObject](request: HttpRequest, bodyOpt: Option[SerializableJsonObject] = None)(implicit mf: scala.reflect.Manifest[T]): Either[Throwable, T] = {
+  private def post[T <: SerializableJsonObject](request: HttpRequest, bodyOpt: Option[SerializableJsonObject] = None)(implicit mf: scala.reflect.Manifest[T]): F[T] = {
     val postRequest = bodyOpt match {
       case Some(body) => request.postData(body.asJson)
       case None => request.postForm
     }
-    postRequest.toEither.map(_.body.as[T])
+    postRequest.invoke.map(_.body.as[T])
   }
 
-  private def put[T <: SerializableJsonObject](request: HttpRequest, bodyOpt: Option[SerializableJsonObject] = None)(implicit mf: scala.reflect.Manifest[T]): Either[Throwable, T] = {
+  private def put[T <: SerializableJsonObject](request: HttpRequest, bodyOpt: Option[SerializableJsonObject] = None)(implicit mf: scala.reflect.Manifest[T]): F[T] = {
     val putRequest = bodyOpt match {
       case Some(body) => request.put(body.asJson)
       case None => request.method("PUT")
     }
-    putRequest.toEither.map(_.body.as[T])
+    putRequest.invoke.map(_.body.as[T])
   }
 
-  private def delete(request: HttpRequest): Either[Throwable, HttpResponse[String]] = {
-    request.postForm.method("DELETE").toEither
+  private def delete(request: HttpRequest): F[HttpResponse[String]] = {
+    request.postForm.method("DELETE").invoke
   }
 
 }

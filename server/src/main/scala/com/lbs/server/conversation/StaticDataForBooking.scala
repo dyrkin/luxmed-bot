@@ -6,12 +6,13 @@ import com.lbs.bot.model.Command
 import com.lbs.server.conversation.Book.BookingData
 import com.lbs.server.conversation.StaticData.{FindOptions, FoundOptions, LatestOptions, StaticDataConfig}
 import com.lbs.server.conversation.base.Conversation
+import com.lbs.server.ThrowableOr
 
 trait StaticDataForBooking extends Conversation[BookingData] {
 
   private[conversation] def staticData: StaticData
 
-  protected def withFunctions(latestOptions: => Seq[IdName], staticOptions: => Either[Throwable, List[IdName]], applyId: IdName => BookingData): Step => MessageProcessorFn = {
+  protected def withFunctions(latestOptions: => Seq[IdName], staticOptions: => ThrowableOr[List[IdName]], applyId: IdName => BookingData): Step => MessageProcessorFn = {
     nextStep: Step => {
       case Msg(cmd: Command, _) =>
         staticData ! cmd
@@ -38,7 +39,7 @@ trait StaticDataForBooking extends Conversation[BookingData] {
     }
   }
 
-  private def filterOptions(options: Either[Throwable, List[IdName]], searchText: String) = {
+  private def filterOptions(options: ThrowableOr[List[IdName]], searchText: String) = {
     options.map(opt => opt.filter(c => c.name.toLowerCase.contains(searchText)))
   }
 }

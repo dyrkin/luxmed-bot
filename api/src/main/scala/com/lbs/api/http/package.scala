@@ -1,14 +1,16 @@
 
 package com.lbs.api
 
-import com.lbs.api.exception.{ApiException, GenericException, InvalidLoginOrPasswordException, ServiceIsAlreadyBookedException, SessionExpiredException}
+import cats.MonadError
+import cats.implicits._
+import com.lbs.api.exception._
 import com.lbs.api.json.JsonSerializer.extensions._
 import com.lbs.api.json.model._
 import com.lbs.common.Logger
 import scalaj.http.{HttpRequest, HttpResponse}
 
-import scala.concurrent.{ExecutionContext, Future}
-import scala.util.{Failure, Try}
+import scala.language.higherKinds
+import scala.util.{Failure, Success, Try}
 
 package object http extends Logger {
 
@@ -29,25 +31,25 @@ package object http extends Logger {
     def asEntity[T <: SerializableJsonObject](implicit mf: scala.reflect.Manifest[T]): HttpResponse[T] = {
       httpResponse.copy(body = httpResponse.body.as[T])
     }
-
-    def asEntityAsync[T <: SerializableJsonObject](implicit mf: scala.reflect.Manifest[T], ec: ExecutionContext): Future[HttpResponse[T]] = {
-      Future(asEntity[T])
-    }
   }
 
-  implicit class ExtendedHttpRequest(httpRequest: HttpRequest) {
-
-    def toEither: Either[Throwable, HttpResponse[String]] = {
-      toTry.toEither
-    }
-
-    def toTry: Try[HttpResponse[String]] = {
+  implicit class ExtendedHttpRequest[F[_] : ThrowableMonad](httpRequest: HttpRequest) {
+    def invoke: F[HttpResponse[String]] = {
+      val me = MonadError[F, Throwable]
       debug(s"Sending request:\n${hidePasswords(httpRequest)}")
-      val httpResponse = Try(httpRequest.asString)
+      val httpResponse = me.pure(httpRequest.asString)
       debug(s"Received response:\n$httpResponse")
-      extractLuxmedError(httpResponse) match {
-        case Some(error) => Failure(error)
-        case None => httpResponse.map(_.throwError)
+
+      httpResponse.flatMap { response =>
+        val errorMaybe = extractLuxmedError(response)
+        errorMaybe match {
+          case Some(error) => me.raiseError(error)
+          case None =>
+            Try(response.throwError) match {
+              case Failure(error) => me.raiseError(error)
+              case Success(value) => me.pure(value)
+            }
+        }
       }
     }
 
@@ -55,8 +57,8 @@ package object http extends Logger {
       value.map(v => httpRequest.param(key, v)).getOrElse(httpRequest)
     }
 
-    private def luxmedErrorToApiException[T <: LuxmedBaseError](ler: HttpResponse[T]): ApiException = {
-      val message = ler.body.message
+    private def luxmedErrorToApiException[T <: LuxmedBaseError](code: Int, error: T): ApiException = {
+      val message = error.message
       val errorMessage = message.toLowerCase
       if (errorMessage.contains("invalid login or password"))
         new InvalidLoginOrPasswordException
@@ -65,16 +67,17 @@ package object http extends Logger {
       else if (errorMessage.contains("session has expired"))
         new SessionExpiredException
       else
-        new GenericException(ler.code, ler.statusLine, message)
+        new GenericException(code, message)
     }
 
-    private def extractLuxmedError(httpResponse: Try[HttpResponse[String]]) = {
-      httpResponse.flatMap { response =>
-        Try(response.asEntity[LuxmedErrorsMap])
-          .orElse(Try(response.asEntity[LuxmedErrorsList]))
-          .orElse(Try(response.asEntity[LuxmedError]))
-          .map(e => luxmedErrorToApiException(e.asInstanceOf[HttpResponse[LuxmedBaseError]]))
-      }.toOption
+    private def extractLuxmedError(httpResponse: HttpResponse[String]) = {
+      val body = httpResponse.body
+      val code = httpResponse.code
+      Try(body.as[LuxmedErrorsMap])
+        .orElse(Try(body.as[LuxmedErrorsList]))
+        .orElse(Try(body.as[LuxmedError]))
+        .map(error => luxmedErrorToApiException(code, error))
+        .toOption
     }
 
     private def hidePasswords(httpRequest: HttpRequest) = {
