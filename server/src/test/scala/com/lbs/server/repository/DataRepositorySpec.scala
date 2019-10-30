@@ -46,7 +46,7 @@ class DataRepositorySpec {
     em.flush()
 
     val found = dataRepository.getCityHistory(1L)
-    assertThat(found).isEqualTo(Seq(history3, history2))
+    assertThat(found).isEqualTo(Seq(history3, history2, history1))
   }
 
   @Test
@@ -60,7 +60,7 @@ class DataRepositorySpec {
     em.flush()
 
     val found = dataRepository.getClinicHistory(1L, 1L)
-    assertThat(found).isEqualTo(Seq(history3, history2))
+    assertThat(found).isEqualTo(Seq(history3, history2, history1))
   }
 
   @Test
@@ -74,7 +74,7 @@ class DataRepositorySpec {
     em.flush()
 
     val found = dataRepository.getServiceHistory(1L, 1L, Some(1L))
-    assertThat(found).isEqualTo(Seq(history3, history2))
+    assertThat(found).isEqualTo(Seq(history3, history2, history1))
   }
 
   @Test
@@ -88,7 +88,7 @@ class DataRepositorySpec {
     em.flush()
 
     val found = dataRepository.getDoctorHistory(1L, 1L, Some(1L), 1L)
-    assertThat(found).isEqualTo(Seq(history3, history2))
+    assertThat(found).isEqualTo(Seq(history3, history2, history1))
   }
 
   @Test
