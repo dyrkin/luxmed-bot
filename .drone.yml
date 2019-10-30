@@ -50,39 +50,6 @@ steps:
 
 ---
 kind: pipeline
-name: arm
-
-platform:
-  os: linux
-  arch: arm
-
-steps:
-  - name: build
-    image: arm32v6/openjdk:8-alpine
-    environment:
-      GRADLE_USER_HOME: ~/.gradle
-    commands:
-      - ./gradlew test
-      - ./gradlew prepare
-      - echo -n "1.0.$DRONE_BUILD_NUMBER-arm,latest-arm" > .tags
-      - echo -n "1.0.$DRONE_BUILD_NUMBER" > ./docker/version
-
-  - name: publish
-    image: plugins/docker
-    settings:
-      repo: eugenezadyra/luxmed-bot
-      username:
-        from_secret: docker_username
-      password:
-        from_secret: docker_password
-      dockerfile: docker/Dockerfile.arm
-      context: docker/
-    when:
-      branch: master
-      event: push
-
----
-kind: pipeline
 name: arm64
 
 platform:
