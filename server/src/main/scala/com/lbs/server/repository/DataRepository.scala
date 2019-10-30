@@ -13,7 +13,7 @@ import scala.collection.JavaConverters._
 @Repository
 class DataRepository(@Autowired em: EntityManager) {
 
-  private val maxHistory = 2
+  private val maxHistory = 4
 
   def getCityHistory(accountId: Long): Seq[CityHistory] = {
     em.createQuery(
