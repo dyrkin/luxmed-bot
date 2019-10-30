@@ -47,36 +47,3 @@ steps:
     when:
       branch: master
       event: push
-
----
-kind: pipeline
-name: arm64
-
-platform:
-  os: linux
-  arch: arm64
-
-steps:
-  - name: build
-    image: arm64v8/openjdk:8-alpine
-    environment:
-      GRADLE_USER_HOME: ~/.gradle
-    commands:
-      - ./gradlew test
-      - ./gradlew prepare
-      - echo -n "1.0.$DRONE_BUILD_NUMBER-arm64,latest-arm64" > .tags
-      - echo -n "1.0.$DRONE_BUILD_NUMBER" > ./docker/version
-
-  - name: publish
-    image: plugins/docker
-    settings:
-      repo: eugenezadyra/luxmed-bot
-      username:
-        from_secret: docker_username
-      password:
-        from_secret: docker_password
-      dockerfile: docker/Dockerfile.arm64
-      context: docker/
-    when:
-      branch: master
-      event: push
