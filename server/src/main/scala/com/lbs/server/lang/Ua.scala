@@ -288,8 +288,6 @@ object Ua extends Lang {
 
   override def maximumMonitoringsLimitExceeded: String = "Максимальна кількість моніторінгів 10"
 
-  override def monitoringOfTheSameTypeExists: String = "У вас вже є активний моніторинг на таку ж саму послугу i лiкаря /monitorings"
-
   override def termIsOutdated: String =
     s"""❗️ Схоже, що термін вже не є доступним
        |

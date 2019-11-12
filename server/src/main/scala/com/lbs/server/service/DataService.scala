@@ -65,10 +65,6 @@ class DataService {
     dataRepository.getActiveMonitorings(accountId)
   }
 
-  def findActiveMonitoring(accountId: Long, cityId: Long, serviceId: Long, doctorId: Long): Option[Monitoring] = {
-    dataRepository.findActiveMonitoring(accountId, cityId, serviceId, doctorId)
-  }
-
   def getActiveMonitoringsSince(since: ZonedDateTime): Seq[Monitoring] = {
     dataRepository.getActiveMonitoringsSince(since)
   }

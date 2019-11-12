@@ -289,8 +289,6 @@ object En extends Lang {
 
   override def maximumMonitoringsLimitExceeded: String = "Maximum monitorings per user is 10"
 
-  override def monitoringOfTheSameTypeExists: String = "You already have active monitoring for the same service and doctor /monitorings"
-
   override def termIsOutdated: String =
     s"""❗️ Looks like the term is already booked by someone else
        |

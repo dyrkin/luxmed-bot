@@ -189,8 +189,6 @@ trait Lang {
 
   def maximumMonitoringsLimitExceeded: String
 
-  def monitoringOfTheSameTypeExists: String
-
   def termIsOutdated: String
 
   def loginHasChangedOrWrong: String
