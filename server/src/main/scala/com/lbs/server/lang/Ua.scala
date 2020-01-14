@@ -133,12 +133,12 @@ object Ua extends Lang {
   override def pleaseEnterStaticDataNameOrAny(config: StaticDataConfig): String =
     withAnyVariant(
       s"""<b>➡</b> Будь ласка, введіть частково ${config.name}
-         |Наприклад: <b>${config.partialExample} якщо ви шукаете ${config.example}""".stripMargin,
+         |Наприклад: <b>${config.partialExample}</b> якщо ви шукаете <b>${config.example}""".stripMargin,
       config.isAnyAllowed)
 
   override def pleaseEnterStaticDataNameOrPrevious(config: StaticDataConfig): String =
     s"""<b>➡</b> Будь ласка, введіть частково ${config.name}
-       |Наприклад: <b>${config.partialExample} якщо ви шукаете ${config.example}</b>
+       |Наприклад: <b>${config.partialExample}</b> якщо ви шукаете <b>${config.example}</b>
        |
        |або оберіть ${config.name} з попередніх пошуків""".stripMargin
 

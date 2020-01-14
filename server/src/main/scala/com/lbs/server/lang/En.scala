@@ -133,12 +133,12 @@ object En extends Lang {
   override def pleaseEnterStaticDataNameOrAny(config: StaticDataConfig): String =
     withAnyVariant(
       s"""<b>➡</b> Please enter a partial ${config.name} name
-         |For example: <b>${config.partialExample} if you are looking for ${config.example}</b>""".stripMargin,
+         |For example: <b>${config.partialExample}</b> if you are looking for <b>${config.example}</b>""".stripMargin,
       config.isAnyAllowed)
 
   override def pleaseEnterStaticDataNameOrPrevious(config: StaticDataConfig): String =
     s"""<b>➡</b> Please enter a partial ${config.name} name
-       |For example: <b>${config.partialExample} if you are looking for ${config.example}</b>
+       |For example: <b>${config.partialExample}</b> if you are looking for <b>${config.example}</b>
        |
        |or choose a ${config.name} from previous searches""".stripMargin
 
