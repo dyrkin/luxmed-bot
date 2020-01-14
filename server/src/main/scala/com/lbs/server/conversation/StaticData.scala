@@ -71,7 +71,7 @@ class StaticData(val userId: UserId, bot: Bot, val localization: Localization, o
 
 object StaticData {
 
-  case class StaticDataConfig(name: String, example: String, isAnyAllowed: Boolean)
+  case class StaticDataConfig(name: String, partialExample: String, example: String, isAnyAllowed: Boolean)
 
   object LatestOptions
 

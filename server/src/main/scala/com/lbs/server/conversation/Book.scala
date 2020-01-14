@@ -302,13 +302,13 @@ class Book(val userId: UserId, bot: Bot, apiService: ApiService, dataService: Da
       end()
     }
 
-  private def cityConfig = StaticDataConfig(lang.city, "Wrocław", isAnyAllowed = false)
+  private def cityConfig = StaticDataConfig(lang.city, "wro", "Wrocław", isAnyAllowed = false)
 
-  private def clinicConfig = StaticDataConfig(lang.clinic, "Swobodna 1", isAnyAllowed = true)
+  private def clinicConfig = StaticDataConfig(lang.clinic, "swob", "Swobodna 1", isAnyAllowed = true)
 
-  private def serviceConfig = StaticDataConfig(lang.service, "Stomatolog", isAnyAllowed = false)
+  private def serviceConfig = StaticDataConfig(lang.service, "stomat", "Stomatolog", isAnyAllowed = false)
 
-  private def doctorConfig = StaticDataConfig(lang.doctor, "Kowalski", isAnyAllowed = true)
+  private def doctorConfig = StaticDataConfig(lang.doctor, "kowal", "Kowalski", isAnyAllowed = true)
 
   beforeDestroy {
     datePicker.destroy()
