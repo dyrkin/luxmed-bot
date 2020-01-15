@@ -82,8 +82,8 @@ class DataService {
     userIdMaybe.flatMap(userId => dataRepository.findAccountId(userId).map(_.toLong).map(accountId => userId -> accountId))
   }
 
-  def findCredentialsByUsername(username: String): Option[Credentials] = {
-    dataRepository.findCredentialsByUsername(username)
+  def findCredentialsByUsername(username: String, userId: Long): Option[Credentials] = {
+    dataRepository.findCredentialsByUsername(username, userId)
   }
 
   def getUserCredentials(userId: Long): Seq[Credentials] = {
@@ -110,32 +110,27 @@ class DataService {
 
   @Transactional
   def saveCredentials(source: MessageSource, username: String, password: String): Credentials = {
-    val credentialsMaybe = findCredentialsByUsername(username)
-    credentialsMaybe match {
-      case Some(credentials) => //user already exists
-        val sourceMaybe = dataRepository.findSource(source.chatId, source.sourceSystem.id, credentials.userId)
-        sourceMaybe match {
-          case Some(_) => //source already exists. Just update credentials
-          case None => //add new source
-            val src = Source(source.chatId, source.sourceSystem.id, credentials.userId)
-            dataRepository.saveEntity(src)
-        }
-        val userMaybe = dataRepository.findUser(credentials.userId)
-        userMaybe match {
-          case Some(user) =>
+    val userMaybe = dataRepository.findUserIdBySource(source.chatId, source.sourceSystem.id).flatMap {
+      userId => dataRepository.findUser(userId).map(_ -> userId)
+    }
+    userMaybe match {
+      case Some((user, userId)) =>
+        val credentialsMaybe = findCredentialsByUsername(username, userId)
+        credentialsMaybe match {
+          case Some(credentials) => //user already exists
+            val sourceMaybe = dataRepository.findSource(source.chatId, source.sourceSystem.id, credentials.userId)
+            sourceMaybe match {
+              case Some(_) => //source already exists. Just update credentials
+              case None => //add new source
+                val src = Source(source.chatId, source.sourceSystem.id, credentials.userId)
+                dataRepository.saveEntity(src)
+            }
             user.activeAccountId = credentials.accountId
             dataRepository.saveEntity(user)
-          case None => sys.error(s"Strange, but user [#${credentials.userId}] not found")
-        }
-        credentials.username = username
-        credentials.password = password
-        dataRepository.saveEntity(credentials)
-      case None => //new user or new account?
-        val userMaybe = dataRepository.findUserIdBySource(source.chatId, source.sourceSystem.id).flatMap {
-          userId => dataRepository.findUser(userId)
-        }
-        userMaybe match {
-          case Some(user) => //user already exists, this is just the new credentials
+            credentials.username = username
+            credentials.password = password
+            dataRepository.saveEntity(credentials)
+          case None =>
             val account = dataRepository.saveEntity(new Account)
             user.activeAccountId = account.recordId
             dataRepository.saveEntity(user)
@@ -148,14 +143,15 @@ class DataService {
             }
             val credentials = Credentials(user.recordId, account.recordId, username, password)
             dataRepository.saveEntity(credentials)
-          case None => //everything is new
-            val account = dataRepository.saveEntity(new Account)
-            val user = dataRepository.saveEntity(SystemUser(account.recordId))
-            val src = Source(source.chatId, source.sourceSystem.id, user.recordId)
-            dataRepository.saveEntity(src)
-            val credentials = Credentials(user.recordId, account.recordId, username, password)
-            dataRepository.saveEntity(credentials)
         }
+
+      case None => //everything is new
+        val account = dataRepository.saveEntity(new Account)
+        val user = dataRepository.saveEntity(SystemUser(account.recordId))
+        val src = Source(source.chatId, source.sourceSystem.id, user.recordId)
+        dataRepository.saveEntity(src)
+        val credentials = Credentials(user.recordId, account.recordId, username, password)
+        dataRepository.saveEntity(credentials)
     }
   }
 
