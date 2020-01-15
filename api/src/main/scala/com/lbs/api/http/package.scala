@@ -26,6 +26,8 @@ package object http extends Logger {
     val Authorization = "Authorization"
   }
 
+  private val SensitiveHeaders = List("passw", "access_token", "refresh_token", "authorization")
+
   implicit class HttpResponseWithJsonDeserializationSupport(httpResponse: HttpResponse[String]) {
 
     def asEntity[T <: SerializableJsonObject](implicit mf: scala.reflect.Manifest[T]): HttpResponse[T] = {
@@ -36,9 +38,9 @@ package object http extends Logger {
   implicit class ExtendedHttpRequest[F[_] : ThrowableMonad](httpRequest: HttpRequest) {
     def invoke: F[HttpResponse[String]] = {
       val me = MonadError[F, Throwable]
-      debug(s"Sending request:\n${hidePasswords(httpRequest)}")
+      debug(s"Sending request:\n${hideSensitive(httpRequest)}")
       val httpResponse = me.pure(httpRequest.asString)
-      debug(s"Received response:\n$httpResponse")
+      debug(s"Received response:\n${hideSensitive(httpResponse)}")
 
       httpResponse.flatMap { response =>
         val errorMaybe = extractLuxmedError(response)
@@ -67,7 +69,7 @@ package object http extends Logger {
       else if (errorMessage.contains("session has expired"))
         new SessionExpiredException
       else
-        new GenericException(code, message)
+        GenericException(code, message)
     }
 
     private def extractLuxmedError(httpResponse: HttpResponse[String]) = {
@@ -80,10 +82,23 @@ package object http extends Logger {
         .toOption
     }
 
-    private def hidePasswords(httpRequest: HttpRequest) = {
+    private def hideSensitive(httpRequest: HttpRequest) = {
       httpRequest.copy(params = httpRequest.params.map { case (k, v) =>
-        if (k.toLowerCase.contains("passw")) k -> "******" else k -> v
+        if (hide(k)) k -> "******" else k -> v
       })
+    }
+
+    private def hideSensitive(httpResponse: F[HttpResponse[String]]) = {
+      httpResponse.map { response =>
+        response.copy(headers = response.headers.map { case (k, v) =>
+          if (hide(k)) k -> IndexedSeq("******") else k -> v
+        })
+      }
+    }
+
+    private def hide(key: String) = {
+      val lowerCaseKey = key.toLowerCase
+      SensitiveHeaders.exists(h => lowerCaseKey.contains(h))
     }
   }
 
