@@ -12,17 +12,17 @@ import com.lbs.server.util.MessageExtractors
 import org.jasypt.util.text.TextEncryptor
 
 class Login(source: MessageSource, bot: Bot, dataService: DataService, apiService: ApiService, textEncryptor: TextEncryptor,
-            val localization: Localization, originator: Interactional)(val actorSystem: ActorSystem) extends Conversation[LoginData] with Localizable {
+            val localization: Localization, originator: Interactional)(val actorSystem: ActorSystem) extends Conversation[String] with Localizable {
 
   protected var userId: UserId = _
 
-  entryPoint(logIn, LoginData())
+  entryPoint(logIn)
 
   private var forwardCommand: ForwardCommand = _
 
   def logIn: Step =
     monologue {
-      case Msg(cmd: Command, LoginData(None, None)) =>
+      case Msg(cmd: Command, _) =>
         forwardCommand = ForwardCommand(cmd)
         goto(requestUsername)
     }
@@ -31,21 +31,15 @@ class Login(source: MessageSource, bot: Bot, dataService: DataService, apiServic
     ask { _ =>
       bot.sendMessage(source, lang.provideUsername)
     } onReply {
-      case Msg(MessageExtractors.OptionalTextCommand(username), _) =>
-        goto(requestPassword) using LoginData(username = username)
+      case Msg(MessageExtractors.TextCommand(username), _) =>
+        goto(requestPassword) using username
     }
 
   def requestPassword: Step =
     ask { _ =>
       bot.sendMessage(source, lang.providePassword)
     } onReply {
-      case Msg(MessageExtractors.OptionalTextCommand(password), loginData: LoginData) =>
-        goto(processLoginInformation) using loginData.copy(password = password.map(textEncryptor.encrypt))
-    }
-
-  def processLoginInformation: Step = {
-    process {
-      case LoginData(Some(username), Some(password)) =>
+      case Msg(MessageExtractors.TextCommand(password), username) =>
         val loginResult = apiService.login(username, password)
         loginResult match {
           case Left(error) =>
@@ -59,14 +53,10 @@ class Login(source: MessageSource, bot: Bot, dataService: DataService, apiServic
             originator ! LoggedIn(forwardCommand, credentials.userId, credentials.accountId)
             end()
         }
-      case _ => end()
     }
-  }
 }
 
 object Login {
-
-  case class LoginData(username: Option[String] = None, password: Option[String] = None)
 
   case class ForwardCommand(cmd: Command)
 
