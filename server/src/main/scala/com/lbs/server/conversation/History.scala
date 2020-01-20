@@ -6,6 +6,7 @@ import com.lbs.api.json.model.HistoricVisit
 import com.lbs.bot.Bot
 import com.lbs.bot.model.Command
 import com.lbs.server.conversation.Login.UserId
+import com.lbs.server.conversation.Pager.SimpleItemsProvider
 import com.lbs.server.conversation.base.Conversation
 import com.lbs.server.lang.{Localizable, Localization}
 import com.lbs.server.service.ApiService
@@ -21,7 +22,7 @@ class History(val userId: UserId, bot: Bot, apiService: ApiService, val localiza
     process { _ =>
       val visits = apiService.visitsHistory(userId.accountId)
       historyPager.restart()
-      historyPager ! visits
+      historyPager ! visits.map(new SimpleItemsProvider(_))
       goto(processResponseFromPager)
     }
 

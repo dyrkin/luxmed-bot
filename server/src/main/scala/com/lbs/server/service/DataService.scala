@@ -65,6 +65,14 @@ class DataService {
     dataRepository.getActiveMonitorings(accountId)
   }
 
+  def getAllMonitoringsCount(accountId: Long): Long = {
+    dataRepository.getAllMonitoringsCount(accountId)
+  }
+
+  def getMonitoringsPage(accountId: Long, start: Int, count: Int): Seq[Monitoring] = {
+    dataRepository.getMonitoringsPage(accountId, start, count)
+  }
+
   def getActiveMonitoringsSince(since: ZonedDateTime): Seq[Monitoring] = {
     dataRepository.getActiveMonitoringsSince(since)
   }

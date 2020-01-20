@@ -14,9 +14,9 @@ import com.lbs.server.util.MessageExtractors
 class Pager[Data](val userId: UserId, bot: Bot, makeMessage: (Data, Int, Int) => String,
                   makeHeader: (Int, Int) => String, selectionPrefix: Option[String],
                   val localization: Localization, originator: Interactional)(val actorSystem: ActorSystem)
-  extends Conversation[(Registry[Data], Option[String])] with Localizable with Logger {
+  extends Conversation[(ItemsProvider[Data], Option[String])] with Localizable with Logger {
 
-  private val Selection = s"/${selectionPrefix.getOrElse("")}_(\\d+)_(\\d+)".r
+  private val Selection = s"/${selectionPrefix.getOrElse("")}_(\\d+)".r
 
   entryPoint(awaitForData)
 
@@ -25,36 +25,34 @@ class Pager[Data](val userId: UserId, bot: Bot, makeMessage: (Data, Int, Int) =>
       case Msg(Left(error: Throwable), _) =>
         bot.sendMessage(userId.source, error.getMessage)
         end()
-      case Msg(Right(items: Seq[Data]), _) if items.isEmpty =>
+      case Msg(Right(itemsProvider: ItemsProvider[Data]), _) if itemsProvider.isEmpty =>
         originator ! NoItemsFound
         end()
-      case Msg(Right(items: Seq[Data]), _) =>
-        goto(displayPage) using Registry(0, items.grouped(Pager.PageSize).toList) -> None
+      case Msg(Right(itemsProvider: ItemsProvider[Data]), _) =>
+        goto(displayPage) using itemsProvider -> None
     }
 
   private def displayPage: Step =
-    ask { case (registry, massageIdMaybe) =>
-      sendPage(registry.page, registry.pages, massageIdMaybe)
+    ask { case (itemsProvider, massageIdMaybe) =>
+      sendPage(itemsProvider, massageIdMaybe)
     } onReply {
-      case Msg(Command(_, msg, Some(Tags.Next)), (registry, _)) =>
-        val page = registry.page + 1
-        goto(displayPage) using registry.copy(page = page) -> Some(msg.messageId)
-      case Msg(Command(_, msg, Some(Tags.Previous)), (registry, _)) =>
-        val page = registry.page - 1
-        goto(displayPage) using registry.copy(page = page) -> Some(msg.messageId)
-      case Msg(MessageExtractors.TextCommand(Selection(pageStr, indexStr)), (registry, _)) if selectionPrefix.nonEmpty =>
-        val page = pageStr.toInt
+      case Msg(Command(_, msg, Some(Tags.Next)), (itemsProvider, _)) =>
+        itemsProvider.next()
+        goto(displayPage) using itemsProvider -> Some(msg.messageId)
+      case Msg(Command(_, msg, Some(Tags.Previous)), (itemsProvider, _)) =>
+        itemsProvider.previous()
+        goto(displayPage) using itemsProvider -> Some(msg.messageId)
+      case Msg(MessageExtractors.TextCommand(Selection(indexStr)), (itemsProvider, _)) if selectionPrefix.nonEmpty =>
         val index = indexStr.toInt
-        originator ! registry.pages(page)(index)
+        originator ! itemsProvider.items(index)
         end()
     }
 
-  private def sendPage(page: Int, data: Seq[Seq[Data]], messageId: Option[String] = None): Unit = {
-    val pages = data.length
-    val message = makeHeader(page, data.length) + "\n\n" + data(page).zipWithIndex.map { case (d, index) => makeMessage(d, page, index) }.mkString
+  private def sendPage(itemsProvider: ItemsProvider[Data], messageId: Option[String] = None): Unit = {
+    val message = makeHeader(itemsProvider.currentPage, itemsProvider.pages) + "\n\n" + itemsProvider.items.zipWithIndex.map { case (d, index) => makeMessage(d, itemsProvider.currentPage, index) }.mkString
 
-    val previousButton = if (page > 0) Some(Button(lang.previous, Tags.Previous)) else None
-    val nextButton = if (page >= 0 && page < pages - 1) Some(Button(lang.next, Tags.Next)) else None
+    val previousButton = if (itemsProvider.currentPage > 0) Some(Button(lang.previous, Tags.Previous)) else None
+    val nextButton = if (itemsProvider.currentPage >= 0 && itemsProvider.currentPage < itemsProvider.pages - 1) Some(Button(lang.next, Tags.Next)) else None
     val buttons = previousButton.toSeq ++ nextButton.toSeq
 
     messageId match {
@@ -69,7 +67,41 @@ class Pager[Data](val userId: UserId, bot: Bot, makeMessage: (Data, Int, Int) =>
 object Pager {
   val PageSize = 5
 
-  case class Registry[Data](page: Int, pages: Seq[Seq[Data]])
+  trait ItemsProvider[Data] {
+    def pages: Int
+
+    def next(): Unit
+
+    def previous(): Unit
+
+    def items: Seq[Data]
+
+    def currentPage: Int
+
+    def itemsCount: Int
+
+    def isEmpty: Boolean
+  }
+
+  class SimpleItemsProvider[Data](fromItems: Seq[Data]) extends ItemsProvider[Data] {
+    private val allPages = fromItems.grouped(PageSize).toSeq
+
+    private var index: Int = 0
+
+    override def pages: Int = allPages.size
+
+    override def next(): Unit = index += 1
+
+    override def previous(): Unit = index -= 1
+
+    override def items: Seq[Data] = allPages(index)
+
+    override def currentPage: Int = index
+
+    override def itemsCount: Int = fromItems.size
+
+    override def isEmpty: Boolean = fromItems.isEmpty
+  }
 
   object NoItemsFound
 

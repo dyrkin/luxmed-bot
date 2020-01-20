@@ -38,7 +38,7 @@ class BootConfig {
   private var localization: Localization = _
 
   @Bean
-  def actorSystem = ActorSystem()
+  def actorSystem: ActorSystem = ActorSystem()
 
   @Bean
   def textEncryptor: TextEncryptor = {
@@ -60,6 +60,10 @@ class BootConfig {
     monitoringService, localization, datePickerFactory, timePickerFactory, staticDataFactory, termsPagerFactory)(actorSystem)
 
   @Bean
+  def bookWithTemplateFactory: UserIdTo[BookWithTemplate] = userId => new BookWithTemplate(userId, bot, apiService, dataService,
+    monitoringService, localization, datePickerFactory, timePickerFactory, termsPagerFactory)(actorSystem)
+
+  @Bean
   def unauthorizedHelpFactory: MessageSourceTo[UnauthorizedHelp] = source => new UnauthorizedHelp(source, bot)(actorSystem)
 
   @Bean
@@ -68,6 +72,10 @@ class BootConfig {
   @Bean
   def monitoringsFactory: UserIdTo[Monitorings] =
     userId => new Monitorings(userId, bot, monitoringService, localization, monitoringsPagerFactory)(actorSystem)
+
+  @Bean
+  def monitoringsHistoryFactory: UserIdTo[MonitoringsHistory] =
+    userId => new MonitoringsHistory(userId, bot, monitoringService, localization, monitoringsHistoryPagerFactory, bookWithTemplateFactory)(actorSystem)
 
   @Bean
   def historyFactory: UserIdTo[History] =
@@ -92,7 +100,7 @@ class BootConfig {
   @Bean
   def chatFactory: UserIdTo[Chat] =
     userId => new Chat(userId, dataService, monitoringService, bookFactory, helpFactory,
-      monitoringsFactory, historyFactory, visitsFactory, settingsFactory, bugFactory, accountFactory)(actorSystem)
+      monitoringsFactory, monitoringsHistoryFactory, historyFactory, visitsFactory, settingsFactory, bugFactory, accountFactory)(actorSystem)
 
   @Bean
   def datePickerFactory: UserIdWithOriginatorTo[DatePicker] = (userId, originator) =>
@@ -141,6 +149,13 @@ class BootConfig {
       (monitoring: Monitoring, page: Int, index: Int) => lang(userId).monitoringEntry(monitoring, page, index),
       (page: Int, pages: Int) => lang(userId).monitoringsHeader(page, pages),
       Some("cancel"), localization, originator)(actorSystem)
+
+  @Bean
+  def monitoringsHistoryPagerFactory: UserIdWithOriginatorTo[Pager[Monitoring]] = (userId, originator) =>
+    new Pager[Monitoring](userId, bot,
+      (monitoring: Monitoring, page: Int, index: Int) => lang(userId).monitoringHistoryEntry(monitoring, page, index),
+      (page: Int, pages: Int) => lang(userId).monitoringsHistoryHeader(page, pages),
+      Some("repeat"), localization, originator)(actorSystem)
 
   @Bean
   def router: Router = new Router(authFactory)(actorSystem)

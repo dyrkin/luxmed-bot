@@ -190,6 +190,14 @@ class MonitoringService extends Logger {
     dataService.getActiveMonitorings(accountId)
   }
 
+  def getMonitoringsPage(accountId: Long, start: Int, count: Int): Seq[Monitoring] = {
+    dataService.getMonitoringsPage(accountId, start, count)
+  }
+
+  def getAllMonitoringsCount(accountId: Long): Long = {
+    dataService.getAllMonitoringsCount(accountId)
+  }
+
   def bookAppointmentByScheduleId(accountId: Long, monitoringId: Long, scheduleId: Long, time: Long): Unit = {
     val monitoringMaybe = dataService.findMonitoring(accountId, monitoringId)
     monitoringMaybe match {

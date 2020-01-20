@@ -175,9 +175,11 @@ object Ua extends Lang {
        |<b>➡</b> Підтримувані команди
        |/book - зарезервувати візит або створити моніторинг
        |/monitorings - моніторінг доступних термінів
+       |/monitorings_history - історія моніторингів
        |/reserved - зарезеровані візити
        |/history - історія візитів
        |/accounts - управління акаунтами Luxmed
+       |/login - залогінитися знову
        |/settings - налаштування
        |/bug - відправити баг""".stripMargin
 
@@ -189,7 +191,7 @@ object Ua extends Lang {
     s"""⏱ <b>${formatDateTime(term.visitDate.startDateTime, locale)}</b>
        |${capitalizeFirstLetter(doctor)}: ${term.doctor.name}
        |${capitalizeFirstLetter(clinic)}: ${term.clinic.name}
-       |<b>➡</b> /book_${page}_$index
+       |<b>➡</b> /book_$index
        |
        |""".stripMargin
 
@@ -212,7 +214,7 @@ object Ua extends Lang {
        |${capitalizeFirstLetter(doctor)}: ${visit.doctorName}
        |${capitalizeFirstLetter(service)}: ${visit.service.name}
        |${capitalizeFirstLetter(clinic)}: ${visit.clinic.name}
-       |<b>➡</b> /cancel_${page}_$index
+       |<b>➡</b> /cancel_$index
        |
        |""".stripMargin
 
@@ -237,12 +239,27 @@ object Ua extends Lang {
        |${capitalizeFirstLetter(clinic)}: ${monitoring.clinicName}
        |${capitalizeFirstLetter(city)}: ${monitoring.cityName}
        |Тип: ${if (monitoring.autobook) "Автоматичний" else "Ручний"}
-       |<b>➡</b> /cancel_${page}_$index
+       |<b>➡</b> /cancel_$index
+       |
+       |""".stripMargin
+
+  override def monitoringHistoryEntry(monitoring: Monitoring, page: Int, index: Int): String =
+    s"""📅 <b>${formatDate(monitoring.dateFrom, locale)}</b> -> <b>${formatDate(monitoring.dateTo, locale)}</b>
+       |⏱ <b>${formatTime(monitoring.timeFrom)}</b> -> <b>${formatTime(monitoring.timeTo)}</b>
+       |${capitalizeFirstLetter(doctor)}: ${monitoring.doctorName}
+       |${capitalizeFirstLetter(service)}: ${monitoring.serviceName}
+       |${capitalizeFirstLetter(clinic)}: ${monitoring.clinicName}
+       |${capitalizeFirstLetter(city)}: ${monitoring.cityName}
+       |Тип: ${if (monitoring.autobook) "Автоматичний" else "Ручний"}
+       |<b>➡</b> /repeat_$index
        |
        |""".stripMargin
 
   override def monitoringsHeader(page: Int, pages: Int): String =
-    s"<b>➡</b> Активні моніторінги"
+    withPages("<b>➡</b> Активні моніторінги", page, pages)
+
+  override def monitoringsHistoryHeader(page: Int, pages: Int): String =
+    withPages("<b>➡</b> Історія моніторінгів", page, pages)
 
   override def invalidLoginOrPassword: String =
     """❗ Ви ввели невірний логін або пароль, або змінили його через сайт.

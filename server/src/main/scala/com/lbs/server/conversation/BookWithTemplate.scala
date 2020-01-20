@@ -11,7 +11,6 @@ import com.lbs.server.conversation.Book._
 import com.lbs.server.conversation.DatePicker.{DateFromMode, DateToMode}
 import com.lbs.server.conversation.Login.UserId
 import com.lbs.server.conversation.Pager.SimpleItemsProvider
-import com.lbs.server.conversation.StaticData.StaticDataConfig
 import com.lbs.server.conversation.TimePicker.{TimeFromMode, TimeToMode}
 import com.lbs.server.conversation.base.Conversation
 import com.lbs.server.lang.{Localizable, Localization}
@@ -20,48 +19,30 @@ import com.lbs.server.service.{ApiService, DataService, MonitoringService}
 import com.lbs.server.util.MessageExtractors._
 import com.lbs.server.util.ServerModelConverters._
 
-class Book(val userId: UserId, bot: Bot, apiService: ApiService, dataService: DataService, monitoringService: MonitoringService,
-           val localization: Localization, datePickerFactory: UserIdWithOriginatorTo[DatePicker], timePickerFactory: UserIdWithOriginatorTo[TimePicker],
-           staticDataFactory: UserIdWithOriginatorTo[StaticData], termsPagerFactory: UserIdWithOriginatorTo[Pager[AvailableVisitsTermPresentation]])(implicit val actorSystem: ActorSystem) extends Conversation[BookingData] with StaticDataForBooking with Localizable {
+class BookWithTemplate(val userId: UserId, bot: Bot, apiService: ApiService, dataService: DataService, monitoringService: MonitoringService,
+                       val localization: Localization, datePickerFactory: UserIdWithOriginatorTo[DatePicker], timePickerFactory: UserIdWithOriginatorTo[TimePicker],
+                       termsPagerFactory: UserIdWithOriginatorTo[Pager[AvailableVisitsTermPresentation]])(implicit val actorSystem: ActorSystem) extends Conversation[BookingData] with Localizable {
 
   private val datePicker = datePickerFactory(userId, self)
   private val timePicker = timePickerFactory(userId, self)
-  private[conversation] val staticData = staticDataFactory(userId, self)
   private val termsPager = termsPagerFactory(userId, self)
 
-  entryPoint(askCity, BookingData())
+  entryPoint(awaitMonitoring)
 
-  private def askCity: Step =
-    staticData(cityConfig) { bd: BookingData =>
-      withFunctions(
-        latestOptions = dataService.getLatestCities(userId.accountId),
-        staticOptions = apiService.getAllCities(userId.accountId),
-        applyId = id => bd.copy(cityId = id))
-    }(requestNext = askClinic)
-
-  private def askClinic: Step =
-    staticData(clinicConfig) { bd: BookingData =>
-      withFunctions(
-        latestOptions = dataService.getLatestClinicsByCityId(userId.accountId, bd.cityId.id),
-        staticOptions = apiService.getAllClinics(userId.accountId, bd.cityId.id),
-        applyId = id => bd.copy(clinicId = id))
-    }(requestNext = askService)
-
-  private def askService: Step =
-    staticData(serviceConfig) { bd: BookingData =>
-      withFunctions(
-        latestOptions = dataService.getLatestServicesByCityIdAndClinicId(userId.accountId, bd.cityId.id, bd.clinicId.optionalId),
-        staticOptions = apiService.getAllServices(userId.accountId, bd.cityId.id, bd.clinicId.optionalId),
-        applyId = id => bd.copy(serviceId = id))
-    }(requestNext = askDoctor)
-
-  private def askDoctor: Step =
-    staticData(doctorConfig) { bd: BookingData =>
-      withFunctions(
-        latestOptions = dataService.getLatestDoctorsByCityIdAndClinicIdAndServiceId(userId.accountId, bd.cityId.id, bd.clinicId.optionalId, bd.serviceId.id),
-        staticOptions = apiService.getAllDoctors(userId.accountId, bd.cityId.id, bd.clinicId.optionalId, bd.serviceId.id),
-        applyId = id => bd.copy(doctorId = id))
-    }(requestNext = determinePayer)
+  private def awaitMonitoring: Step =
+    monologue {
+      case Msg(monitoring: Monitoring, _) =>
+        val bookingData = BookingData(
+          cityId = IdName.from(monitoring.cityId, monitoring.cityName),
+          clinicId = IdName.from(monitoring.clinicId, monitoring.clinicName),
+          serviceId = IdName.from(monitoring.serviceId, monitoring.serviceName),
+          doctorId = IdName.from(monitoring.doctorId, monitoring.doctorName),
+          dateFrom = monitoring.dateFrom,
+          dateTo = monitoring.dateTo,
+          timeFrom = monitoring.timeFrom,
+          timeTo = monitoring.timeTo)
+        goto(determinePayer) using bookingData
+    }
 
   private def determinePayer: Step =
     process { bookingData =>
@@ -303,41 +284,11 @@ class Book(val userId: UserId, bot: Bot, apiService: ApiService, dataService: Da
       end()
     }
 
-  private def cityConfig = StaticDataConfig(lang.city, "wro", "Wrocław", isAnyAllowed = false)
-
-  private def clinicConfig = StaticDataConfig(lang.clinic, "swob", "Swobodna 1", isAnyAllowed = true)
-
-  private def serviceConfig = StaticDataConfig(lang.service, "stomat", "Stomatolog", isAnyAllowed = false)
-
-  private def doctorConfig = StaticDataConfig(lang.doctor, "kowal", "Kowalski", isAnyAllowed = true)
-
   beforeDestroy {
     datePicker.destroy()
-    staticData.destroy()
     termsPager.destroy()
     timePicker.destroy()
   }
 }
 
-object Book {
 
-  case class BookingData(cityId: IdName = null, clinicId: IdName = null,
-                         serviceId: IdName = null, doctorId: IdName = null, dateFrom: ZonedDateTime = ZonedDateTime.now(),
-                         dateTo: ZonedDateTime = ZonedDateTime.now().plusDays(1L), timeFrom: LocalTime = LocalTime.of(7, 0),
-                         timeTo: LocalTime = LocalTime.of(21, 0), autobook: Boolean = false, rebookIfExists: Boolean = false,
-                         term: Option[AvailableVisitsTermPresentation] = None, temporaryReservationId: Option[Long] = None,
-                         valuations: Option[ValuationsResponse] = None, offset: Int = 0, payerId: Long = 0, payers: Seq[IdName] = Seq())
-
-  object Tags {
-    val Cancel = "cancel"
-    val Book = "book"
-    val FindTerms = "find_terms"
-    val ModifyDate = "modify_date"
-    val CreateMonitoring = "create_monitoring"
-    val BookManually = "false"
-    val BookByApplication = "true"
-    val Yes = "true"
-    val No = "false"
-  }
-
-}

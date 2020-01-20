@@ -175,7 +175,11 @@ trait Lang {
 
   def monitoringEntry(monitoring: Monitoring, page: Int, index: Int): String
 
+  def monitoringHistoryEntry(monitoring: Monitoring, page: Int, index: Int): String
+
   def monitoringsHeader(page: Int, pages: Int): String
+
+  def monitoringsHistoryHeader(page: Int, pages: Int): String
 
   def invalidLoginOrPassword: String
 

@@ -101,6 +101,26 @@ class DataRepository(@Autowired em: EntityManager) {
       .getResultList.asScala
   }
 
+  def getAllMonitoringsCount(accountId: Long): JLong = {
+    em.createQuery(
+      """select count(monitoring) from Monitoring monitoring where
+        | monitoring.accountId = :accountId""".stripMargin, classOf[JLong])
+      .setParameter("accountId", accountId)
+      .getSingleResult
+  }
+
+  def getMonitoringsPage(accountId: Long, start: Int, count: Int): Seq[Monitoring] = {
+    em.createQuery(
+      """select monitoring from Monitoring monitoring where monitoring.accountId = :accountId
+        | order by monitoring.created desc""".stripMargin, classOf[Monitoring])
+      .setParameter("accountId", accountId)
+      .setFirstResult(start)
+      .setMaxResults(count)
+      .getResultList.asScala
+  }
+
+
+
   def findActiveMonitoring(accountId: Long, cityId: Long, serviceId: Long, doctorId: Long): Option[Monitoring] = {
     em.createQuery(
       """select monitoring from Monitoring monitoring where monitoring.active = true

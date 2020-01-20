@@ -6,6 +6,7 @@ import com.lbs.bot._
 import com.lbs.bot.model.{Button, Command}
 import com.lbs.server.conversation.Login.UserId
 import com.lbs.server.conversation.Monitorings.Tags
+import com.lbs.server.conversation.Pager.SimpleItemsProvider
 import com.lbs.server.conversation.base.Conversation
 import com.lbs.server.lang.{Localizable, Localization}
 import com.lbs.server.repository.model.Monitoring
@@ -21,7 +22,7 @@ class Monitorings(val userId: UserId, bot: Bot, monitoringService: MonitoringSer
     process { _ =>
       val monitorings = monitoringService.getActiveMonitorings(userId.accountId)
       monitoringsPager.restart()
-      monitoringsPager ! Right[Throwable, Seq[Monitoring]](monitorings)
+      monitoringsPager ! Right[Throwable, Seq[Monitoring]](monitorings).map(new SimpleItemsProvider(_))
       goto(processResponseFromPager)
     }
 

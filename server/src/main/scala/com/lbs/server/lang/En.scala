@@ -176,9 +176,11 @@ object En extends Lang {
        |<b>➡</b> Supported commands
        |/book - reserve a visit, or create a monitoring
        |/monitorings - available terms monitoring
+       |/monitorings_history - previous monitoring
        |/reserved - upcoming visits
        |/history - visits history
        |/accounts - manage Luxmed accounts
+       |/login - login again
        |/settings - settings, e.g. lang
        |/bug - submit an issue""".stripMargin
 
@@ -190,7 +192,7 @@ object En extends Lang {
     s"""⏱ <b>${formatDateTime(term.visitDate.startDateTime, locale)}</b>
        |${capitalizeFirstLetter(doctor)}: ${term.doctor.name}
        |${capitalizeFirstLetter(clinic)}: ${term.clinic.name}
-       |<b>➡</b> /book_${page}_$index
+       |<b>➡</b> /book_$index
        |
        |""".stripMargin
 
@@ -213,7 +215,7 @@ object En extends Lang {
        |${capitalizeFirstLetter(doctor)}: ${visit.doctorName}
        |${capitalizeFirstLetter(service)}: ${visit.service.name}
        |${capitalizeFirstLetter(clinic)}: ${visit.clinic.name}
-       |<b>➡</b> /cancel_${page}_$index
+       |<b>➡</b> /cancel_$index
        |
        |""".stripMargin
 
@@ -238,12 +240,27 @@ object En extends Lang {
        |${capitalizeFirstLetter(clinic)}: ${monitoring.clinicName}
        |${capitalizeFirstLetter(city)}: ${monitoring.cityName}
        |Type: ${if (monitoring.autobook) "Auto" else "Manual"}
-       |<b>➡</b> /cancel_${page}_$index
+       |<b>➡</b> /cancel_$index
+       |
+       |""".stripMargin
+
+  override def monitoringHistoryEntry(monitoring: Monitoring, page: Int, index: Int): String =
+    s"""📅 <b>${formatDate(monitoring.dateFrom, locale)}</b> -> <b>${formatDate(monitoring.dateTo, locale)}</b>
+       |⏱ <b>${formatTime(monitoring.timeFrom)}</b> -> <b>${formatTime(monitoring.timeTo)}</b>
+       |${capitalizeFirstLetter(doctor)}: ${monitoring.doctorName}
+       |${capitalizeFirstLetter(service)}: ${monitoring.serviceName}
+       |${capitalizeFirstLetter(clinic)}: ${monitoring.clinicName}
+       |${capitalizeFirstLetter(city)}: ${monitoring.cityName}
+       |Type: ${if (monitoring.autobook) "Auto" else "Manual"}
+       |<b>➡</b> /repeat_$index
        |
        |""".stripMargin
 
   override def monitoringsHeader(page: Int, pages: Int): String =
-    s"<b>➡</b> Active monitorings."
+    withPages("<b>➡</b> Active monitorings", page, pages)
+
+  override def monitoringsHistoryHeader(page: Int, pages: Int): String =
+    withPages("<b>➡</b> Monitorings history", page, pages)
 
   override def invalidLoginOrPassword: String =
     """❗ You have entered invalid login or password or changed it via the site.

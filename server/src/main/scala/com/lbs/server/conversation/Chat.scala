@@ -13,13 +13,14 @@ import com.lbs.server.util.MessageExtractors._
 import scala.util.matching.Regex
 
 class Chat(val userId: UserId, dataService: DataService, monitoringService: MonitoringService, bookingFactory: UserIdTo[Book],
-           helpFactory: UserIdTo[Help], monitoringsFactory: UserIdTo[Monitorings], historyFactory: UserIdTo[History],
+           helpFactory: UserIdTo[Help], monitoringsFactory: UserIdTo[Monitorings], monitoringsHistoryFactory: UserIdTo[MonitoringsHistory], historyFactory: UserIdTo[History],
            visitsFactory: UserIdTo[Visits], settingsFactory: UserIdTo[Settings],
            bugFactory: UserIdTo[Bug], accountFactory: UserIdTo[Account])(val actorSystem: ActorSystem) extends Conversation[Unit] with Logger {
 
   private val book = bookingFactory(userId)
   private val help = helpFactory(userId)
   private val monitorings = monitoringsFactory(userId)
+  private val monitoringsHistory = monitoringsHistoryFactory(userId)
   private val history = historyFactory(userId)
   private val visits = visitsFactory(userId)
   private val settings = settingsFactory(userId)
@@ -73,6 +74,13 @@ class Chat(val userId: UserId, dataService: DataService, monitoringService: Moni
         stay()
     }
 
+  private def monitoringsHistoryChat: Step =
+    dialogue(monitoringsHistory) {
+      case Msg(TextCommand("/monitorings_history"), _) =>
+        monitoringsHistory.restart()
+        stay()
+    }
+
   private def settingsChat: Step =
     dialogue(settings) {
       case Msg(TextCommand("/settings"), _) =>
@@ -113,6 +121,9 @@ class Chat(val userId: UserId, dataService: DataService, monitoringService: Moni
     case Msg(cmd@TextCommand("/monitorings"), _) =>
       self ! cmd
       goto(monitoringsChat)
+    case Msg(cmd@TextCommand("/monitorings_history"), _) =>
+      self ! cmd
+      goto(monitoringsHistoryChat)
     case Msg(cmd@TextCommand("/history"), _) =>
       self ! cmd
       goto(historyChat)
@@ -140,6 +151,7 @@ class Chat(val userId: UserId, dataService: DataService, monitoringService: Moni
     book.destroy()
     help.destroy()
     monitorings.destroy()
+    monitoringsHistory.destroy()
     history.destroy()
     visits.destroy()
     settings.destroy()

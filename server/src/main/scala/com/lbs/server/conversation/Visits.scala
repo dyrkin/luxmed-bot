@@ -6,6 +6,7 @@ import com.lbs.api.json.model.ReservedVisit
 import com.lbs.bot.model.{Button, Command}
 import com.lbs.bot.{Bot, _}
 import com.lbs.server.conversation.Login.UserId
+import com.lbs.server.conversation.Pager.SimpleItemsProvider
 import com.lbs.server.conversation.Visits.Tags
 import com.lbs.server.conversation.base.Conversation
 import com.lbs.server.lang.{Localizable, Localization}
@@ -22,7 +23,7 @@ class Visits(val userId: UserId, bot: Bot, apiService: ApiService, val localizat
     process { _ =>
       val visits = apiService.reservedVisits(userId.accountId)
       reservedVisitsPager.restart()
-      reservedVisitsPager ! visits
+      reservedVisitsPager ! visits.map(new SimpleItemsProvider(_))
       goto(processResponseFromPager)
     }
 
