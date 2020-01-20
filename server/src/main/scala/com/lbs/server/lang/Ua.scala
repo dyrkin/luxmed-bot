@@ -201,7 +201,6 @@ object Ua extends Lang {
        |${capitalizeFirstLetter(doctor)}: ${visit.doctorName}
        |${capitalizeFirstLetter(service)}: ${visit.service.name}
        |${capitalizeFirstLetter(clinic)}: ${visit.clinicName}
-       |<b>➡</b> /repeat_${page}_$index
        |
        |""".stripMargin
 

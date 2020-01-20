@@ -133,7 +133,7 @@ class BootConfig {
     new Pager[HistoricVisit](userId, bot,
       (visit: HistoricVisit, page: Int, index: Int) => lang(userId).historyEntry(visit, page, index),
       (page: Int, pages: Int) => lang(userId).historyHeader(page, pages),
-      Some("repeat"), localization, originator)(actorSystem)
+      None, localization, originator)(actorSystem)
 
   @Bean
   def monitoringsPagerFactory: UserIdWithOriginatorTo[Pager[Monitoring]] = (userId, originator) =>
