@@ -39,7 +39,8 @@ class Login(source: MessageSource, bot: Bot, dataService: DataService, apiServic
     ask { _ =>
       bot.sendMessage(source, lang.providePassword)
     } onReply {
-      case Msg(MessageExtractors.TextCommand(password), username) =>
+      case Msg(MessageExtractors.TextCommand(plainPassword), username) =>
+        val password = textEncryptor.encrypt(plainPassword)
         val loginResult = apiService.login(username, password)
         loginResult match {
           case Left(error) =>
