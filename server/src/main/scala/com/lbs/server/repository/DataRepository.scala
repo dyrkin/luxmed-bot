@@ -151,7 +151,7 @@ class DataRepository(@Autowired em: EntityManager) {
   def findCredentialsByUsername(username: String, userId: Long): Option[Credentials] = {
     em.createQuery(
       "select credentials from Credentials credentials where credentials.username = :username" +
-        " and credential.userId = :userId", classOf[Credentials])
+        " and credentials.userId = :userId", classOf[Credentials])
       .setParameter("username", username)
       .setParameter("userId", userId)
       .getResultList.asScala.headOption
