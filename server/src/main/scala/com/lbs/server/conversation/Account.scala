@@ -19,18 +19,17 @@ class Account(val userId: UserId, bot: Bot, dataService: DataService, val locali
     ask { _ =>
       val credentials = dataService.getUserCredentials(userId.userId)
       val currentAccount = credentials.find(c => c.accountId == userId.accountId).getOrElse(sys.error("Can't determine current account"))
-      val buttons = Seq(Button(lang.addAccount, -1L), Button(lang.deleteAccount, -2L)) ++ credentials.map(c => Button(s"🔐️ ${c.username}", c.accountId))
+      val buttons = Seq(Button(lang.addAccount, Tags.AddAccount), Button(lang.deleteAccount, Tags.DeleteAccount)) ++ credentials.map(c => Button(s"🔐️ ${c.username}", c.accountId))
       bot.sendMessage(userId.source, lang.pleaseChooseAccount(currentAccount.username), inlineKeyboard = createInlineKeyboard(buttons, columns = 1))
     } onReply {
-      case Msg(cmd@CallbackCommand(actionStr), _) =>
-        val action = actionStr.toLong
+      case Msg(cmd@CallbackCommand(action), _) =>
         action match {
-          case -1L =>
-            router ! cmd.copy(message = cmd.message.copy(text = Some("/login")))
-          case -2L =>
+          case Tags.AddAccount =>
+            router ! cmd.copy(message = cmd.message.copy(text = Some("/login")), callbackData = None)
+          case Tags.DeleteAccount =>
             bot.sendMessage(userId.source, "Not implemented yet")
           case accountId =>
-            switchAccount(accountId)
+            switchAccount(accountId.toLong)
         }
         end()
     }
@@ -55,5 +54,10 @@ class Account(val userId: UserId, bot: Bot, dataService: DataService, val locali
 object Account {
 
   case class SwitchAccount(userId: UserId)
+
+  object Tags {
+    val AddAccount = "add_account"
+    val DeleteAccount = "delete_account"
+  }
 
 }
