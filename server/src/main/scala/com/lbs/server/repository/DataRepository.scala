@@ -3,7 +3,7 @@ package com.lbs.server.repository
 
 import java.time.ZonedDateTime
 
-import com.lbs.server.repository.model.{Bug, CityHistory, ClinicHistory, Credentials, DoctorHistory, JLong, Monitoring, ServiceHistory, Settings, Source, SystemUser}
+import com.lbs.server.repository.model.{CityHistory, ClinicHistory, Credentials, DoctorHistory, JLong, Monitoring, ServiceHistory, Settings, Source, SystemUser}
 import javax.persistence.EntityManager
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.stereotype.Repository
@@ -69,14 +69,6 @@ class DataRepository(@Autowired em: EntityManager) {
       "select credentials from Credentials credentials where credentials.accountId = :accountId", classOf[Credentials])
       .setParameter("accountId", accountId)
       .getResultList.asScala.headOption
-  }
-
-  def getBugs(userId: Long): Seq[Bug] = {
-    em.createQuery(
-      """select bug from Bug bug where bug.userId = :userId order by bug.submitted desc""".stripMargin, classOf[Bug])
-      .setParameter("userId", userId)
-      .setMaxResults(50)
-      .getResultList.asScala
   }
 
   def getActiveMonitorings: Seq[Monitoring] = {

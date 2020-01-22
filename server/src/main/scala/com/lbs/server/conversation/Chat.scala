@@ -14,8 +14,7 @@ import scala.util.matching.Regex
 
 class Chat(val userId: UserId, dataService: DataService, monitoringService: MonitoringService, bookingFactory: UserIdTo[Book],
            helpFactory: UserIdTo[Help], monitoringsFactory: UserIdTo[Monitorings], monitoringsHistoryFactory: UserIdTo[MonitoringsHistory], historyFactory: UserIdTo[History],
-           visitsFactory: UserIdTo[Visits], settingsFactory: UserIdTo[Settings],
-           bugFactory: UserIdTo[Bug], accountFactory: UserIdTo[Account])(val actorSystem: ActorSystem) extends Conversation[Unit] with Logger {
+           visitsFactory: UserIdTo[Visits], settingsFactory: UserIdTo[Settings], accountFactory: UserIdTo[Account])(val actorSystem: ActorSystem) extends Conversation[Unit] with Logger {
 
   private val book = bookingFactory(userId)
   private val help = helpFactory(userId)
@@ -24,7 +23,6 @@ class Chat(val userId: UserId, dataService: DataService, monitoringService: Moni
   private val history = historyFactory(userId)
   private val visits = visitsFactory(userId)
   private val settings = settingsFactory(userId)
-  private val bug = bugFactory(userId)
   private val account = accountFactory(userId)
 
   entryPoint(helpChat)
@@ -57,13 +55,6 @@ class Chat(val userId: UserId, dataService: DataService, monitoringService: Moni
     dialogue(visits) {
       case Msg(TextCommand("/reserved"), _) =>
         visits.restart()
-        stay()
-    }
-
-  private def bugChat: Step =
-    dialogue(bug) {
-      case Msg(TextCommand("/bug"), _) =>
-        bug.restart()
         stay()
     }
 
@@ -106,9 +97,6 @@ class Chat(val userId: UserId, dataService: DataService, monitoringService: Moni
     }
 
   private def secondaryState(interactional: Interactional): MessageProcessorFn = {
-    case Msg(cmd@TextCommand("/bug"), _) =>
-      this ! cmd
-      goto(bugChat)
     case Msg(cmd@TextCommand("/help"), _) =>
       self ! cmd
       goto(helpChat)
@@ -155,7 +143,6 @@ class Chat(val userId: UserId, dataService: DataService, monitoringService: Moni
     history.destroy()
     visits.destroy()
     settings.destroy()
-    bug.destroy()
     account.destroy()
   }
 }

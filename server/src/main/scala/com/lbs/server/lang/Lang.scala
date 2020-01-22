@@ -7,7 +7,6 @@ import java.util.Locale
 import com.lbs.api.json.model.{AvailableVisitsTermPresentation, HistoricVisit, ReservedVisit, ValuationsResponse}
 import com.lbs.server.conversation.Book.BookingData
 import com.lbs.server.conversation.StaticData.StaticDataConfig
-import com.lbs.server.repository.model
 import com.lbs.server.repository.model.Monitoring
 
 import scala.io.Source
@@ -168,8 +167,6 @@ trait Lang {
   def upcomingVisitEntry(visit: ReservedVisit, page: Int, index: Int): String
 
   def upcomingVisitsHeader(page: Int, pages: Int): String
-
-  def bugEntry(bug: model.Bug, page: Int, index: Int): String
 
   def bugsHeader(page: Int, pages: Int): String
 

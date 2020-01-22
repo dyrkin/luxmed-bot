@@ -7,7 +7,7 @@ import java.util.Locale
 import com.lbs.api.json.model.{AvailableVisitsTermPresentation, HistoricVisit, ReservedVisit, ValuationsResponse}
 import com.lbs.server.conversation.Book
 import com.lbs.server.conversation.StaticData.StaticDataConfig
-import com.lbs.server.repository.model.{Bug, Monitoring}
+import com.lbs.server.repository.model.Monitoring
 import com.lbs.server.util.DateTimeUtil._
 
 object En extends Lang {
@@ -182,7 +182,7 @@ object En extends Lang {
        |/accounts - manage Luxmed accounts
        |/login - login again
        |/settings - settings, e.g. lang
-       |/bug - submit an issue""".stripMargin
+       |/help - the help""".stripMargin
 
   override def dateFromIs(dateFrom: ZonedDateTime): String = s"📅 Date from is ${formatDate(dateFrom, locale)}"
 
@@ -221,13 +221,6 @@ object En extends Lang {
 
   override def upcomingVisitsHeader(page: Int, pages: Int): String =
     withPages("<b>➡</b> Reserved visits", page, pages)
-
-  override def bugEntry(bug: Bug, page: Int, index: Int): String =
-    s"""⏱ <b>${formatDateTime(bug.submitted, locale)}</b>
-       |Description: ${bug.details}
-       |State: <b>${if (bug.resolved) "✅ Resolved" else "🚫 Unresolved"}</b>
-       |
-       |""".stripMargin
 
   override def bugsHeader(page: Int, pages: Int): String =
     withPages("<b>➡</b> Submitted issues", page, pages)

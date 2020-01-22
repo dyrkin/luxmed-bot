@@ -40,15 +40,6 @@ class DataService {
   }
 
   @Transactional
-  def submitBug(userId: Long, sourceSystemId: Long, details: String): Option[Long] = {
-    dataRepository.saveEntity(Bug(userId, sourceSystemId, details)).recordId
-  }
-
-  def getBugs(chatId: Long): Seq[Bug] = {
-    dataRepository.getBugs(chatId)
-  }
-
-  @Transactional
   def saveMonitoring(monitoring: Monitoring): Monitoring = {
     dataRepository.saveEntity(monitoring)
   }

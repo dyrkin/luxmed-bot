@@ -1,0 +1,11 @@
+databaseChangeLog:
+- changeSet:
+    id: 05
+    author: dyrkin
+    preConditions:
+      onFail: MARK_RAN
+      tableExists:
+        tableName: bug
+    changes:
+    - dropTable:
+        tableName: bug

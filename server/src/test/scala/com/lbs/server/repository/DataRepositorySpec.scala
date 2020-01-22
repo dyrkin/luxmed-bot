@@ -2,7 +2,7 @@ package com.lbs.server.repository
 
 import java.time.ZonedDateTime
 
-import com.lbs.server.repository.model.{Bug, CityHistory, ClinicHistory, Credentials, DoctorHistory, ServiceHistory}
+import com.lbs.server.repository.model.{CityHistory, ClinicHistory, Credentials, DoctorHistory, ServiceHistory}
 import javax.persistence.EntityManager
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.Test
@@ -99,17 +99,5 @@ class DataRepositorySpec {
 
     val found = dataRepository.getUserCredentials(1L)
     assertThat(found).isEqualTo(Seq(credentials))
-  }
-
-  @Test
-  def whenGetBugs_thenReturnABug(): Unit = {
-    val bug1 = Bug(1L, 1L, "bug1", resolved = false, ZonedDateTime.now())
-    val bug2 = Bug(1L, 2L, "bug2", resolved = false, ZonedDateTime.now())
-    em.persist(bug1)
-    em.persist(bug2)
-    em.flush()
-
-    val found = dataRepository.getBugs(1L)
-    assertThat(found).isEqualTo(Seq(bug2, bug1))
   }
 }

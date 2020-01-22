@@ -7,15 +7,11 @@ import com.lbs.bot.Bot
 import com.lbs.bot.telegram.TelegramBot
 import com.lbs.server.conversation._
 import com.lbs.server.lang.Localization
-import com.lbs.server.repository.model
 import com.lbs.server.repository.model.Monitoring
 import com.lbs.server.service.{ApiService, DataService, MonitoringService}
 import org.jasypt.util.text.{StrongTextEncryptor, TextEncryptor}
 import org.springframework.beans.factory.annotation.{Autowired, Value}
 import org.springframework.context.annotation.{Bean, Configuration}
-
-import scala.io.Source
-import scala.util.Try
 
 @Configuration
 class BootConfig {
@@ -86,10 +82,6 @@ class BootConfig {
     userId => new Visits(userId, bot, apiService, localization, visitsPagerFactory)(actorSystem)
 
   @Bean
-  def bugFactory: UserIdTo[Bug] =
-    userId => new Bug(userId, bot, dataService, bugPagerFactory, localization)(actorSystem)
-
-  @Bean
   def settingsFactory: UserIdTo[Settings] =
     userId => new Settings(userId, bot, dataService, localization)(actorSystem)
 
@@ -100,7 +92,7 @@ class BootConfig {
   @Bean
   def chatFactory: UserIdTo[Chat] =
     userId => new Chat(userId, dataService, monitoringService, bookFactory, helpFactory,
-      monitoringsFactory, monitoringsHistoryFactory, historyFactory, visitsFactory, settingsFactory, bugFactory, accountFactory)(actorSystem)
+      monitoringsFactory, monitoringsHistoryFactory, historyFactory, visitsFactory, settingsFactory, accountFactory)(actorSystem)
 
   @Bean
   def datePickerFactory: UserIdWithOriginatorTo[DatePicker] = (userId, originator) =>
@@ -128,13 +120,6 @@ class BootConfig {
       (visit: ReservedVisit, page: Int, index: Int) => lang(userId).upcomingVisitEntry(visit, page, index),
       (page: Int, pages: Int) => lang(userId).upcomingVisitsHeader(page, pages),
       Some("cancel"), localization, originator)(actorSystem)
-
-  @Bean
-  def bugPagerFactory: UserIdWithOriginatorTo[Pager[model.Bug]] = (userId, originator) =>
-    new Pager[model.Bug](userId, bot,
-      (bug: model.Bug, page: Int, index: Int) => lang(userId).bugEntry(bug, page, index),
-      (page: Int, pages: Int) => lang(userId).bugsHeader(page, pages),
-      None, localization, originator)(actorSystem)
 
   @Bean
   def historyPagerFactory: UserIdWithOriginatorTo[Pager[HistoricVisit]] = (userId, originator) =>
