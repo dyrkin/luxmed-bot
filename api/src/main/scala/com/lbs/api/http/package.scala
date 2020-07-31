@@ -21,6 +21,7 @@ package object http extends Logger {
     val Connection = "Connection"
     val `Accept-Encoding` = "Accept-Encoding"
     val `User-Agent` = "User-Agent"
+    val `Custom-User-Agent` = "Custom-User-Agent"
     val `x-api-client-identifier` = "x-api-client-identifier"
     val `Accept-Language` = "Accept-Language"
     val Authorization = "Authorization"
