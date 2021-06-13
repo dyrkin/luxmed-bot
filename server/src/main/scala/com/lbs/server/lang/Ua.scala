@@ -1,14 +1,14 @@
 
 package com.lbs.server.lang
 
-import java.time.{LocalTime, ZonedDateTime}
-import java.util.Locale
-
 import com.lbs.api.json.model.{AvailableVisitsTermPresentation, HistoricVisit, ReservedVisit, ValuationsResponse}
 import com.lbs.server.conversation.Book
 import com.lbs.server.conversation.StaticData.StaticDataConfig
 import com.lbs.server.repository.model.Monitoring
 import com.lbs.server.util.DateTimeUtil._
+
+import java.time.{LocalTime, ZonedDateTime}
+import java.util.Locale
 
 object Ua extends Lang {
 
@@ -169,8 +169,6 @@ object Ua extends Lang {
   override def help: String =
     s"""ℹ Це неофіційний бот для <b>Порталу Пацієнта LUX MED (v.${Lang.version})</b>.
        |Завдяки йому ви можете зарезервувати візит до лікаря, створити моніторинг доступних термінів, переглянути історію та майбутні візити.
-       |
-       |Пінгани @dyrkin_me у разі питань.
        |
        |<b>➡</b> Підтримувані команди
        |/book - зарезервувати візит або створити моніторинг

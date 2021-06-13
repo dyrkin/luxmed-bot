@@ -1,14 +1,14 @@
 
 package com.lbs.server.lang
 
-import java.time.{LocalTime, ZonedDateTime}
-import java.util.Locale
-
 import com.lbs.api.json.model.{AvailableVisitsTermPresentation, HistoricVisit, ReservedVisit, ValuationsResponse}
 import com.lbs.server.conversation.Book
 import com.lbs.server.conversation.StaticData.StaticDataConfig
 import com.lbs.server.repository.model.Monitoring
 import com.lbs.server.util.DateTimeUtil._
+
+import java.time.{LocalTime, ZonedDateTime}
+import java.util.Locale
 
 object En extends Lang {
 
@@ -170,8 +170,6 @@ object En extends Lang {
   override def help: String =
     s"""ℹ Non official bot for <b>Portal Pacjenta LUX MED (v.${Lang.version})</b>.
        |It can help you to book a visit to a doctor, create term monitoring, view upcoming appointments and visit history.
-       |
-       |Ping @dyrkin_me if you have any questions.
        |
        |<b>➡</b> Supported commands
        |/book - reserve a visit, or create a monitoring
