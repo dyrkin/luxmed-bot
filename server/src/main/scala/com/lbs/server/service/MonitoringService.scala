@@ -1,9 +1,6 @@
 
 package com.lbs.server.service
 
-import java.time.ZonedDateTime
-import java.util.concurrent.ScheduledFuture
-
 import com.lbs.api.exception.{InvalidLoginOrPasswordException, ServiceIsAlreadyBookedException}
 import com.lbs.api.json.model.AvailableVisitsTermPresentation
 import com.lbs.bot.Bot
@@ -12,10 +9,12 @@ import com.lbs.common.{Logger, Scheduler}
 import com.lbs.server.lang.Localization
 import com.lbs.server.repository.model._
 import com.lbs.server.util.DateTimeUtil._
-import javax.annotation.PostConstruct
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.stereotype.Service
 
+import java.time.ZonedDateTime
+import java.util.concurrent.ScheduledFuture
+import javax.annotation.PostConstruct
 import scala.collection.mutable
 import scala.concurrent.duration._
 import scala.util.{Failure, Random}
@@ -94,9 +93,8 @@ class MonitoringService extends Logger {
   }
 
   private def optimizeDateFrom(date: ZonedDateTime, offset: Int) = {
-    val dateWithOffset = date.plusHours(offset)
-    val now = ZonedDateTime.now()
-    if (dateWithOffset.isBefore(now)) now else dateWithOffset
+    val nowWithOffset = ZonedDateTime.now().plusHours(offset)
+    if (date.isBefore(nowWithOffset)) nowWithOffset else date
   }
 
   private def initializeMonitorings(allMonitorings: Seq[Monitoring]): Unit = {
