@@ -59,7 +59,7 @@ platform:
 
 steps:
   - name: build
-    image: arm64v8/openjdk:8-alpine
+    image: arm64v8/openjdk:8-slim
     environment:
       GRADLE_USER_HOME: ~/.gradle
     commands:
