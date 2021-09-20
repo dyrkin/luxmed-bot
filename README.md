@@ -18,7 +18,6 @@ It is available here [@luxmedbot](https://telegram.me/luxmedbot), but you can in
 2. Install **docker** and **docker-compose** (install **docker-machine** if you are on Mac)
 3. Depending on your platform download:
     - [docker-compose.xml](https://raw.githubusercontent.com/dyrkin/luxmed-booking-service/master/docker/docker-compose.yml) 
-    - [docker-compose-arm.xml](https://raw.githubusercontent.com/dyrkin/luxmed-booking-service/master/docker/docker-compose-arm.yml)
     - [docker-compose-arm64.xml](https://raw.githubusercontent.com/dyrkin/luxmed-booking-service/master/docker/docker-compose-arm64.yml)
 4. Download [secrets.env.template](https://raw.githubusercontent.com/dyrkin/luxmed-booking-service/master/docker/secrets.env.template) 
 to the same folder and rename it to **secrets.env**
