@@ -5,14 +5,14 @@ import com.lbs.api.http.headers._
 import scalaj.http.{BaseHttp, HttpRequest}
 
 object ApiHttp extends BaseHttp(
-  userAgent = "PatientPortal/3.20.5 (pl.luxmed.pp.LUX-MED; build:853; iOS 13.5.1) Alamofire/4.9.1"
+  userAgent = "PatientPortal/4.20.5 (pl.luxmed.pp.LUX-MED; build:853; iOS 13.5.1) Alamofire/4.9.1"
 )
 
 trait ApiBase {
   private val CommonHeaders =
     Map(
       Host -> "portalpacjenta.luxmed.pl",
-      `Custom-User-Agent` -> "PatientPortal; 3.20.5; 4380E6AC-D291-4895-8B1B-F774C318BD7D; iOS; 13.5.1; iPhone8,1",
+      `Custom-User-Agent` -> "PatientPortal; 4.20.5; 4380E6AC-D291-4895-8B1B-F774C318BD7D; iOS; 14.5.1; iPhone8,1",
       Accept -> "*/*",
       Connection -> "keep-alive",
       `Accept-Encoding` -> "gzip;q=1.0, compress;q=0.5",
