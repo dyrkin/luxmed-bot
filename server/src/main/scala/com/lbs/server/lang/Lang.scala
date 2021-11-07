@@ -1,14 +1,13 @@
 
 package com.lbs.server.lang
 
-import java.time.{LocalTime, ZonedDateTime}
-import java.util.Locale
-
 import com.lbs.api.json.model.{AvailableVisitsTermPresentation, HistoricVisit, ReservedVisit, ValuationsResponse}
 import com.lbs.server.conversation.Book.BookingData
 import com.lbs.server.conversation.StaticData.StaticDataConfig
 import com.lbs.server.repository.model.Monitoring
 
+import java.time.{LocalTime, ZonedDateTime}
+import java.util.Locale
 import scala.io.Source
 import scala.util.Try
 
@@ -16,7 +15,7 @@ object Lang {
 
   val Langs: Seq[Lang] = Seq(En, Ua)
 
-  private val LangsMap = Seq(En, Ua).map(e => e.id -> e).toMap
+  private val LangsMap = Langs.map(e => e.id -> e).toMap
 
   def apply(id: Int): Lang = {
     LangsMap.getOrElse(id, sys.error(s"Unknown language id $id"))
