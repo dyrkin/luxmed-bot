@@ -95,7 +95,7 @@ object Pl extends Lang {
 
   override def bookManually: String = "👤 Rezerwacja ręczna (otrzymasz powiadomienie o dostępnych terminach)"
 
-  override def rebookIfExists: String = "<b>➡</b> Czy chcesz zaktualizować termin, jeśli rezerwacja juz istnieje?"
+  override def rebookIfExists: String = "<b>➡</b> Czy chcesz zaktualizować termin, jeśli rezerwacja już istnieje?"
 
   override def pleaseSpecifyOffset: String = "<b>➡</b> Podaj offset w godzinach albo kliknij Nie"
 
@@ -128,7 +128,7 @@ object Pl extends Lang {
 
   override def any: String = "Jakikolwiek"
 
-  override def pressAny: String = s"albo naciśnij guzik <b>$any</b> "
+  override def pressAny: String = s"albo naciśnij przycisk <b>$any</b> "
 
   override def pleaseEnterStaticDataNameOrAny(config: StaticDataConfig): String =
     withAnyVariant(
@@ -154,8 +154,8 @@ object Pl extends Lang {
          |Proszę podaj nazwę ${config.name} jeszcze raz""", config.isAnyAllowed)
 
   override def loginAndPasswordAreOk: String =
-    s"""✅ Brawo! Login i hasło są ok OK!
-       |Teraz mozesz zmienic język przez /settings
+    s"""✅ Brawo! Login i hasło są OK!
+       |Teraz możesz zmienic język przez /settings
      """.stripMargin
 
   override def provideUsername: String =
@@ -169,7 +169,7 @@ object Pl extends Lang {
 
   override def help: String =
     s"""ℹ Nieoficjalny Bot do <b>Portal Pacjenta LUX MED (v.${Lang.version})</b>.
-       |Pomogę Ci w rezerwacji wizyty, stworzeniu monitoringu na termin, pokazania nadchodzących wizyt i przejrzeniu historii.
+       |Pomogę Ci w rezerwacji wizyty, stworzeniu monitoringu na termin, pokazaniu nadchodzących wizyt i przejrzeniu historii.
        |
        |<b>➡</b> Wspierane komendy
        |/book - zarezerwuj wizytę albo stwórz monitoring
@@ -297,12 +297,12 @@ object Pl extends Lang {
   override def maximumMonitoringsLimitExceeded: String = "Maksymalna liczba monitoringów uzytkownika to 10"
 
   override def termIsOutdated: String =
-    s"""❗️ Wygląda na to, ze ten termin został juz zarezewowany!
+    s"""❗️ Wygląda na to, ze ten termin został już zarezewowany!
        |
        |Wybierz inny termin albo stwórz nowy monitoring przez /book""".stripMargin
 
   override def loginHasChangedOrWrong: String =
-    """❗ Wprowadzono niepoprawny <b>login</b> lub <b>hasłi</b> lub zostało ono zmienione.
+    """❗ Wprowadzono niepoprawny <b>login</b> lub <b>hasło</b> lub zostały one zmienione.
       |
       |Zaloguj się ponownie przez /login i stwórz nowy monitoring przez /book.
     """.stripMargin
@@ -333,7 +333,7 @@ object Pl extends Lang {
 
   override def createNewBug: String = "🐞 Dodaj nowy"
 
-  override def showSubmittedBugs: String = "👀 Pokaz dotychczasowe"
+  override def showSubmittedBugs: String = "👀 Pokaż dotychczasowe"
 
   override def enterIssueDetails: String = "<b>➡</b> Podaj szczegóły błędu:"
 
