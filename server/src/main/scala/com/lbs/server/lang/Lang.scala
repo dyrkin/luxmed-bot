@@ -13,7 +13,7 @@ import scala.util.Try
 
 object Lang {
 
-  val Langs: Seq[Lang] = Seq(En, Ua)
+  val Langs: Seq[Lang] = Seq(En, Ua, Pl)
 
   private val LangsMap = Langs.map(e => e.id -> e).toMap
 
