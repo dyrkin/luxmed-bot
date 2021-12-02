@@ -15,6 +15,7 @@ import com.lbs.common.Logger
 import io.circe.{Decoder, Encoder, Json}
 
 import scala.concurrent.Future
+import scala.util.Failure
 
 class TelegramClient(onReceive: TelegramEvent => Unit, botToken: String) extends AkkaTelegramBot with Polling with Commands with Callbacks with Logger {
 
@@ -26,7 +27,7 @@ class TelegramClient(onReceive: TelegramEvent => Unit, botToken: String) extends
     private val apiBaseUrl = s"https://api.telegram.org/bot$botToken/"
 
     override def sendRequest[R, T <: Request[_]](request: T)(implicit encT: Encoder[T], decR: Decoder[R]): Future[R] = {
-      Marshal(request).to[RequestEntity]
+     val f = Marshal(request).to[RequestEntity]
         .map(re => HttpRequest(HttpMethods.POST, Uri(apiBaseUrl + request.methodName), entity = re))
         .flatMap(http.singleRequest(_))
         .flatMap(r => {
@@ -52,6 +53,11 @@ class TelegramClient(onReceive: TelegramEvent => Unit, botToken: String) extends
           }
         })
         .map(processApiResponse[R])
+      f.onComplete{
+        case Failure(e) => error("can't parse telegram update", e)
+        case _ =>
+      }
+      f
     }
   }
 
