@@ -1,65 +1,23 @@
 
 package com.lbs.bot.telegram
 
-import akka.http.scaladsl.Http
-import akka.http.scaladsl.marshalling.Marshal
-import akka.http.scaladsl.model._
-import akka.http.scaladsl.unmarshalling.Unmarshal
+import cats.implicits.toFunctorOps
+import com.bot4s.telegram.api.RequestHandler
 import com.bot4s.telegram.api.declarative.{Callbacks, Commands}
-import com.bot4s.telegram.api.{AkkaTelegramBot, Polling, RequestHandler}
-import com.bot4s.telegram.clients.AkkaHttpClient
-import com.bot4s.telegram.marshalling._
+import com.bot4s.telegram.clients.FutureSttpClient
+import com.bot4s.telegram.future.{Polling, TelegramBot => TelegramBoT}
 import com.bot4s.telegram.methods._
 import com.bot4s.telegram.models.{InlineKeyboardMarkup, InputFile, Message}
 import com.lbs.common.Logger
-import io.circe.{Decoder, Encoder, Json}
+import sttp.client3.SttpBackend
+import sttp.client3.okhttp.OkHttpFutureBackend
 
 import scala.concurrent.Future
-import scala.util.Failure
 
-class TelegramClient(onReceive: TelegramEvent => Unit, botToken: String) extends AkkaTelegramBot with Polling with Commands with Callbacks with Logger {
+class TelegramClient(onReceive: TelegramEvent => Unit, botToken: String) extends TelegramBoT with Polling with Commands[Future] with Callbacks[Future] with Logger {
 
-  val client: RequestHandler = new AkkaHttpClient(botToken) {
-
-    import AkkaHttpMarshalling._
-
-    private val http = Http()
-    private val apiBaseUrl = s"https://api.telegram.org/bot$botToken/"
-
-    override def sendRequest[R, T <: Request[_]](request: T)(implicit encT: Encoder[T], decR: Decoder[R]): Future[R] = {
-     val f = Marshal(request).to[RequestEntity]
-        .map(re => HttpRequest(HttpMethods.POST, Uri(apiBaseUrl + request.methodName), entity = re))
-        .flatMap(http.singleRequest(_))
-        .flatMap(r => {
-          request match {
-            case _: GetUpdates =>
-              Unmarshal(r.entity).to[Json].flatMap { json =>
-                val patchedJson = json.mapObject { jsonObject =>
-                  jsonObject.mapValues { value =>
-                    if (value.isArray) {
-                      value.mapArray { update =>
-                        update.filterNot(_.findAllByKey("myChatMember").nonEmpty)
-                      }
-                    } else {
-                      value
-                    }
-                  }
-                }
-
-                Unmarshal(HttpEntity(ContentTypes.`application/json`, patchedJson.noSpaces)).to[Response[R]]
-              }
-            case _ =>
-              Unmarshal(r.entity).to[Response[R]]
-          }
-        })
-        .map(processApiResponse[R])
-      f.onComplete{
-        case Failure(e) => error("can't parse telegram update", e)
-        case _ =>
-      }
-      f
-    }
-  }
+  private implicit val backend: SttpBackend[Future, Any] = OkHttpFutureBackend()
+  override val client: RequestHandler[Future] = new FutureSttpClient(botToken)
 
   def sendMessage(chatId: Long, text: String): Future[Message] =
     loggingRequest(SendMessage(chatId, text, parseMode = Some(ParseMode.HTML)))
@@ -82,19 +40,18 @@ class TelegramClient(onReceive: TelegramEvent => Unit, botToken: String) extends
   }
 
 
-  override def receiveMessage(msg: Message): Unit = {
+  override def receiveMessage(msg: Message): Future[Unit] = {
     debug(s"Received telegram message: $msg")
-    onReceive(TelegramEvent(msg, None))
+    Future.successful(onReceive(TelegramEvent(msg, None)))
   }
 
   onCallbackWithTag(TagPrefix) { implicit cbq =>
     debug(s"Received telegram callback: $cbq")
-    ackCallback()
-    for {
+    val ack = ackCallback()
+    val maybeOnReceive = for {
       data <- cbq.data.map(_.stripPrefix(TagPrefix))
       msg <- cbq.message
-    } {
-      onReceive(TelegramEvent(msg, Some(data)))
-    }
+    } yield onReceive(TelegramEvent(msg, Some(data)))
+    ack.zip(Future.successful(maybeOnReceive)).void
   }
 }
