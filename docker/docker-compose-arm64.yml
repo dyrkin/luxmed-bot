@@ -5,6 +5,7 @@ services:
     env_file: secrets.env
     environment:
       DB_HOST: "database"
+      DB_PORT: 5432
     volumes:
     - lbs:/lbs
 
