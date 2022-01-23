@@ -54,13 +54,13 @@ object En extends Lang {
   override def modifyDate: String = "📅 Modify date"
 
   override def bookingSummary(bookingData: Book.BookingData): String =
-    s"🦄 Ok! We are going to book a service <b>${bookingData.serviceId.name}</b>" +
-      s" with a doctor chosen <b>${bookingData.doctorId.name}</b>" +
+    s"🦄 Ok! We are going to book the service <b>${bookingData.serviceId.name}</b>" +
+      s" with the doctor chosen <b>${bookingData.doctorId.name}</b>" +
       s" in <b>${bookingData.clinicId.name}</b> clinic" +
-      s" of the <b>${bookingData.cityId.name}</b> city." +
+      s" of <b>${bookingData.cityId.name}</b> city." +
       s"\nDesired dates: <b>${formatDate(bookingData.dateFrom, locale)}</b> -> <b>${formatDate(bookingData.dateTo, locale)}</b>" +
       s"\nTime: <b>${formatTime(bookingData.timeFrom)} -> ${formatTime(bookingData.timeTo)}</b>" +
-      s"\n\n<b>➡</b> Now choose your action"
+      s"\n\n<b>➡</b> Now choose an action"
 
   override def noTermsFound: String =
     s"""ℹ No available terms found
