@@ -2,7 +2,6 @@
 package com.lbs.common
 
 import java.util.concurrent.{Executors, ScheduledFuture}
-
 import scala.concurrent.duration.FiniteDuration
 
 class Scheduler(poolSize: Int) extends Logger {

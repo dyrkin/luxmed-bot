@@ -2,9 +2,7 @@
 package com.lbs.server.repository.model
 
 import java.time.ZonedDateTime
-
 import javax.persistence.{Access, AccessType, Column, Entity}
-
 import scala.beans.BeanProperty
 
 @Entity

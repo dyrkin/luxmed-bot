@@ -1,10 +1,6 @@
 
 package com.lbs.server
 
-import java.time._
-import java.time.format.DateTimeFormatter
-import java.util.Locale
-
 import com.lbs.api.json.model._
 import com.lbs.bot.model.Command
 import com.lbs.common.ModelConverters
@@ -12,6 +8,9 @@ import com.lbs.server.conversation.Book.BookingData
 import com.lbs.server.conversation.Login.UserId
 import com.lbs.server.repository.model.{History, Monitoring}
 
+import java.time._
+import java.time.format.DateTimeFormatter
+import java.util.Locale
 import scala.language.{higherKinds, implicitConversions}
 import scala.util.Try
 
@@ -38,8 +37,8 @@ package object util {
           serviceName = bookingData.serviceId.name,
           doctorId = bookingData.doctorId.optionalId,
           doctorName = bookingData.doctorId.name,
-          dateFrom = bookingData.dateFrom,
-          dateTo = bookingData.dateTo,
+          dateFrom = bookingData.dateFrom.atZone(DateTimeUtil.Zone),
+          dateTo = bookingData.dateTo.atZone(DateTimeUtil.Zone),
           timeFrom = bookingData.timeFrom,
           timeTo = bookingData.timeTo,
           autobook = bookingData.autobook,
@@ -48,48 +47,72 @@ package object util {
         )
       }
 
-    implicit val AvailableVisitsTermPresentationToTemporaryReservationRequestConverter:
-      ObjectConverter[AvailableVisitsTermPresentation, TemporaryReservationRequest] =
-      (term: AvailableVisitsTermPresentation) => {
-        TemporaryReservationRequest(
-          clinicId = term.clinic.id,
+    implicit val ReservationLocktermResponseAndTermToReservationConfirmRequestConverter:
+      ObjectConverter[(ReservationLocktermResponse, TermExt), ReservationConfirmRequest] =
+      (data: (ReservationLocktermResponse, TermExt)) => {
+        val (reservationLocktermResponse, termExt) = data
+        val term = termExt.term
+        ReservationConfirmRequest(
+          date = term.dateTimeFrom.minusHours(2).toString + ":00.000Z",
           doctorId = term.doctor.id,
-          payerDetailsList = term.payerDetailsList,
-          referralRequiredByService = term.referralRequiredByService,
+          facilityId = term.clinicId,
           roomId = term.roomId,
-          serviceId = term.serviceId,
-          startDateTime = term.visitDate.startDateTime
+          scheduleId = term.scheduleId,
+          serviceVariantId = term.serviceId,
+          temporaryReservationId = reservationLocktermResponse.value.temporaryReservationId,
+          timeFrom = term.dateTimeFrom.toLocalTime,
+          valuation = reservationLocktermResponse.value.valuations.head
         )
       }
 
-    implicit val TmpReservationIdWithValuationsToReservationRequestConverter:
-      ObjectConverter[(Long, VisitTermVariant, AvailableVisitsTermPresentation), ReservationRequest] =
-      (any: (Long, VisitTermVariant, AvailableVisitsTermPresentation)) => {
-        val (tmpReservationId, valuations, term) = any
-        ReservationRequest(
-          clinicId = term.clinic.id,
-          doctorId = term.doctor.id,
-          payerData = valuations.valuationDetail.payerData,
-          roomId = term.roomId,
-          serviceId = term.serviceId,
-          startDateTime = term.visitDate.startDateTime,
-          temporaryReservationId = tmpReservationId
+    implicit val ReservationLocktermResponseAndTermToReservationChangeTermRequestConverter:
+      ObjectConverter[(ReservationLocktermResponse, TermExt), ReservationChangetermRequest] =
+      (data: (ReservationLocktermResponse, TermExt)) => {
+        val (reservationLocktermResponse, termExt) = data
+        val term = termExt.term
+        val existingReservationId = reservationLocktermResponse.value.relatedVisits.head.reservationId
+        ReservationChangetermRequest(
+          existingReservationId = existingReservationId,
+          term = NewTerm(
+            date = term.dateTimeFrom.minusHours(2).toString + ":00.000Z",
+            doctorId = term.doctor.id,
+            facilityId = term.clinicId,
+            parentReservationId = existingReservationId,
+            referralRequired = reservationLocktermResponse.value.valuations.head.isReferralRequired,
+            roomId = term.roomId,
+            scheduleId = term.scheduleId,
+            serviceVariantId = term.serviceId,
+            temporaryReservationId = reservationLocktermResponse.value.temporaryReservationId,
+            timeFrom = term.dateTimeFrom.toLocalTime,
+            valuation = reservationLocktermResponse.value.valuations.head
+          )
         )
       }
 
-    implicit val AvailableVisitsTermPresentationToValuationRequestConverter:
-      ObjectConverter[AvailableVisitsTermPresentation, ValuationsRequest] =
-      (term: AvailableVisitsTermPresentation) => {
-        ValuationsRequest(
-          clinicId = term.clinic.id,
+    implicit val TermToReservationLocktermRequest:
+      ObjectConverter[TermExt, ReservationLocktermRequest] =
+      termExt => {
+        val term = termExt.term
+        val additionalData = termExt.additionalData
+        ReservationLocktermRequest(
+          date = term.dateTimeFrom.minusHours(2).toString + ":00.000Z",
+          doctor = term.doctor,
           doctorId = term.doctor.id,
-          payerDetailsList = term.payerDetailsList,
-          referralRequiredByService = term.referralRequiredByService,
+          facilityId = term.clinicId,
+          impedimentText = term.impedimentText,
+          isAdditional = term.isAdditional,
+          isImpediment = term.isImpediment,
+          isPreparationRequired = additionalData.isPreparationRequired,
+          isTelemedicine = term.isTelemedicine,
+          preparationItems = additionalData.preparationItems,
           roomId = term.roomId,
-          serviceId = term.serviceId,
-          startDateTime = term.visitDate.startDateTime
+          scheduleId = term.scheduleId,
+          serviceVariantId = term.serviceId,
+          timeFrom = term.dateTimeFrom.toLocalTime.toString,
+          timeTo = term.dateTimeTo.toLocalTime.toString
         )
       }
+
 
     implicit val HistoryToIdNameConverter: ObjectConverter[History, IdName] =
       (history: History) => IdName(history.id, history.name)
@@ -124,6 +147,8 @@ package object util {
   }
 
   object DateTimeUtil {
+    val Zone: ZoneId = ZoneId.of("Europe/Warsaw")
+
     private val DateFormat: Locale => DateTimeFormatter = locale => DateTimeFormatter.ofPattern("dd MMM yyyy", locale)
 
     private val DateShortFormat = DateTimeFormatter.ofPattern("dd-MM")
@@ -132,21 +157,25 @@ package object util {
 
     private val DateTimeFormat: Locale => DateTimeFormatter = locale => DateTimeFormatter.ofPattern("EEE',' dd MMM yyyy',' HH:mm", locale)
 
+    def formatDate(date: LocalDateTime, locale: Locale): String = date.format(DateFormat(locale))
+
     def formatDate(date: ZonedDateTime, locale: Locale): String = date.format(DateFormat(locale))
 
-    def formatDateShort(date: ZonedDateTime): String = date.format(DateShortFormat)
+    def formatDateShort(date: LocalDateTime): String = date.format(DateShortFormat)
 
     def formatTime(time: LocalTime): String = time.format(TimeFormat)
 
     def formatDateTime(date: ZonedDateTime, locale: Locale): String = date.format(DateTimeFormat(locale))
 
-    private val EpochMinutesTillBeginOf2018: Long = epochMinutes(ZonedDateTime.of(2018, 1, 1, 0, 0, 0, 0, ZoneId.systemDefault()))
+    def formatDateTime(date: LocalDateTime, locale: Locale): String = date.format(DateTimeFormat(locale))
 
-    def epochMinutes(time: ZonedDateTime): Long = time.toInstant.getEpochSecond / 60
+    private val EpochMinutesTillBeginOf2022: Long = epochMinutes(LocalDateTime.of(2022, 1, 1, 0, 0, 0, 0))
 
-    def minutesSinceBeginOf2018(time: ZonedDateTime): Long = epochMinutes(time) - EpochMinutesTillBeginOf2018
+    def epochMinutes(time: LocalDateTime): Long = time.toInstant(ZonedDateTime.now().getOffset).getEpochSecond / 60
 
-    def applyDayMonth(dayMonthStr: String, date: ZonedDateTime): ZonedDateTime = {
+    def minutesSinceBeginOf2018(time: LocalDateTime): Long = epochMinutes(time) - EpochMinutesTillBeginOf2022
+
+    def applyDayMonth(dayMonthStr: String, date: LocalDateTime): LocalDateTime = {
       val dayMonth = MonthDay.parse(dayMonthStr, DateShortFormat)
       val newDate = date.withDayOfMonth(dayMonth.getDayOfMonth).withMonth(dayMonth.getMonthValue)
 

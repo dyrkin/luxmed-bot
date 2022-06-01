@@ -8,9 +8,9 @@ import com.lbs.server.conversation.Login.UserId
 import com.lbs.server.conversation.Settings._
 import com.lbs.server.conversation.base.Conversation
 import com.lbs.server.lang.{Lang, Localizable, Localization}
+import com.lbs.server.repository.model
 import com.lbs.server.service.DataService
 import com.lbs.server.util.MessageExtractors.{CallbackCommand, IntString, TextCommand}
-import com.lbs.server.repository.model
 
 class Settings(val userId: UserId, bot: Bot, dataService: DataService, val localization: Localization)(val actorSystem: ActorSystem) extends Conversation[Unit] with Localizable {
 

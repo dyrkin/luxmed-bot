@@ -1,9 +1,6 @@
 package com.lbs.server.repository
 
-import java.time.ZonedDateTime
-
 import com.lbs.server.repository.model.{CityHistory, ClinicHistory, Credentials, DoctorHistory, ServiceHistory}
-import javax.persistence.EntityManager
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.Test
 import org.junit.runner.RunWith
@@ -12,6 +9,9 @@ import org.springframework.boot.test.autoconfigure.orm.jpa.{DataJpaTest, TestEnt
 import org.springframework.boot.test.context.TestConfiguration
 import org.springframework.context.annotation.Bean
 import org.springframework.test.context.junit4.SpringRunner
+
+import java.time.ZonedDateTime
+import javax.persistence.EntityManager
 
 object DataRepositorySpec {
 

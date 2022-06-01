@@ -1,13 +1,13 @@
 
 package com.lbs.server.lang
 
-import com.lbs.api.json.model.{AvailableVisitsTermPresentation, HistoricVisit, ReservedVisit, ValuationsResponse}
+import com.lbs.api.json.model.{Event, TermExt}
 import com.lbs.server.conversation.Book
 import com.lbs.server.conversation.StaticData.StaticDataConfig
 import com.lbs.server.repository.model.Monitoring
 import com.lbs.server.util.DateTimeUtil._
 
-import java.time.{LocalTime, ZonedDateTime}
+import java.time.{LocalDateTime, LocalTime}
 import java.util.Locale
 
 object Ua extends Lang {
@@ -36,18 +36,18 @@ object Ua extends Lang {
   override def noUpcomingVisits: String =
     "ℹ Не знайдено жодного майбутнього візиту"
 
-  override def areYouSureToCancelAppointment(visit: ReservedVisit): String =
+  override def areYouSureToCancelAppointment(event: Event): String =
     s"""<b>➡</b> Ви впевнені, що хочете скасувати візит?
        |
-       |⏱ <b>${formatDateTime(visit.visitDate.startDateTime, locale)}</b>
-       |${capitalizeFirstLetter(doctor)}: ${visit.doctorName}
-       |${capitalizeFirstLetter(service)}: ${visit.service.name}
-       |${capitalizeFirstLetter(clinic)}: ${visit.clinic.name}
+       |⏱ <b>${formatDateTime(event.date, locale)}</b>
+       |${capitalizeFirstLetter(doctor)}: ${capitalizeFirstLetter(event.doctor.name)} ${capitalizeFirstLetter(event.doctor.lastname)}
+       |${capitalizeFirstLetter(service)}: ${event.title}
+       |${capitalizeFirstLetter(clinic)}: ${event.clinic.map(c => s"${capitalizeFirstLetter(c.city)} - ${capitalizeFirstLetter(c.address)}").getOrElse("Telemedicine")}
        |""".stripMargin
 
-  override def chooseDateFrom(exampleDate: ZonedDateTime): String = s"<b>➡</b> Будь ласка, виберіть початкову дату або введіть її, використовуючи формат dd-MM, наприклад ${formatDateShort(exampleDate)}"
+  override def chooseDateFrom(exampleDate: LocalDateTime): String = s"<b>➡</b> Будь ласка, виберіть початкову дату або введіть її, використовуючи формат dd-MM, наприклад ${formatDateShort(exampleDate)}"
 
-  override def chooseDateTo(exampleDate: ZonedDateTime): String = s"<b>➡</b> Будь ласка, виберіть кінцеву дату або введіть її, використовуючи формат dd-MM, наприклад ${formatDateShort(exampleDate)}"
+  override def chooseDateTo(exampleDate: LocalDateTime): String = s"<b>➡</b> Будь ласка, виберіть кінцеву дату або введіть її, використовуючи формат dd-MM, наприклад ${formatDateShort(exampleDate)}"
 
   override def findTerms: String = "🔍 Знайти терміни"
 
@@ -73,15 +73,13 @@ object Ua extends Lang {
 
   override def book: String = "Зарезервувати"
 
-  override def confirmAppointment(term: AvailableVisitsTermPresentation, valuations: ValuationsResponse): String =
+  override def confirmAppointment(term: TermExt): String =
 
-    s"""<b>➡</b> ${valuations.optionsQuestion.getOrElse("Ви хотіли б підтвердити резервацію візиту?")}
+    s"""<b>➡</b> Ви хотіли б підтвердити резервацію візиту?
        |
-       |⏱ <b>${formatDateTime(term.visitDate.startDateTime, locale)}</b>
-       |${capitalizeFirstLetter(doctor)}: ${term.doctor.name}
-       |${capitalizeFirstLetter(clinic)}: ${term.clinic.name}
-       |
-       |ℹ${valuations.visitTermVariants.head.infoMessage}""".stripMargin
+       |⏱ <b>${formatDateTime(term.term.dateTimeFrom, locale)}</b>
+       |${capitalizeFirstLetter(doctor)}: ${term.term.doctor.firstName} ${term.term.doctor.lastName}
+       |${capitalizeFirstLetter(clinic)}: ${term.term.clinic}""".stripMargin
 
   override def appointmentIsConfirmed: String = "👍 Ваш візит було підтверджено!"
 
@@ -164,7 +162,7 @@ object Ua extends Lang {
 
   override def providePassword: String = "<b>➡</b> Будь ласка, введіть пароль"
 
-  override def visitsHistoryIsEmpty: String = "ℹ Немає візитів в вашій історії"
+  override def eventsListIsEmpty: String = "ℹ Немає візитів в вашій історії"
 
   override def help: String =
     s"""ℹ Це неофіційний бот для <b>Порталу Пацієнта LUX MED (v.${Lang.version})</b>.
@@ -181,14 +179,14 @@ object Ua extends Lang {
        |/settings - налаштування
        |/help - допомога""".stripMargin
 
-  override def dateFromIs(dateFrom: ZonedDateTime): String = s"📅 Початкова дата ${formatDate(dateFrom, locale)}"
+  override def dateFromIs(dateFrom: LocalDateTime): String = s"📅 Початкова дата ${formatDate(dateFrom, locale)}"
 
-  override def dateToIs(dateTo: ZonedDateTime): String = s"📅 Кінцева дата ${formatDate(dateTo, locale)}"
+  override def dateToIs(dateTo: LocalDateTime): String = s"📅 Кінцева дата ${formatDate(dateTo, locale)}"
 
-  override def termEntry(term: AvailableVisitsTermPresentation, page: Int, index: Int): String =
-    s"""⏱ <b>${formatDateTime(term.visitDate.startDateTime, locale)}</b>
-       |${capitalizeFirstLetter(doctor)}: ${term.doctor.name}
-       |${capitalizeFirstLetter(clinic)}: ${term.clinic.name}
+  override def termEntry(term: TermExt, page: Int, index: Int): String =
+    s"""⏱ <b>${formatDateTime(term.term.dateTimeFrom, locale)}</b>
+       |${capitalizeFirstLetter(doctor)}: ${term.term.doctor.firstName} ${term.term.doctor.lastName}
+       |${capitalizeFirstLetter(clinic)}: ${term.term.clinic}
        |<b>➡</b> /book_$index
        |
        |""".stripMargin
@@ -196,27 +194,27 @@ object Ua extends Lang {
   override def termsHeader(page: Int, pages: Int): String =
     withPages("<b>➡</b> Доступні терміни", page, pages)
 
-  override def historyEntry(visit: HistoricVisit, page: Int, index: Int): String =
-    s"""⏱ <b>${formatDateTime(visit.visitDate.startDateTime, locale)}</b>
-       |${capitalizeFirstLetter(doctor)}: ${visit.doctorName}
-       |${capitalizeFirstLetter(service)}: ${visit.service.name}
-       |${capitalizeFirstLetter(clinic)}: ${visit.clinicName}
+  override def historyEntry(event: Event, page: Int, index: Int): String =
+    s"""⏱ <b>${formatDateTime(event.date, locale)}</b>
+       |${capitalizeFirstLetter(doctor)}: ${capitalizeFirstLetter(event.doctor.name)} ${capitalizeFirstLetter(event.doctor.lastname)}
+       |${capitalizeFirstLetter(service)}: ${event.title}
+       |${capitalizeFirstLetter(clinic)}: ${event.clinic.map(c => s"${capitalizeFirstLetter(c.city)} - ${capitalizeFirstLetter(c.address)}").getOrElse("Telemedicine")}
        |
        |""".stripMargin
 
   override def historyHeader(page: Int, pages: Int): String =
     withPages("<b>➡</b> Завершені візити", page, pages)
 
-  override def upcomingVisitEntry(visit: ReservedVisit, page: Int, index: Int): String =
-    s"""⏱ <b>${formatDateTime(visit.visitDate.startDateTime, locale)}</b>
-       |${capitalizeFirstLetter(doctor)}: ${visit.doctorName}
-       |${capitalizeFirstLetter(service)}: ${visit.service.name}
-       |${capitalizeFirstLetter(clinic)}: ${visit.clinic.name}
+  override def reservedVisitEntry(event: Event, page: Int, index: Int): String =
+    s"""⏱ <b>${formatDateTime(event.date, locale)}</b>
+       |${capitalizeFirstLetter(doctor)}: ${capitalizeFirstLetter(event.doctor.name)} ${capitalizeFirstLetter(event.doctor.lastname)}
+       |${capitalizeFirstLetter(service)}: ${event.title}
+       |${capitalizeFirstLetter(clinic)}: ${event.clinic.map(c => s"${capitalizeFirstLetter(c.city)} - ${capitalizeFirstLetter(c.address)}").getOrElse("Telemedicine")}
        |<b>➡</b> /cancel_$index
        |
        |""".stripMargin
 
-  override def upcomingVisitsHeader(page: Int, pages: Int): String =
+  override def reservedVisitsHeader(page: Int, pages: Int): String =
     withPages("<b>➡</b> Зарезервовані візити", page, pages)
 
   override def bugsHeader(page: Int, pages: Int): String =
@@ -257,13 +255,13 @@ object Ua extends Lang {
       |Ваші моніторинги були видалені. Будь ласка, /login знову і створіть нові моніторинги.
     """.stripMargin
 
-  override def availableTermEntry(term: AvailableVisitsTermPresentation, monitoring: Monitoring, index: Int): String =
-    s"""⏱ <b>${formatDateTime(term.visitDate.startDateTime, locale)}</b>
-       |${capitalizeFirstLetter(doctor)}: ${term.doctor.name}
+  override def availableTermEntry(term: TermExt, monitoring: Monitoring, index: Int): String =
+    s"""⏱ <b>${formatDateTime(term.term.dateTimeFrom, locale)}</b>
+       |${capitalizeFirstLetter(doctor)}: ${term.term.doctor.firstName} ${term.term.doctor.lastName}
        |${capitalizeFirstLetter(service)}: ${monitoring.serviceName}
-       |${capitalizeFirstLetter(clinic)}: ${term.clinic.name}
+       |${capitalizeFirstLetter(clinic)}: ${term.term.clinic}
        |${capitalizeFirstLetter(city)}: ${monitoring.cityName}
-       |/reserve_${monitoring.recordId}_${term.scheduleId}_${minutesSinceBeginOf2018(term.visitDate.startDateTime)}
+       |/reserve_${monitoring.recordId}_${term.term.scheduleId}_${minutesSinceBeginOf2018(term.term.dateTimeFrom)}
        |
        |""".stripMargin
 
@@ -284,13 +282,13 @@ object Ua extends Lang {
        |
        |<b>➡</b> Створити новий моніторінг /book""".stripMargin
 
-  override def appointmentIsBooked(term: AvailableVisitsTermPresentation, monitoring: Monitoring): String =
+  override def appointmentIsBooked(term: TermExt, monitoring: Monitoring): String =
     s"""👍 Ми зерезевували візит для вас!
        |
-       |⏱ <b>${formatDateTime(term.visitDate.startDateTime, locale)}</b>
-       |${capitalizeFirstLetter(doctor)}: ${term.doctor.name}
+       |⏱ <b>${formatDateTime(term.term.dateTimeFrom, locale)}</b>
+       |${capitalizeFirstLetter(doctor)}: ${term.term.doctor.firstName} ${term.term.doctor.lastName}
        |${capitalizeFirstLetter(service)}: ${monitoring.serviceName}
-       |${capitalizeFirstLetter(clinic)}: ${term.clinic.name}
+       |${capitalizeFirstLetter(clinic)}: ${term.term.clinic}
        |${capitalizeFirstLetter(city)}: ${monitoring.cityName}""".stripMargin
 
   override def maximumMonitoringsLimitExceeded: String = "Максимальна кількість моніторінгів 10"

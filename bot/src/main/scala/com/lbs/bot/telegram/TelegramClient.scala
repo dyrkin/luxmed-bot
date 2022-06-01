@@ -2,22 +2,19 @@
 package com.lbs.bot.telegram
 
 import cats.implicits.toFunctorOps
-import com.bot4s.telegram.api.RequestHandler
 import com.bot4s.telegram.api.declarative.{Callbacks, Commands}
-import com.bot4s.telegram.clients.FutureSttpClient
+import com.bot4s.telegram.api.{AkkaTelegramBot, RequestHandler}
+import com.bot4s.telegram.clients.AkkaHttpClient
 import com.bot4s.telegram.future.{Polling, TelegramBot => TelegramBoT}
 import com.bot4s.telegram.methods._
 import com.bot4s.telegram.models.{InlineKeyboardMarkup, InputFile, Message}
 import com.lbs.common.Logger
-import sttp.client3.SttpBackend
-import sttp.client3.okhttp.OkHttpFutureBackend
 
 import scala.concurrent.Future
 
-class TelegramClient(onReceive: TelegramEvent => Unit, botToken: String) extends TelegramBoT with Polling with Commands[Future] with Callbacks[Future] with Logger {
+class TelegramClient(onReceive: TelegramEvent => Unit, botToken: String) extends AkkaTelegramBot with TelegramBoT with Polling with Commands[Future] with Callbacks[Future] with Logger {
 
-  private implicit val backend: SttpBackend[Future, Any] = OkHttpFutureBackend()
-  override val client: RequestHandler[Future] = new FutureSttpClient(botToken)
+  override val client: RequestHandler[Future] = new AkkaHttpClient(botToken)
 
   def sendMessage(chatId: Long, text: String): Future[Message] =
     loggingRequest(SendMessage(chatId, text, parseMode = Some(ParseMode.HTML)))
@@ -32,7 +29,7 @@ class TelegramClient(onReceive: TelegramEvent => Unit, botToken: String) extends
     loggingRequest(EditMessageText(Some(chatId), Some(messageId), text = text, parseMode = Some(ParseMode.HTML), replyMarkup = replyMarkup))
 
   def sendFile(chatId: Long, filename: String, contents: Array[Byte], caption: Option[String] = None): Future[Message] =
-    loggingRequest(SendDocument(chatId, InputFile(filename, contents), caption))
+    loggingRequest(SendDocument(chatId, InputFile(filename, contents), caption = caption))
 
   private def loggingRequest[R: Manifest](req: Request[R]): Future[R] = {
     debug(s"Sending telegram request: $req")

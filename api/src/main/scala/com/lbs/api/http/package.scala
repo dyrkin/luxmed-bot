@@ -9,32 +9,30 @@ import com.lbs.api.json.model._
 import com.lbs.common.Logger
 import scalaj.http.{HttpRequest, HttpResponse}
 
+import java.net.HttpCookie
 import scala.language.higherKinds
 import scala.util.{Failure, Success, Try}
 
 package object http extends Logger {
 
+  case class Session(accessToken: String, tokenType: String, cookies: Seq[HttpCookie])
+
   object headers {
     val `Content-Type` = "Content-Type"
+    val `xsrf-token` = "xsrf-token"
     val Host = "Host"
+    val Origin = "Origin"
     val Accept = "Accept"
     val Connection = "Connection"
     val `Accept-Encoding` = "Accept-Encoding"
     val `User-Agent` = "User-Agent"
     val `Custom-User-Agent` = "Custom-User-Agent"
     val `x-api-client-identifier` = "x-api-client-identifier"
-    val `Accept-Language` = "Accept-Language"
+    val `Accept-Language` = "accept-language"
     val Authorization = "Authorization"
   }
 
   private val SensitiveHeaders = List("passw", "access_token", "refresh_token", "authorization")
-
-  implicit class HttpResponseWithJsonDeserializationSupport(httpResponse: HttpResponse[String]) {
-
-    def asEntity[T <: SerializableJsonObject](implicit mf: scala.reflect.Manifest[T]): HttpResponse[T] = {
-      httpResponse.copy(body = httpResponse.body.as[T])
-    }
-  }
 
   implicit class ExtendedHttpRequest[F[_] : ThrowableMonad](httpRequest: HttpRequest) {
     def invoke: F[HttpResponse[String]] = {
@@ -65,8 +63,6 @@ package object http extends Logger {
       val errorMessage = message.toLowerCase
       if (errorMessage.contains("invalid login or password"))
         new InvalidLoginOrPasswordException
-      else if (errorMessage.contains("already booked this service"))
-        new ServiceIsAlreadyBookedException
       else if (errorMessage.contains("session has expired"))
         new SessionExpiredException
       else
@@ -77,7 +73,6 @@ package object http extends Logger {
       val body = httpResponse.body
       val code = httpResponse.code
       Try(body.as[LuxmedErrorsMap])
-        .orElse(Try(body.as[LuxmedErrorsList]))
         .orElse(Try(body.as[LuxmedError]))
         .map(error => luxmedErrorToApiException(code, error))
         .toOption
