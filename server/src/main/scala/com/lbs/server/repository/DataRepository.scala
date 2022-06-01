@@ -1,13 +1,12 @@
 
 package com.lbs.server.repository
 
-import java.time.ZonedDateTime
-
 import com.lbs.server.repository.model.{CityHistory, ClinicHistory, Credentials, DoctorHistory, JLong, Monitoring, ServiceHistory, Settings, Source, SystemUser}
-import javax.persistence.EntityManager
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.stereotype.Repository
 
+import java.time.ZonedDateTime
+import javax.persistence.EntityManager
 import scala.collection.JavaConverters._
 
 @Repository

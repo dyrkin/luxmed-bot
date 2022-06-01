@@ -1,7 +1,7 @@
 dependencies {
     compile project(':common')
 
-    compile group: "org.scalaj", name: "scalaj-http_2.12", version: "2.4.1"
+    compile group: "org.scalaj", name: "scalaj-http_2.12", version: "2.4.2"
     compile group: "org.json4s", name: "json4s-jackson_2.12", version: "3.6.0-M3"
     compile group: "com.softwaremill.quicklens", name: "quicklens_2.12", version: "1.4.12"
 }

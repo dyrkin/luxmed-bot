@@ -41,15 +41,14 @@ class Login(source: MessageSource, bot: Bot, dataService: DataService, apiServic
     } onReply {
       case Msg(MessageExtractors.TextCommand(plainPassword), username) =>
         val password = textEncryptor.encrypt(plainPassword)
-        val loginResult = apiService.login(username, password)
-        loginResult match {
+        apiService.fullLogin(username, password) match {
           case Left(error) =>
             bot.sendMessage(source, error.getMessage)
             goto(requestUsername)
-          case Right(loggedIn) =>
+          case Right(session) =>
             val credentials = dataService.saveCredentials(source, username, password)
             userId = UserId(credentials.userId, credentials.accountId, source)
-            apiService.addSession(credentials.accountId, loggedIn.accessToken, loggedIn.tokenType)
+            apiService.addSession(credentials.accountId, session)
             bot.sendMessage(source, lang.loginAndPasswordAreOk)
             originator ! LoggedIn(forwardCommand, credentials.userId, credentials.accountId)
             end()

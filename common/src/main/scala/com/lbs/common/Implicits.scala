@@ -2,7 +2,6 @@
 package com.lbs.common
 
 import java.util.Optional
-
 import scala.language.implicitConversions
 
 object Implicits {

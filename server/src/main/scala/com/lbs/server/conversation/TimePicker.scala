@@ -1,8 +1,6 @@
 
 package com.lbs.server.conversation
 
-import java.time.LocalTime
-
 import akka.actor.ActorSystem
 import com.lbs.bot.model.Button
 import com.lbs.bot.{Bot, _}
@@ -13,6 +11,7 @@ import com.lbs.server.lang.{Localizable, Localization}
 import com.lbs.server.util.DateTimeUtil.applyHourMinute
 import com.lbs.server.util.MessageExtractors.{CallbackCommand, TextCommand}
 
+import java.time.LocalTime
 import scala.util.control.NonFatal
 
 /**

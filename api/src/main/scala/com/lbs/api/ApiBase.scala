@@ -1,26 +1,52 @@
 
 package com.lbs.api
 
+import com.lbs.api.http.Session
 import com.lbs.api.http.headers._
 import scalaj.http.{BaseHttp, HttpRequest}
 
+import java.net.HttpCookie
+
 object ApiHttp extends BaseHttp(
-  userAgent = "PatientPortal/4.20.5 (pl.luxmed.pp.LUX-MED; build:853; iOS 13.5.1) Alamofire/4.9.1"
+  userAgent = "Mozilla/5.0 (iPhone; CPU iPhone OS 15_4_1 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Mobile/15E148"
 )
 
 trait ApiBase {
   private val CommonHeaders =
     Map(
       Host -> "portalpacjenta.luxmed.pl",
-      `Custom-User-Agent` -> "PatientPortal; 4.20.5; 4380E6AC-D291-4895-8B1B-F774C318BD7D; iOS; 14.5.1; iPhone8,1",
-      Accept -> "*/*",
-      Connection -> "keep-alive",
-      `Accept-Encoding` -> "gzip;q=1.0, compress;q=0.5",
-      `Accept-Language` -> "en;q=1.0, en-PL;q=0.9, pl-PL;q=0.8, ru-PL;q=0.7, uk-PL;q=0.6"
+      Origin -> "https://portalpacjenta.luxmed.pl",
+      `Custom-User-Agent` -> "Mozilla/5.0 (iPhone; CPU iPhone OS 15_5 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Mobile/15E148",
+      `User-Agent` -> "Mozilla/5.0 (iPhone; CPU iPhone OS 15_5 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Mobile/15E148",
+      Accept -> "application/json, text/plain, */*",
+      `Accept-Encoding` -> "gzip, deflate, br",
+      `Accept-Language` -> "pl;q=1.0, pl;q=0.9, en;q=0.8"
     )
 
 
-  protected def http(url: String): HttpRequest = {
-    ApiHttp(s"https://portalpacjenta.luxmed.pl/PatientPortalMobileAPI/api/$url").headers(CommonHeaders)
+  protected def httpUnauthorized(url: String): HttpRequest = {
+    ApiHttp(s"https://portalpacjenta.luxmed.pl/PatientPortalMobileAPI/api/$url")
+      .headers(CommonHeaders)
+  }
+
+
+  protected def http(url: String, session: Session): HttpRequest = {
+    ApiHttp(s"https://portalpacjenta.luxmed.pl/PatientPortalMobileAPI/api/$url")
+      .headers(CommonHeaders)
+      .cookies(session.cookies)
+      .header(Authorization, s"${session.tokenType} ${session.accessToken}")
+  }
+
+  protected def httpNewApi(url: String, session: Session, cookiesMaybe: Option[Seq[HttpCookie]] = None): HttpRequest = {
+    val req = ApiHttp(s"https://portalpacjenta.luxmed.pl/PatientPortal/$url")
+      .headers(CommonHeaders)
+      .header(Authorization, session.accessToken)
+    cookiesMaybe.map(cookies => req.cookies(cookies)).getOrElse(req.cookies(session.cookies))
+  }
+
+  protected def httpNewApi(url: String, cookies: IndexedSeq[HttpCookie]): HttpRequest = {
+    ApiHttp(s"https://portalpacjenta.luxmed.pl/PatientPortal/$url")
+      .headers(CommonHeaders)
+      .cookies(cookies)
   }
 }

@@ -1,13 +1,13 @@
 
 package com.lbs.server.lang
 
-import com.lbs.api.json.model.{AvailableVisitsTermPresentation, HistoricVisit, ReservedVisit, ValuationsResponse}
+import com.lbs.api.json.model.{Event, TermExt}
 import com.lbs.server.conversation.Book
 import com.lbs.server.conversation.StaticData.StaticDataConfig
 import com.lbs.server.repository.model.Monitoring
 import com.lbs.server.util.DateTimeUtil._
 
-import java.time.{LocalTime, ZonedDateTime}
+import java.time.{LocalDateTime, LocalTime}
 import java.util.Locale
 
 object En extends Lang {
@@ -36,18 +36,18 @@ object En extends Lang {
   override def noUpcomingVisits: String =
     "ℹ No upcoming visits found"
 
-  override def areYouSureToCancelAppointment(visit: ReservedVisit): String =
+  override def areYouSureToCancelAppointment(event: Event): String =
     s"""<b>➡</b> Are you sure want to cancel appointment?
        |
-       |⏱ <b>${formatDateTime(visit.visitDate.startDateTime, locale)}</b>
-       |${capitalizeFirstLetter(doctor)}: ${visit.doctorName}
-       |${capitalizeFirstLetter(service)}: ${visit.service.name}
-       |${capitalizeFirstLetter(clinic)}: ${visit.clinic.name}
+       |⏱ <b>${formatDateTime(event.date, locale)}</b>
+       |${capitalizeFirstLetter(doctor)}: ${capitalizeFirstLetter(event.doctor.name)} ${capitalizeFirstLetter(event.doctor.lastname)}
+       |${capitalizeFirstLetter(service)}: ${event.title}
+       |${capitalizeFirstLetter(clinic)}: ${event.clinic.map(c => s"${capitalizeFirstLetter(c.city)} - ${capitalizeFirstLetter(c.address)}").getOrElse("Telemedicine")}
        |""".stripMargin
 
-  override def chooseDateFrom(exampleDate: ZonedDateTime): String = s"<b>➡</b> Please choose date from or write it manually using format dd-MM, e.g. ${formatDateShort(exampleDate)}"
+  override def chooseDateFrom(exampleDate: LocalDateTime): String = s"<b>➡</b> Please choose date from or write it manually using format dd-MM, e.g. ${formatDateShort(exampleDate)}"
 
-  override def chooseDateTo(exampleDate: ZonedDateTime): String = s"<b>➡</b> Please choose date to or write it manually using format dd-MM, e.g. ${formatDateShort(exampleDate)}"
+  override def chooseDateTo(exampleDate: LocalDateTime): String = s"<b>➡</b> Please choose date to or write it manually using format dd-MM, e.g. ${formatDateShort(exampleDate)}"
 
   override def findTerms: String = "🔍 Find terms"
 
@@ -73,15 +73,13 @@ object En extends Lang {
 
   override def book: String = "Book"
 
-  override def confirmAppointment(term: AvailableVisitsTermPresentation, valuations: ValuationsResponse): String =
+  override def confirmAppointment(term: TermExt): String =
 
-    s"""<b>➡</b> ${valuations.optionsQuestion.getOrElse("Would you like to confirm your appointment booking?")}
+    s"""<b>➡</b> Would you like to confirm your appointment booking?
        |
-       |⏱ <b>${formatDateTime(term.visitDate.startDateTime, locale)}</b>
-       |${capitalizeFirstLetter(doctor)}: ${term.doctor.name}
-       |${capitalizeFirstLetter(clinic)}: ${term.clinic.name}
-       |
-       |ℹ${valuations.visitTermVariants.head.infoMessage}""".stripMargin
+       |⏱ <b>${formatDateTime(term.term.dateTimeFrom, locale)}</b>
+       |${capitalizeFirstLetter(doctor)}: ${term.term.doctor.firstName} ${term.term.doctor.lastName}
+       |${capitalizeFirstLetter(clinic)}: ${term.term.clinic}""".stripMargin
 
   override def appointmentIsConfirmed: String = "👍 Your appointment has been confirmed!"
 
@@ -165,7 +163,7 @@ object En extends Lang {
 
   override def providePassword: String = "<b>➡</b> Please provide password"
 
-  override def visitsHistoryIsEmpty: String = "ℹ No visits in your history"
+  override def eventsListIsEmpty: String = "ℹ No visits in your history"
 
   override def help: String =
     s"""ℹ Non official bot for <b>Portal Pacjenta LUX MED (v.${Lang.version})</b>.
@@ -182,14 +180,14 @@ object En extends Lang {
        |/settings - settings, e.g. lang
        |/help - the help""".stripMargin
 
-  override def dateFromIs(dateFrom: ZonedDateTime): String = s"📅 Date from is ${formatDate(dateFrom, locale)}"
+  override def dateFromIs(dateFrom: LocalDateTime): String = s"📅 Date from is ${formatDate(dateFrom, locale)}"
 
-  override def dateToIs(dateTo: ZonedDateTime): String = s"📅 Date to is ${formatDate(dateTo, locale)}"
+  override def dateToIs(dateTo: LocalDateTime): String = s"📅 Date to is ${formatDate(dateTo, locale)}"
 
-  override def termEntry(term: AvailableVisitsTermPresentation, page: Int, index: Int): String =
-    s"""⏱ <b>${formatDateTime(term.visitDate.startDateTime, locale)}</b>
-       |${capitalizeFirstLetter(doctor)}: ${term.doctor.name}
-       |${capitalizeFirstLetter(clinic)}: ${term.clinic.name}
+  override def termEntry(term: TermExt, page: Int, index: Int): String =
+    s"""⏱ <b>${formatDateTime(term.term.dateTimeFrom, locale)}</b>
+       |${capitalizeFirstLetter(doctor)}: ${term.term.doctor.firstName} ${term.term.doctor.lastName}
+       |${capitalizeFirstLetter(clinic)}: ${term.term.clinic}
        |<b>➡</b> /book_$index
        |
        |""".stripMargin
@@ -197,27 +195,27 @@ object En extends Lang {
   override def termsHeader(page: Int, pages: Int): String =
     withPages("<b>➡</b> Available terms", page, pages)
 
-  override def historyEntry(visit: HistoricVisit, page: Int, index: Int): String =
-    s"""⏱ <b>${formatDateTime(visit.visitDate.startDateTime, locale)}</b>
-       |${capitalizeFirstLetter(doctor)}: ${visit.doctorName}
-       |${capitalizeFirstLetter(service)}: ${visit.service.name}
-       |${capitalizeFirstLetter(clinic)}: ${visit.clinicName}
+  override def historyEntry(event: Event, page: Int, index: Int): String =
+    s"""⏱ <b>${formatDateTime(event.date, locale)}</b>
+       |${capitalizeFirstLetter(doctor)}: ${capitalizeFirstLetter(event.doctor.name)} ${capitalizeFirstLetter(event.doctor.lastname)}
+       |${capitalizeFirstLetter(service)}: ${event.title}
+       |${capitalizeFirstLetter(clinic)}: ${event.clinic.map(c => s"${capitalizeFirstLetter(c.city)} - ${capitalizeFirstLetter(c.address)}").getOrElse("Telemedicine")}
        |
        |""".stripMargin
 
   override def historyHeader(page: Int, pages: Int): String =
     withPages("<b>➡</b> Conducted visits", page, pages)
 
-  override def upcomingVisitEntry(visit: ReservedVisit, page: Int, index: Int): String =
-    s"""⏱ <b>${formatDateTime(visit.visitDate.startDateTime, locale)}</b>
-       |${capitalizeFirstLetter(doctor)}: ${visit.doctorName}
-       |${capitalizeFirstLetter(service)}: ${visit.service.name}
-       |${capitalizeFirstLetter(clinic)}: ${visit.clinic.name}
+  override def reservedVisitEntry(event: Event, page: Int, index: Int): String =
+    s"""⏱ <b>${formatDateTime(event.date, locale)}</b>
+       |${capitalizeFirstLetter(doctor)}: ${capitalizeFirstLetter(event.doctor.name)} ${capitalizeFirstLetter(event.doctor.lastname)}
+       |${capitalizeFirstLetter(service)}: ${event.title}
+       |${capitalizeFirstLetter(clinic)}: ${event.clinic.map(c => s"${capitalizeFirstLetter(c.city)} - ${capitalizeFirstLetter(c.address)}").getOrElse("Telemedicine")}
        |<b>➡</b> /cancel_$index
        |
        |""".stripMargin
 
-  override def upcomingVisitsHeader(page: Int, pages: Int): String =
+  override def reservedVisitsHeader(page: Int, pages: Int): String =
     withPages("<b>➡</b> Reserved visits", page, pages)
 
   override def bugsHeader(page: Int, pages: Int): String =
@@ -258,13 +256,13 @@ object En extends Lang {
       |Your monitorings were removed. Please /login again and create new monitorings.
     """.stripMargin
 
-  override def availableTermEntry(term: AvailableVisitsTermPresentation, monitoring: Monitoring, index: Int): String =
-    s"""⏱ <b>${formatDateTime(term.visitDate.startDateTime, locale)}</b>
-       |${capitalizeFirstLetter(doctor)}: ${term.doctor.name}
+  override def availableTermEntry(term: TermExt, monitoring: Monitoring, index: Int): String =
+    s"""⏱ <b>${formatDateTime(term.term.dateTimeFrom, locale)}</b>
+       |${capitalizeFirstLetter(doctor)}: ${term.term.doctor.firstName} ${term.term.doctor.lastName}
        |${capitalizeFirstLetter(service)}: ${monitoring.serviceName}
-       |${capitalizeFirstLetter(clinic)}: ${term.clinic.name}
+       |${capitalizeFirstLetter(clinic)}: ${term.term.clinic}
        |${capitalizeFirstLetter(city)}: ${monitoring.cityName}
-       |/reserve_${monitoring.recordId}_${term.scheduleId}_${minutesSinceBeginOf2018(term.visitDate.startDateTime)}
+       |/reserve_${monitoring.recordId}_${term.term.scheduleId}_${minutesSinceBeginOf2018(term.term.dateTimeFrom)}
        |
        |""".stripMargin
 
@@ -285,13 +283,13 @@ object En extends Lang {
        |
        |<b>➡</b> Create new monitoring /book""".stripMargin
 
-  override def appointmentIsBooked(term: AvailableVisitsTermPresentation, monitoring: Monitoring): String =
+  override def appointmentIsBooked(term: TermExt, monitoring: Monitoring): String =
     s"""👍 We just booked an appointment for you!
        |
-       |⏱ <b>${formatDateTime(term.visitDate.startDateTime, locale)}</b>
-       |${capitalizeFirstLetter(doctor)}: ${term.doctor.name}
+       |⏱ <b>${formatDateTime(term.term.dateTimeFrom, locale)}</b>
+       |${capitalizeFirstLetter(doctor)}: ${term.term.doctor.firstName} ${term.term.doctor.lastName}
        |${capitalizeFirstLetter(service)}: ${monitoring.serviceName}
-       |${capitalizeFirstLetter(clinic)}: ${term.clinic.name}
+       |${capitalizeFirstLetter(clinic)}: ${term.term.clinic}
        |${capitalizeFirstLetter(city)}: ${monitoring.cityName}""".stripMargin
 
   override def maximumMonitoringsLimitExceeded: String = "Maximum monitorings per user is 10"

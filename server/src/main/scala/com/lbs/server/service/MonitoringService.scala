@@ -1,23 +1,24 @@
 
 package com.lbs.server.service
 
-import com.lbs.api.exception.{InvalidLoginOrPasswordException, ServiceIsAlreadyBookedException}
-import com.lbs.api.json.model.AvailableVisitsTermPresentation
+import com.lbs.api.exception.InvalidLoginOrPasswordException
+import com.lbs.api.json.model._
 import com.lbs.bot.Bot
 import com.lbs.bot.model.{MessageSource, MessageSourceSystem}
 import com.lbs.common.{Logger, Scheduler}
 import com.lbs.server.lang.Localization
 import com.lbs.server.repository.model._
 import com.lbs.server.util.DateTimeUtil._
+import com.lbs.server.util.ServerModelConverters._
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.stereotype.Service
 
-import java.time.ZonedDateTime
+import java.time.{LocalDateTime, ZonedDateTime}
 import java.util.concurrent.ScheduledFuture
 import javax.annotation.PostConstruct
 import scala.collection.mutable
 import scala.concurrent.duration._
-import scala.util.{Failure, Random}
+import scala.util.Random
 
 @Service
 class MonitoringService extends Logger {
@@ -49,7 +50,7 @@ class MonitoringService extends Logger {
 
   private var checkedOn: ZonedDateTime = _
 
-  def notifyUserAboutTerms(terms: Seq[AvailableVisitsTermPresentation], monitoring: Monitoring): Unit = {
+  def notifyUserAboutTerms(terms: Seq[TermExt], monitoring: Monitoring): Unit = {
     deactivateMonitoring(monitoring.accountId, monitoring.recordId)
 
     val fiveTerms = terms.take(5).zipWithIndex //send only 5 closest terms
@@ -65,9 +66,9 @@ class MonitoringService extends Logger {
 
   private def monitor(monitoring: Monitoring): Unit = {
     debug(s"Looking for available terms. Monitoring [#${monitoring.recordId}]")
-    val dateFrom = optimizeDateFrom(monitoring.dateFrom, monitoring.offset)
-    val termsEither = apiService.getAvailableTerms(monitoring.accountId, monitoring.payerId, monitoring.cityId, monitoring.clinicId, monitoring.serviceId,
-      monitoring.doctorId, dateFrom, Some(monitoring.dateTo), timeFrom = monitoring.timeFrom, timeTo = monitoring.timeTo)
+    val dateFrom = optimizeDateFrom(monitoring.dateFrom.toLocalDateTime, monitoring.offset)
+    val termsEither = apiService.getAvailableTerms(monitoring.accountId, monitoring.cityId, monitoring.clinicId, monitoring.serviceId,
+      monitoring.doctorId, dateFrom, monitoring.dateTo.toLocalDateTime, timeFrom = monitoring.timeFrom, timeTo = monitoring.timeTo)
     termsEither match {
       case Right(terms) =>
         if (terms.nonEmpty) {
@@ -92,8 +93,8 @@ class MonitoringService extends Logger {
     }
   }
 
-  private def optimizeDateFrom(date: ZonedDateTime, offset: Int) = {
-    val nowWithOffset = ZonedDateTime.now().plusHours(offset)
+  private def optimizeDateFrom(date: LocalDateTime, offset: Int) = {
+    val nowWithOffset = LocalDateTime.now().plusHours(offset)
     if (date.isBefore(nowWithOffset)) nowWithOffset else date
   }
 
@@ -144,18 +145,33 @@ class MonitoringService extends Logger {
     dbChecker.schedule(updateMonitorings(), 1.minute)
   }
 
-  private def bookAppointment(term: AvailableVisitsTermPresentation, monitoring: Monitoring, rebookIfExists: Boolean): Unit = {
-    apiService.reserveVisit(monitoring.accountId, term).toTry.recoverWith {
-      case _: ServiceIsAlreadyBookedException if rebookIfExists =>
+  private def bookAppointment(term: TermExt, monitoring: Monitoring, rebookIfExists: Boolean): Unit = {
+    val bookingResult = for {
+      xsrfToken <- apiService.getXsrfToken(monitoring.accountId)
+      reservationLocktermResponse <- apiService.reservationLockterm(monitoring.accountId, xsrfToken, term.mapTo[ReservationLocktermRequest])
+      temporaryReservationId = reservationLocktermResponse.value.temporaryReservationId
+      response <- if (reservationLocktermResponse.value.changeTermAvailable && rebookIfExists) {
         info(s"Service [${monitoring.serviceName}] is already booked. Trying to update term")
-        apiService.updateReservedVisit(monitoring.accountId, term).toTry
-      case ex => Failure(ex)
-    }.toEither match {
+        bookOrUnlockTerm(monitoring.accountId, xsrfToken, temporaryReservationId, apiService.reservationChangeTerm(_, xsrfToken, (reservationLocktermResponse, term).mapTo[ReservationChangetermRequest]))
+      } else {
+        bookOrUnlockTerm(monitoring.accountId, xsrfToken, temporaryReservationId, apiService.reservationConfirm(_, xsrfToken, (reservationLocktermResponse, term).mapTo[ReservationConfirmRequest]))
+      }
+    } yield response
+    bookingResult match {
       case Right(_) =>
         bot.sendMessage(monitoring.source, lang(monitoring.userId).appointmentIsBooked(term, monitoring))
         deactivateMonitoring(monitoring.accountId, monitoring.recordId)
       case Left(ex) =>
         error(s"Unable to book appointment by monitoring [${monitoring.recordId}]", ex)
+    }
+  }
+
+  private def bookOrUnlockTerm[T](accountId: Long, xsrfToken: XsrfToken, temporaryReservationId: Long, fn: (Long) => Either[Throwable, T]): Either[Throwable, T] = {
+    fn(accountId) match {
+      case r@Left(_) =>
+        apiService.deleteTemporaryReservation(accountId, xsrfToken, temporaryReservationId)
+        r
+      case r => r
     }
   }
 
@@ -200,11 +216,11 @@ class MonitoringService extends Logger {
     val monitoringMaybe = dataService.findMonitoring(accountId, monitoringId)
     monitoringMaybe match {
       case Some(monitoring) =>
-        val termsEither = apiService.getAvailableTerms(monitoring.accountId, monitoring.payerId, monitoring.cityId, monitoring.clinicId, monitoring.serviceId,
-          monitoring.doctorId, monitoring.dateFrom, Some(monitoring.dateTo), timeFrom = monitoring.timeFrom, timeTo = monitoring.timeTo)
+        val termsEither = apiService.getAvailableTerms(monitoring.accountId, monitoring.cityId, monitoring.clinicId, monitoring.serviceId,
+          monitoring.doctorId, monitoring.dateFrom.toLocalDateTime, monitoring.dateTo.toLocalDateTime, timeFrom = monitoring.timeFrom, timeTo = monitoring.timeTo)
         termsEither match {
           case Right(terms) =>
-            val termMaybe = terms.find(term => term.scheduleId == scheduleId && minutesSinceBeginOf2018(term.visitDate.startDateTime) == time)
+            val termMaybe = terms.find(term => term.term.scheduleId == scheduleId && minutesSinceBeginOf2018(term.term.dateTimeFrom) == time)
             termMaybe match {
               case Some(term) =>
                 bookAppointment(term, monitoring, rebookIfExists = true)

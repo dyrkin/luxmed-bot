@@ -1,25 +1,24 @@
 
 package com.lbs.api
 
-import java.time.ZonedDateTime
-import java.time.format.DateTimeFormatter
-
 import cats.implicits.toFunctorOps
-import com.lbs.api.ApiResponseMutators._
 import com.lbs.api.http._
 import com.lbs.api.http.headers._
 import com.lbs.api.json.JsonSerializer.extensions._
-import com.lbs.api.json.model.{AvailableTermsResponse, ReservationFilterResponse, ReservedVisitsResponse, VisitsHistoryResponse, _}
+import com.lbs.api.json.model.{EventsResponse, TermsIndexResponse, _}
 import scalaj.http.{HttpRequest, HttpResponse}
 
+import java.time.format.DateTimeFormatter
+import java.time.{LocalDateTime, ZonedDateTime}
 import scala.language.higherKinds
 
 class LuxmedApi[F[_] : ThrowableMonad] extends ApiBase {
 
-  private val dateFormat = DateTimeFormatter.ofPattern("yyyy-MM-dd'T'HH:mm:ss.SSS'Z'")
+  private val dateFormatNewPortal = DateTimeFormatter.ofPattern("yyyy-MM-dd")
+  private val dateFormatEvents = DateTimeFormatter.ofPattern("yyyy-MM-dd'T'HH:mm:ssZ")
 
-  def login(username: String, password: String, clientId: String = "iPhone"): F[LoginResponse] = {
-    val request = http("token").
+  def login(username: String, password: String, clientId: String = "iPhone"): F[HttpResponse[LoginResponse]] = {
+    val request = httpUnauthorized("token").
       header(`Content-Type`, "application/x-www-form-urlencoded").
       header(`x-api-client-identifier`, clientId).
       param("client_id", clientId).
@@ -29,160 +28,132 @@ class LuxmedApi[F[_] : ThrowableMonad] extends ApiBase {
     post[LoginResponse](request)
   }
 
-  def refreshToken(refreshToken: String, clientId: String = "iPhone"): F[LoginResponse] = {
-    val request = http("token").
-      header(`Content-Type`, "application/x-www-form-urlencoded").
-      header(`x-api-client-identifier`, clientId).
-      param("client_id", clientId).
-      param("grant_type", "refresh_token").
-      param("refresh_token", refreshToken)
-    post[LoginResponse](request)
+  def loginToApp(session: Session): F[HttpResponse[Unit]] = {
+    val request = httpNewApi("Account/LogInToApp?app=search&lang=pl&client=2&paymentSupported=true", session)
+      .header(Authorization, session.accessToken)
+    getVoid(request)
   }
 
-  def reservedVisits(accessToken: String, tokenType: String, fromDate: ZonedDateTime = ZonedDateTime.now(),
-                     toDate: ZonedDateTime = ZonedDateTime.now().plusMonths(3)): F[ReservedVisitsResponse] = {
-    val request = http("visits/reserved").
-      header(`Content-Type`, "application/json").
-      header(Authorization, s"$tokenType $accessToken").
-      param("fromDate", dateFormat.format(fromDate)).
-      param("toDate", dateFormat.format(toDate))
-    get[ReservedVisitsResponse](request).mutate
+  def getForgeryToken(session: Session): F[HttpResponse[ForgeryTokenResponse]] = {
+    val request = httpNewApi("security/getforgerytoken", session)
+    get[ForgeryTokenResponse](request)
   }
 
-  def visitsHistory(accessToken: String, tokenType: String, fromDate: ZonedDateTime = ZonedDateTime.now().minusYears(1),
-                    toDate: ZonedDateTime = ZonedDateTime.now(), page: Int = 1, pageSize: Int = 100): F[VisitsHistoryResponse] = {
-    val request = http("visits/history").
+  def events(session: Session, fromDate: ZonedDateTime = ZonedDateTime.now().minusYears(1),
+             toDate: ZonedDateTime = ZonedDateTime.now()): F[EventsResponse] = {
+    val request = http("Events", session).
       header(`Content-Type`, "application/json").
-      header(Authorization, s"$tokenType $accessToken").
-      param("fromDate", dateFormat.format(fromDate)).
-      param("toDate", dateFormat.format(toDate)).
-      param("page", page.toString).
-      param("pageSize", pageSize.toString)
-    get[VisitsHistoryResponse](request).mutate
+      param("filter.filterDateFrom", dateFormatEvents.format(fromDate)).
+      param("filter.filterDateTo", dateFormatEvents.format(toDate))
+    get[EventsResponse](request).map(_.body)
   }
 
-  def reservationFilter(accessToken: String, tokenType: String, fromDate: ZonedDateTime = ZonedDateTime.now(),
-                        toDate: Option[ZonedDateTime] = None, cityId: Option[Long] = None, clinicId: Option[Long] = None,
-                        serviceId: Option[Long] = None): F[ReservationFilterResponse] = {
-    val request = http("visits/available-terms/reservation-filter").
+  def dictionaryCities(session: Session): F[List[DictionaryCity]] = {
+    val request = httpNewApi("NewPortal/Dictionary/cities", session).
+      header(`Content-Type`, "application/json")
+    getList[DictionaryCity](request).map(_.body)
+  }
+
+  def dictionaryServiceVariants(session: Session): F[List[DictionaryServiceVariants]] = {
+    val request = httpNewApi("NewPortal/Dictionary/serviceVariantsGroups", session).
+      header(`Content-Type`, "application/json")
+    getList[DictionaryServiceVariants](request).map(_.body)
+  }
+
+  def dictionaryFacilitiesAndDoctors(session: Session, cityId: Option[Long], serviceVariantId: Option[Long]): F[FacilitiesAndDoctors] = {
+    val request = httpNewApi("NewPortal/Dictionary/facilitiesAndDoctors", session).
       header(`Content-Type`, "application/json").
-      header(Authorization, s"$tokenType $accessToken").
       param("cityId", cityId.map(_.toString)).
-      param("clinicId", clinicId.map(_.toString)).
-      param("fromDate", dateFormat.format(fromDate)).
-      param("toDate", toDate.map(dateFormat.format)).
-      param("serviceId", serviceId.map(_.toString))
-    get[ReservationFilterResponse](request).mutate
+      param("serviceVariantId", serviceVariantId.map(_.toString))
+    get[FacilitiesAndDoctors](request).map(_.body)
   }
 
-  def availableTerms(accessToken: String, tokenType: String, payerId: Long, cityId: Long, clinicId: Option[Long], serviceId: Long, doctorId: Option[Long],
-                     fromDate: ZonedDateTime = ZonedDateTime.now(), toDate: Option[ZonedDateTime] = None, timeOfDay: Int = 0,
-                     languageId: Long = 10, findFirstFreeTerm: Boolean = false): F[AvailableTermsResponse] = {
-    val request = http("visits/available-terms").
+  def termsIndex(session: Session, cityId: Long, clinicId: Option[Long], serviceId: Long, doctorId: Option[Long],
+                 fromDate: LocalDateTime = LocalDateTime.now(), toDate: LocalDateTime, languageId: Long = 10): F[TermsIndexResponse] = {
+    val request = httpNewApi("NewPortal/terms/index", session).
       header(`Content-Type`, "application/json").
-      header(Authorization, s"$tokenType $accessToken").
       param("cityId", cityId.toString).
-      param("doctorId", doctorId.map(_.toString)).
-      param("findFirstFreeTerm", findFirstFreeTerm.toString).
-      param("fromDate", dateFormat.format(fromDate)).
+      param("serviceVariantId", serviceId.toString).
       param("languageId", languageId.toString).
-      param("payerId", payerId.toString).
-      param("clinicId", clinicId.map(_.toString)).
-      param("serviceId", serviceId.toString).
-      param("timeOfDay", timeOfDay.toString).
-      param("toDate", dateFormat.format(toDate.getOrElse(fromDate.plusMonths(3))))
-    get[AvailableTermsResponse](request).mutate
+      param("searchDateFrom", dateFormatNewPortal.format(fromDate)).
+      param("searchDateTo", dateFormatNewPortal.format(toDate)).
+      param("searchDatePreset", 14.toString).
+      param("facilitiesIds", clinicId.map(_.toString)).
+      param("doctorsIds", doctorId.map(_.toString)).
+      param("nextSearch", false.toString).
+      param("searchByMedicalSpecialist", false.toString)
+    get[TermsIndexResponse](request).map(_.body)
   }
 
-  def temporaryReservation(accessToken: String, tokenType: String, temporaryReservationRequest: TemporaryReservationRequest): F[TemporaryReservationResponse] = {
-    val request = http("visits/temporary-reservation").
-      header(`Content-Type`, "application/json").
-      header(Authorization, s"$tokenType $accessToken")
-    post[TemporaryReservationResponse](request, bodyOpt = Some(temporaryReservationRequest))
+  def reservationLockterm(session: Session, xsrfToken: XsrfToken, reservationLocktermRequest: ReservationLocktermRequest): F[ReservationLocktermResponse] = {
+    val request = httpNewApi("NewPortal/reservation/lockterm", session, Some(session.cookies ++ xsrfToken.cookies)).
+      header(`Content-Type`, "application/json")
+      .header(`xsrf-token`, xsrfToken.token)
+    post[ReservationLocktermResponse](request, bodyOpt = Some(reservationLocktermRequest)).map(_.body)
   }
 
-  def deleteTemporaryReservation(accessToken: String, tokenType: String, temporaryReservationId: Long): F[HttpResponse[String]] = {
-    val request = http(s"visits/temporary-reservation/$temporaryReservationId").
-      header(`Content-Type`, "application/json").
-      header(Authorization, s"$tokenType $accessToken")
+  def deleteTemporaryReservation(session: Session, xsrfToken: XsrfToken, temporaryReservationId: Long): F[Unit] = {
+    val request = httpNewApi(s"NewPortal/reservation/releaseterm?reservationId=$temporaryReservationId", session, Some(session.cookies ++ xsrfToken.cookies)).
+      header(`Content-Type`, "application/json")
+      .header(`xsrf-token`, xsrfToken.token)
+    postVoid(request, bodyOpt = Some(Empty()))
+  }
+
+  def reservationConfirm(session: Session, xsrfToken: XsrfToken, reservationConfirmRequest: ReservationConfirmRequest): F[ReservationConfirmResponse] = {
+    val request = httpNewApi("NewPortal/reservation/confirm", session, Some(session.cookies ++ xsrfToken.cookies)).
+      header(`Content-Type`, "application/json")
+      .header(`xsrf-token`, xsrfToken.token)
+    post[ReservationConfirmResponse](request, bodyOpt = Some(reservationConfirmRequest)).map(_.body)
+  }
+
+  def reservationChangeTerm(session: Session, xsrfToken: XsrfToken, reservationChangetermRequest: ReservationChangetermRequest): F[ReservationConfirmResponse] = {
+    val request = httpNewApi("NewPortal/reservation/changeterm", session, Some(session.cookies ++ xsrfToken.cookies)).
+      header(`Content-Type`, "application/json")
+      .header(`xsrf-token`, xsrfToken.token)
+    post[ReservationConfirmResponse](request, bodyOpt = Some(reservationChangetermRequest)).map(_.body)
+  }
+
+  def reservationDelete(session: Session, reservationId: Long): F[HttpResponse[String]] = {
+    val request = http(s"events/Visit/$reservationId", session).
+      header(`Content-Type`, "application/json")
     delete(request)
   }
 
-  def valuations(accessToken: String, tokenType: String, valuationsRequest: ValuationsRequest): F[ValuationsResponse] = {
-    val request = http("visits/available-terms/valuations").
-      header(`Content-Type`, "application/json").
-      header(Authorization, s"$tokenType $accessToken")
-    post[ValuationsResponse](request, bodyOpt = Some(valuationsRequest))
+  private def get[T <: SerializableJsonObject](request: HttpRequest)(implicit mf: scala.reflect.Manifest[T]): F[HttpResponse[T]] = {
+    request.invoke.map(r => r.copy(body = r.body.as[T]))
   }
 
-  def reservation(accessToken: String, tokenType: String, reservationRequest: ReservationRequest): F[ReservationResponse] = {
-    val request = http("visits/reserved").
-      header(`Content-Type`, "application/json").
-      header(Authorization, s"$tokenType $accessToken")
-    post[ReservationResponse](request, bodyOpt = Some(reservationRequest))
+  private def getList[T <: SerializableJsonObject](request: HttpRequest)(implicit mf: scala.reflect.Manifest[T]): F[HttpResponse[List[T]]] = {
+    request.invoke.map(r => r.copy(body = r.body.asList[T]))
   }
 
-  def deleteReservation(accessToken: String, tokenType: String, reservationId: Long): F[HttpResponse[String]] = {
-    val request = http(s"visits/reserved/$reservationId").
-      header(`Content-Type`, "application/json").
-      header(Authorization, s"$tokenType $accessToken")
-    delete(request)
+  private def getVoid[T <: SerializableJsonObject](request: HttpRequest)(implicit mf: scala.reflect.Manifest[T]): F[HttpResponse[Unit]] = {
+    request.invoke.map(r => r.copy(body = {}))
   }
 
-  //204 means OK?
-  def canTermBeChanged(accessToken: String, tokenType: String, reservationId: Long): F[HttpResponse[String]] = {
-    val request = http(s"visits/reserved/$reservationId/can-term-be-changed").
-      header(`Content-Type`, "application/json").
-      header(Authorization, s"$tokenType $accessToken")
-    request.invoke
-  }
-
-  def detailToChangeTerm(accessToken: String, tokenType: String, reservationId: Long): F[ChangeTermDetailsResponse] = {
-    val request = http(s"visits/reserved/$reservationId/details-to-change-term").
-      header(`Content-Type`, "application/json").
-      header(Authorization, s"$tokenType $accessToken")
-    get[ChangeTermDetailsResponse](request)
-  }
-
-  def temporaryReservationToChangeTerm(accessToken: String, tokenType: String, reservationId: Long, temporaryReservationRequest: TemporaryReservationRequest): F[TemporaryReservationResponse] = {
-    val request = http(s"visits/reserved/$reservationId/temporary-reservation-to-change-term").
-      header(`Content-Type`, "application/json").
-      header(Authorization, s"$tokenType $accessToken")
-    post[TemporaryReservationResponse](request, bodyOpt = Some(temporaryReservationRequest))
-  }
-
-  def valuationToChangeTerm(accessToken: String, tokenType: String, reservationId: Long, valuationsRequest: ValuationsRequest): F[ValuationsResponse] = {
-    val request = http(s"visits/reserved/$reservationId/valuations-to-change-term").
-      header(`Content-Type`, "application/json").
-      header(Authorization, s"$tokenType $accessToken")
-    post[ValuationsResponse](request, bodyOpt = Some(valuationsRequest))
-  }
-
-  def changeTerm(accessToken: String, tokenType: String, reservationId: Long, reservationRequest: ReservationRequest): F[ChangeTermResponse] = {
-    val request = http(s"visits/reserved/$reservationId/term").
-      header(`Content-Type`, "application/json").
-      header(Authorization, s"$tokenType $accessToken")
-    put[ChangeTermResponse](request, bodyOpt = Some(reservationRequest))
-  }
-
-  private def get[T <: SerializableJsonObject](request: HttpRequest)(implicit mf: scala.reflect.Manifest[T]): F[T] = {
-    request.invoke.map(_.body.as[T])
-  }
-
-  private def post[T <: SerializableJsonObject](request: HttpRequest, bodyOpt: Option[SerializableJsonObject] = None)(implicit mf: scala.reflect.Manifest[T]): F[T] = {
+  private def post[T <: SerializableJsonObject](request: HttpRequest, bodyOpt: Option[SerializableJsonObject] = None)(implicit mf: scala.reflect.Manifest[T]): F[HttpResponse[T]] = {
     val postRequest = bodyOpt match {
       case Some(body) => request.postData(body.asJson)
       case None => request.postForm
     }
-    postRequest.invoke.map(_.body.as[T])
+    postRequest.invoke.map(r => r.copy(body = r.body.as[T]))
   }
 
-  private def put[T <: SerializableJsonObject](request: HttpRequest, bodyOpt: Option[SerializableJsonObject] = None)(implicit mf: scala.reflect.Manifest[T]): F[T] = {
+  private def put[T <: SerializableJsonObject](request: HttpRequest, bodyOpt: Option[SerializableJsonObject] = None)(implicit mf: scala.reflect.Manifest[T]): F[HttpResponse[T]] = {
     val putRequest = bodyOpt match {
       case Some(body) => request.put(body.asJson)
       case None => request.method("PUT")
     }
-    putRequest.invoke.map(_.body.as[T])
+    putRequest.invoke.map(r => r.copy(body = r.body.as[T]))
+  }
+
+
+  private def postVoid(request: HttpRequest, bodyOpt: Option[SerializableJsonObject] = None): F[Unit] = {
+    val postRequest = bodyOpt match {
+      case Some(body) => request.postData(body.asJson)
+      case None => request.postForm
+    }
+    postRequest.invoke.void
   }
 
   private def delete(request: HttpRequest): F[HttpResponse[String]] = {

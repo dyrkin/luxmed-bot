@@ -2,7 +2,6 @@
 package com.lbs.server.repository.model
 
 import javax.persistence._
-
 import scala.beans.BeanProperty
 
 @Access(AccessType.FIELD)

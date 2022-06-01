@@ -2,7 +2,7 @@
 package com.lbs.server.conversation
 
 import akka.actor.ActorSystem
-import com.lbs.api.json.model.IdName
+import com.lbs.api.json.model.{IdName, Identified}
 import com.lbs.bot.model.{Button, Command, TaggedButton}
 import com.lbs.bot.{Bot, _}
 import com.lbs.server.ThrowableOr
@@ -79,6 +79,6 @@ object StaticData {
 
   case class FindOptions(searchText: String)
 
-  case class FoundOptions(option: ThrowableOr[List[IdName]])
+  case class FoundOptions[T <: Identified](option: ThrowableOr[List[T]])
 
 }

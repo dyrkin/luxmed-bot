@@ -2,18 +2,18 @@
 package com.lbs.server.conversation
 
 import akka.actor.ActorSystem
-import com.lbs.api.json.model.ReservedVisit
+import com.lbs.api.json.model.Event
 import com.lbs.bot.model.{Button, Command}
 import com.lbs.bot.{Bot, _}
 import com.lbs.server.conversation.Login.UserId
 import com.lbs.server.conversation.Pager.SimpleItemsProvider
-import com.lbs.server.conversation.Visits.Tags
+import com.lbs.server.conversation.ReservedVisitsViewer.Tags
 import com.lbs.server.conversation.base.Conversation
 import com.lbs.server.lang.{Localizable, Localization}
 import com.lbs.server.service.ApiService
 
-class Visits(val userId: UserId, bot: Bot, apiService: ApiService, val localization: Localization,
-             visitsPagerFactory: UserIdWithOriginatorTo[Pager[ReservedVisit]])(val actorSystem: ActorSystem) extends Conversation[ReservedVisit] with Localizable {
+class ReservedVisitsViewer(val userId: UserId, bot: Bot, apiService: ApiService, val localization: Localization,
+                           visitsPagerFactory: UserIdWithOriginatorTo[Pager[Event]])(val actorSystem: ActorSystem) extends Conversation[Event] with Localizable {
 
   private val reservedVisitsPager = visitsPagerFactory(userId, self)
 
@@ -21,7 +21,7 @@ class Visits(val userId: UserId, bot: Bot, apiService: ApiService, val localizat
 
   def prepareData: Step =
     process { _ =>
-      val visits = apiService.reservedVisits(userId.accountId)
+      val visits = apiService.reserved(userId.accountId)
       reservedVisitsPager.restart()
       reservedVisitsPager ! visits.map(new SimpleItemsProvider(_))
       goto(processResponseFromPager)
@@ -35,7 +35,7 @@ class Visits(val userId: UserId, bot: Bot, apiService: ApiService, val localizat
       case Msg(Pager.NoItemsFound, _) =>
         bot.sendMessage(userId.source, lang.noUpcomingVisits)
         end()
-      case Msg(visit: ReservedVisit, _) =>
+      case Msg(visit: Event, _) =>
         goto(askToCancelVisit) using visit
     }
 
@@ -47,10 +47,10 @@ class Visits(val userId: UserId, bot: Bot, apiService: ApiService, val localizat
       case Msg(Command(_, _, Some(Tags.No)), _) =>
         bot.sendMessage(userId.source, lang.appointmentWasNotCancelled)
         end()
-      case Msg(Command(_, _, Some(Tags.Yes)), visit: ReservedVisit) =>
-        apiService.deleteReservation(userId.accountId, visit.reservationId) match {
+      case Msg(Command(_, _, Some(Tags.Yes)), visit: Event) =>
+        apiService.deleteReservation(userId.accountId, visit.eventId) match {
           case Left(ex) => bot.sendMessage(userId.source, lang.unableToCancelUpcomingVisit(ex.getMessage))
-          case Right(r) => bot.sendMessage(userId.source, lang.appointmentHasBeenCancelled)
+          case Right(_) => bot.sendMessage(userId.source, lang.appointmentHasBeenCancelled)
         }
         end()
     }
@@ -60,7 +60,7 @@ class Visits(val userId: UserId, bot: Bot, apiService: ApiService, val localizat
   }
 }
 
-object Visits {
+object ReservedVisitsViewer {
 
   object Tags {
     val Yes = "yes"

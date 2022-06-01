@@ -2,7 +2,7 @@
 package com.lbs.server
 
 import akka.actor.ActorSystem
-import com.lbs.api.json.model.{AvailableVisitsTermPresentation, HistoricVisit, ReservedVisit}
+import com.lbs.api.json.model.{Event, TermExt}
 import com.lbs.bot.Bot
 import com.lbs.bot.telegram.TelegramBot
 import com.lbs.server.conversation._
@@ -74,12 +74,12 @@ class BootConfig {
     userId => new MonitoringsHistory(userId, bot, monitoringService, localization, monitoringsHistoryPagerFactory, bookWithTemplateFactory)(actorSystem)
 
   @Bean
-  def historyFactory: UserIdTo[History] =
-    userId => new History(userId, bot, apiService, localization, historyPagerFactory)(actorSystem)
+  def historyFactory: UserIdTo[HistoryViewer] =
+    userId => new HistoryViewer(userId, bot, apiService, localization, historyPagerFactory)(actorSystem)
 
   @Bean
-  def visitsFactory: UserIdTo[Visits] =
-    userId => new Visits(userId, bot, apiService, localization, visitsPagerFactory)(actorSystem)
+  def reservedVisitsFactory: UserIdTo[ReservedVisitsViewer] =
+    userId => new ReservedVisitsViewer(userId, bot, apiService, localization, reservedVisitsPagerFactory)(actorSystem)
 
   @Bean
   def settingsFactory: UserIdTo[Settings] =
@@ -92,7 +92,7 @@ class BootConfig {
   @Bean
   def chatFactory: UserIdTo[Chat] =
     userId => new Chat(userId, dataService, monitoringService, bookFactory, helpFactory,
-      monitoringsFactory, monitoringsHistoryFactory, historyFactory, visitsFactory, settingsFactory, accountFactory)(actorSystem)
+      monitoringsFactory, monitoringsHistoryFactory, historyFactory, reservedVisitsFactory, settingsFactory, accountFactory)(actorSystem)
 
   @Bean
   def datePickerFactory: UserIdWithOriginatorTo[DatePicker] = (userId, originator) =>
@@ -107,24 +107,24 @@ class BootConfig {
     new StaticData(userId, bot, localization, originator)(actorSystem)
 
   @Bean
-  def termsPagerFactory: UserIdWithOriginatorTo[Pager[AvailableVisitsTermPresentation]] = (userId, originator) =>
-    new Pager[AvailableVisitsTermPresentation](userId, bot,
-      (term: AvailableVisitsTermPresentation, page: Int, index: Int) => lang(userId).termEntry(term, page, index),
+  def termsPagerFactory: UserIdWithOriginatorTo[Pager[TermExt]] = (userId, originator) =>
+    new Pager[TermExt](userId, bot,
+      (term: TermExt, page: Int, index: Int) => lang(userId).termEntry(term, page, index),
       (page: Int, pages: Int) => lang(userId).termsHeader(page, pages),
       Some("book"), localization, originator)(actorSystem)
 
 
   @Bean
-  def visitsPagerFactory: UserIdWithOriginatorTo[Pager[ReservedVisit]] = (userId, originator) =>
-    new Pager[ReservedVisit](userId, bot,
-      (visit: ReservedVisit, page: Int, index: Int) => lang(userId).upcomingVisitEntry(visit, page, index),
-      (page: Int, pages: Int) => lang(userId).upcomingVisitsHeader(page, pages),
+  def reservedVisitsPagerFactory: UserIdWithOriginatorTo[Pager[Event]] = (userId, originator) =>
+    new Pager[Event](userId, bot,
+      (visit: Event, page: Int, index: Int) => lang(userId).reservedVisitEntry(visit, page, index),
+      (page: Int, pages: Int) => lang(userId).reservedVisitsHeader(page, pages),
       Some("cancel"), localization, originator)(actorSystem)
 
   @Bean
-  def historyPagerFactory: UserIdWithOriginatorTo[Pager[HistoricVisit]] = (userId, originator) =>
-    new Pager[HistoricVisit](userId, bot,
-      (visit: HistoricVisit, page: Int, index: Int) => lang(userId).historyEntry(visit, page, index),
+  def historyPagerFactory: UserIdWithOriginatorTo[Pager[Event]] = (userId, originator) =>
+    new Pager[Event](userId, bot,
+      (event: Event, page: Int, index: Int) => lang(userId).historyEntry(event, page, index),
       (page: Int, pages: Int) => lang(userId).historyHeader(page, pages),
       None, localization, originator)(actorSystem)
 

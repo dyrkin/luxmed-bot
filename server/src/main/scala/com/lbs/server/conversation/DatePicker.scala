@@ -1,9 +1,6 @@
 
 package com.lbs.server.conversation
 
-import java.time.format.TextStyle
-import java.time.{LocalTime, ZonedDateTime}
-
 import akka.actor.ActorSystem
 import com.lbs.bot.model.Button
 import com.lbs.bot.{Bot, _}
@@ -14,18 +11,20 @@ import com.lbs.server.lang.{Localizable, Localization}
 import com.lbs.server.util.DateTimeUtil._
 import com.lbs.server.util.MessageExtractors.{CallbackCommand, TextCommand}
 
+import java.time.format.TextStyle
+import java.time.{LocalDateTime, LocalTime}
 import scala.util.control.NonFatal
 
 /**
-  * Date picker Inline Keyboard
-  *
-  * ⬆   ⬆    ⬆
-  * dd   MM   yyyy
-  * ⬇   ⬇    ⬇
-  *
-  */
+ * Date picker Inline Keyboard
+ *
+ * ⬆   ⬆    ⬆
+ * dd   MM   yyyy
+ * ⬇   ⬇    ⬇
+ *
+ */
 class DatePicker(val userId: UserId, val bot: Bot, val localization: Localization, originator: Interactional)
-                (val actorSystem: ActorSystem) extends Conversation[ZonedDateTime] with Localizable {
+                (val actorSystem: ActorSystem) extends Conversation[LocalDateTime] with Localizable {
 
   private var mode: Mode = DateFromMode
 
@@ -36,7 +35,7 @@ class DatePicker(val userId: UserId, val bot: Bot, val localization: Localizatio
       case Msg(newMode: Mode, _) =>
         mode = newMode
         stay()
-      case Msg(initialDate: ZonedDateTime, _) =>
+      case Msg(initialDate: LocalDateTime, _) =>
         goto(requestDate) using initialDate
     }
 
@@ -52,7 +51,7 @@ class DatePicker(val userId: UserId, val bot: Bot, val localization: Localizatio
         val (message, updatedDate) = mode match {
           case DateFromMode =>
             val startOfTheDay = finalDate.`with`(LocalTime.MIN)
-            val dateFrom = if (startOfTheDay.isBefore(ZonedDateTime.now())) finalDate else startOfTheDay
+            val dateFrom = if (startOfTheDay.isBefore(LocalDateTime.now())) finalDate else startOfTheDay
             lang.dateFromIs(dateFrom) -> dateFrom
           case DateToMode =>
             val dateTo = finalDate.`with`(LocalTime.MAX).minusHours(2)
@@ -85,7 +84,7 @@ class DatePicker(val userId: UserId, val bot: Bot, val localization: Localizatio
         stay() using modifiedDate
     }
 
-  private def modifyDate(date: ZonedDateTime, tag: String) = {
+  private def modifyDate(date: LocalDateTime, tag: String) = {
     val dateModifier = tag match {
       case Tags.DayInc => date.plusDays _
       case Tags.MonthInc => date.plusMonths _
@@ -97,7 +96,7 @@ class DatePicker(val userId: UserId, val bot: Bot, val localization: Localizatio
     dateModifier(1)
   }
 
-  private def dateButtons(date: ZonedDateTime) = {
+  private def dateButtons(date: LocalDateTime) = {
     val day = date.getDayOfMonth.toString
     val dayOfWeek = date.getDayOfWeek.getDisplayName(TextStyle.SHORT, lang.locale)
     val month = date.getMonth.getDisplayName(TextStyle.SHORT, lang.locale)

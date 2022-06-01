@@ -2,7 +2,7 @@
 package com.lbs.server.service
 
 import com.lbs.api.exception.SessionExpiredException
-import com.lbs.api.json.model.LoginResponse
+import com.lbs.api.http.Session
 import com.lbs.common.{Logger, ParametrizedLock}
 import com.lbs.server.ThrowableOr
 import com.lbs.server.exception.UserNotFoundException
@@ -11,9 +11,7 @@ import scala.collection.mutable
 
 trait SessionSupport extends Logger {
 
-  case class Session(accessToken: String, tokenType: String)
-
-  def login(username: String, password: String): ThrowableOr[LoginResponse]
+  def fullLogin(username: String, password: String): ThrowableOr[Session]
 
   protected def dataService: DataService
 
@@ -27,9 +25,7 @@ trait SessionSupport extends Logger {
       def auth: ThrowableOr[Session] = {
         val credentialsMaybe = dataService.getCredentials(accountId)
         credentialsMaybe match {
-          case Some(credentials) =>
-            val loginResponse = login(credentials.username, credentials.password)
-            loginResponse.map(r => Session(r.accessToken, r.tokenType))
+          case Some(credentials) => fullLogin(credentials.username, credentials.password)
           case None => Left(UserNotFoundException(accountId))
         }
       }
@@ -67,8 +63,8 @@ trait SessionSupport extends Logger {
       } yield result
     }
 
-  def addSession(accountId: Long, accessToken: String, tokenType: String): Unit =
+  def addSession(accountId: Long, session: Session): Unit =
     lock.obtainLock(accountId).synchronized {
-      sessions.put(accountId, Session(accessToken, tokenType))
+      sessions.put(accountId, session)
     }
 }

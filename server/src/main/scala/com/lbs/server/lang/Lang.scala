@@ -1,12 +1,12 @@
 
 package com.lbs.server.lang
 
-import com.lbs.api.json.model.{AvailableVisitsTermPresentation, HistoricVisit, ReservedVisit, ValuationsResponse}
+import com.lbs.api.json.model.{Event, TermExt}
 import com.lbs.server.conversation.Book.BookingData
 import com.lbs.server.conversation.StaticData.StaticDataConfig
 import com.lbs.server.repository.model.Monitoring
 
-import java.time.{LocalTime, ZonedDateTime}
+import java.time.{LocalDateTime, LocalTime}
 import java.util.Locale
 import scala.io.Source
 import scala.util.Try
@@ -33,8 +33,10 @@ trait Lang {
   def label: String
 
   protected def capitalizeFirstLetter(str: String): String = {
-    val fistCapitalLetter = str.head.toTitleCase
-    fistCapitalLetter + str.tail
+    if (str != null && str != "") {
+      val fistCapitalLetter = str.head.toTitleCase
+      fistCapitalLetter + str.tail.toLowerCase
+    } else ""
   }
 
   protected def withPages(message: String, page: Int, pages: Int): String
@@ -49,11 +51,11 @@ trait Lang {
 
   def noUpcomingVisits: String
 
-  def areYouSureToCancelAppointment(visit: ReservedVisit): String
+  def areYouSureToCancelAppointment(visit: Event): String
 
-  def chooseDateFrom(exampleDate: ZonedDateTime): String
+  def chooseDateFrom(exampleDate: LocalDateTime): String
 
-  def chooseDateTo(exampleDate: ZonedDateTime): String
+  def chooseDateTo(exampleDate: LocalDateTime): String
 
   def chooseTimeFrom(exampleTime: LocalTime): String
 
@@ -75,7 +77,7 @@ trait Lang {
 
   def book: String
 
-  def confirmAppointment(term: AvailableVisitsTermPresentation, valuations: ValuationsResponse): String
+  def confirmAppointment(term: TermExt): String
 
   def appointmentIsConfirmed: String
 
@@ -143,29 +145,29 @@ trait Lang {
 
   def providePassword: String
 
-  def visitsHistoryIsEmpty: String
+  def eventsListIsEmpty: String
 
   def help: String
 
-  def dateFromIs(dateFrom: ZonedDateTime): String
+  def dateFromIs(dateFrom: LocalDateTime): String
 
-  def dateToIs(dateTo: ZonedDateTime): String
+  def dateToIs(dateTo: LocalDateTime): String
 
   def timeFromIs(timeFrom: LocalTime): String
 
   def timeToIs(timeTo: LocalTime): String
 
-  def termEntry(term: AvailableVisitsTermPresentation, page: Int, index: Int): String
+  def termEntry(term: TermExt, page: Int, index: Int): String
 
   def termsHeader(page: Int, pages: Int): String
 
-  def historyEntry(visit: HistoricVisit, page: Int, index: Int): String
+  def historyEntry(event: Event, page: Int, index: Int): String
 
   def historyHeader(page: Int, pages: Int): String
 
-  def upcomingVisitEntry(visit: ReservedVisit, page: Int, index: Int): String
+  def reservedVisitEntry(visit: Event, page: Int, index: Int): String
 
-  def upcomingVisitsHeader(page: Int, pages: Int): String
+  def reservedVisitsHeader(page: Int, pages: Int): String
 
   def bugsHeader(page: Int, pages: Int): String
 
@@ -179,13 +181,13 @@ trait Lang {
 
   def invalidLoginOrPassword: String
 
-  def availableTermEntry(term: AvailableVisitsTermPresentation, monitoring: Monitoring, index: Int): String
+  def availableTermEntry(term: TermExt, monitoring: Monitoring, index: Int): String
 
   def availableTermsHeader(size: Int): String
 
   def nothingWasFoundByMonitoring(monitoring: Monitoring): String
 
-  def appointmentIsBooked(term: AvailableVisitsTermPresentation, monitoring: Monitoring): String
+  def appointmentIsBooked(term: TermExt, monitoring: Monitoring): String
 
   def maximumMonitoringsLimitExceeded: String
 
