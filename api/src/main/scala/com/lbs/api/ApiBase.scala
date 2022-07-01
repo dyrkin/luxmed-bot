@@ -8,7 +8,7 @@ import scalaj.http.{BaseHttp, HttpRequest}
 import java.net.HttpCookie
 
 object ApiHttp extends BaseHttp(
-  userAgent = "Mozilla/5.0 (iPhone; CPU iPhone OS 15_4_1 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Mobile/15E148"
+  userAgent = "Mozilla/5.0 (iPhone; CPU iPhone OS 15_5 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Mobile/15E148"
 )
 
 trait ApiBase {
@@ -17,7 +17,6 @@ trait ApiBase {
       Host -> "portalpacjenta.luxmed.pl",
       Origin -> "https://portalpacjenta.luxmed.pl",
       `Custom-User-Agent` -> "Mozilla/5.0 (iPhone; CPU iPhone OS 15_5 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Mobile/15E148",
-      `User-Agent` -> "Mozilla/5.0 (iPhone; CPU iPhone OS 15_5 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Mobile/15E148",
       Accept -> "application/json, text/plain, */*",
       `Accept-Encoding` -> "gzip, deflate, br",
       `Accept-Language` -> "pl;q=1.0, pl;q=0.9, en;q=0.8"

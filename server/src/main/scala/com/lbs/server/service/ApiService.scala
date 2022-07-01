@@ -11,7 +11,7 @@ import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.stereotype.Service
 import scalaj.http.HttpResponse
 
-import java.time.{LocalDateTime, LocalTime, ZonedDateTime}
+import java.time.{LocalDateTime, LocalTime}
 
 @Service
 class ApiService extends SessionSupport {
@@ -85,14 +85,14 @@ class ApiService extends SessionSupport {
       luxmedApi.reservationChangeTerm(session, xsrfToken, reservationChangetermRequest)
     }
 
-  def history(accountId: Long, fromDate: ZonedDateTime = ZonedDateTime.now().minusYears(1),
-              toDate: ZonedDateTime = ZonedDateTime.now()): ThrowableOr[List[Event]] =
+  def history(accountId: Long, fromDate: LocalDateTime = LocalDateTime.now().minusYears(1),
+              toDate: LocalDateTime = LocalDateTime.now()): ThrowableOr[List[Event]] =
     withSession(accountId) { session =>
       luxmedApi.events(session, fromDate, toDate).map(_.events.filter(_.status == "Realized"))
     }
 
-  def reserved(accountId: Long, fromDate: ZonedDateTime = ZonedDateTime.now(),
-               toDate: ZonedDateTime = ZonedDateTime.now().plusMonths(3)): ThrowableOr[List[Event]] =
+  def reserved(accountId: Long, fromDate: LocalDateTime = LocalDateTime.now(),
+               toDate: LocalDateTime = LocalDateTime.now().plusMonths(3)): ThrowableOr[List[Event]] =
     withSession(accountId) { session =>
       luxmedApi.events(session, fromDate, toDate).map(_.events.filter(_.status == "Reserved"))
     }
