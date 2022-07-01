@@ -30,7 +30,7 @@ dependencies {
     compile('org.jasypt:jasypt:1.9.2')
     compile('org.postgresql:postgresql:42.2.1.jre7')
 
-    testImplementation('com.typesafe.akka:akka-testkit_2.12:2.4.19')
+    testImplementation('com.typesafe.akka:akka-testkit_2.12:2.6.19')
     testImplementation('org.springframework.boot:spring-boot-starter-test')
     testImplementation('com.h2database:h2')
     runtime group: "org.jetbrains.kotlin", name: "kotlin-stdlib", version: "1.4.10"
