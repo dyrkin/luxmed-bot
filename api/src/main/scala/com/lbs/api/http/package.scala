@@ -9,7 +9,7 @@ import com.lbs.api.json.model._
 import com.lbs.common.Logger
 import scalaj.http.{HttpRequest, HttpResponse}
 
-import java.net.HttpCookie
+import java.net.{HttpCookie, HttpURLConnection}
 import scala.language.higherKinds
 import scala.util.{Failure, Success, Try}
 
@@ -72,10 +72,15 @@ package object http extends Logger {
     private def extractLuxmedError(httpResponse: HttpResponse[String]) = {
       val body = httpResponse.body
       val code = httpResponse.code
-      Try(body.as[LuxmedErrorsMap])
-        .orElse(Try(body.as[LuxmedError]))
-        .map(error => luxmedErrorToApiException(code, error))
-        .toOption
+      code match {
+        case HttpURLConnection.HTTP_MOVED_TEMP if httpResponse.header("Location").exists(_.contains("/LogOn")) =>
+          Some(new SessionExpiredException)
+        case _ =>
+          Try(body.as[LuxmedErrorsMap])
+            .orElse(Try(body.as[LuxmedError]))
+            .map(error => luxmedErrorToApiException(code, error))
+            .toOption
+      }
     }
 
     private def hideSensitive(httpRequest: HttpRequest) = {
