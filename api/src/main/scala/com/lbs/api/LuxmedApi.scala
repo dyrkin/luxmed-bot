@@ -8,8 +8,8 @@ import com.lbs.api.json.JsonSerializer.extensions._
 import com.lbs.api.json.model.{EventsResponse, TermsIndexResponse, _}
 import scalaj.http.{HttpRequest, HttpResponse}
 
-import java.time.LocalDateTime
 import java.time.format.DateTimeFormatter
+import java.time.{LocalDateTime, ZonedDateTime}
 import scala.language.higherKinds
 
 class LuxmedApi[F[_] : ThrowableMonad] extends ApiBase {
@@ -39,8 +39,8 @@ class LuxmedApi[F[_] : ThrowableMonad] extends ApiBase {
     get[ForgeryTokenResponse](request)
   }
 
-  def events(session: Session, fromDate: LocalDateTime = LocalDateTime.now().minusYears(1),
-             toDate: LocalDateTime = LocalDateTime.now()): F[EventsResponse] = {
+  def events(session: Session, fromDate: ZonedDateTime = ZonedDateTime.now().minusYears(1),
+             toDate: ZonedDateTime = ZonedDateTime.now()): F[EventsResponse] = {
     val request = http("Events", session).
       header(`Content-Type`, "application/json").
       param("filter.filterDateFrom", dateFormatEvents.format(fromDate)).
