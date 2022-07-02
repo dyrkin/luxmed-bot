@@ -108,13 +108,14 @@ class MonitoringService extends Logger {
         activeMonitorings += (monitoring.recordId -> (monitoring -> future))
       }
     }
+    debug(s"Number of active monitorings: ${activeMonitorings.size}")
   }
 
   private def initializeNewMonitorings(): Unit = {
     debug(s"Looking for new monitorings created since $checkedOn")
     val currentTime = ZonedDateTime.now()
     val monitorings = dataService.getActiveMonitoringsSince(checkedOn)
-    debug(s"New active monitorings found: ${monitorings.length}")
+    debug(s"New monitorings found: ${monitorings.length}")
     checkedOn = currentTime
     initializeMonitorings(monitorings)
   }
