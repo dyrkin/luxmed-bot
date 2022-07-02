@@ -71,10 +71,13 @@ package object http extends Logger {
 
     private def extractLuxmedError(httpResponse: HttpResponse[String]) = {
       val body = httpResponse.body
+      val lowercasedBody = body.toLowerCase
       val code = httpResponse.code
       code match {
         case HttpURLConnection.HTTP_MOVED_TEMP if httpResponse.header("Location").exists(_.contains("/LogOn")) =>
           Some(new SessionExpiredException)
+        case HttpURLConnection.HTTP_CONFLICT if lowercasedBody.contains("nieprawidłowy login lub hasło") || lowercasedBody.contains("invalid login or password") =>
+          Some(new InvalidLoginOrPasswordException)
         case _ =>
           Try(body.as[LuxmedErrorsMap])
             .orElse(Try(body.as[LuxmedError]))
