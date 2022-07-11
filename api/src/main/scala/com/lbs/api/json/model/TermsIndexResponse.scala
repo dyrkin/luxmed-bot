@@ -124,7 +124,7 @@ case class PreparationItem(header: Option[String], text: Option[String])
 
 case class AdditionalData(isPreparationRequired: Boolean, preparationItems: List[PreparationItem])
 
-case class TermsForDay(day: LocalDateTime, terms: List[Term]) extends SerializableJsonObject
+case class TermsForDay(day: LuxmedFunnyDateTime, terms: List[Term]) extends SerializableJsonObject
 
 case class Term(clinic: String, clinicId: Long, dateTimeFrom: LuxmedFunnyDateTime, dateTimeTo: LuxmedFunnyDateTime, doctor: Doctor,
                 impedimentText: String, isAdditional: Boolean, isImpediment: Boolean, isTelemedicine: Boolean, roomId: Long,
