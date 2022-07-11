@@ -53,14 +53,14 @@ package object util {
         val (reservationLocktermResponse, termExt) = data
         val term = termExt.term
         ReservationConfirmRequest(
-          date = term.dateTimeFrom.minusHours(2).toString + ":00.000Z",
+          date = term.dateTimeFrom.get.minusHours(2).toString + ":00.000Z",
           doctorId = term.doctor.id,
           facilityId = term.clinicId,
           roomId = term.roomId,
           scheduleId = term.scheduleId,
           serviceVariantId = term.serviceId,
           temporaryReservationId = reservationLocktermResponse.value.temporaryReservationId,
-          timeFrom = term.dateTimeFrom.toLocalTime,
+          timeFrom = term.dateTimeFrom.get.toLocalTime,
           valuation = reservationLocktermResponse.value.valuations.head
         )
       }
@@ -74,7 +74,7 @@ package object util {
         ReservationChangetermRequest(
           existingReservationId = existingReservationId,
           term = NewTerm(
-            date = term.dateTimeFrom.minusHours(2).toString + ":00.000Z",
+            date = term.dateTimeFrom.get.minusHours(2).toString + ":00.000Z",
             doctorId = term.doctor.id,
             facilityId = term.clinicId,
             parentReservationId = existingReservationId,
@@ -83,7 +83,7 @@ package object util {
             scheduleId = term.scheduleId,
             serviceVariantId = term.serviceId,
             temporaryReservationId = reservationLocktermResponse.value.temporaryReservationId,
-            timeFrom = term.dateTimeFrom.toLocalTime,
+            timeFrom = term.dateTimeFrom.get.toLocalTime,
             valuation = reservationLocktermResponse.value.valuations.head
           )
         )
@@ -95,7 +95,7 @@ package object util {
         val term = termExt.term
         val additionalData = termExt.additionalData
         ReservationLocktermRequest(
-          date = term.dateTimeFrom.minusHours(2).toString + ":00.000Z",
+          date = term.dateTimeFrom.get.minusHours(2).toString + ":00.000Z",
           doctor = term.doctor,
           doctorId = term.doctor.id,
           facilityId = term.clinicId,
@@ -108,8 +108,8 @@ package object util {
           roomId = term.roomId,
           scheduleId = term.scheduleId,
           serviceVariantId = term.serviceId,
-          timeFrom = term.dateTimeFrom.toLocalTime.toString,
-          timeTo = term.dateTimeTo.toLocalTime.toString
+          timeFrom = term.dateTimeFrom.get.toLocalTime.toString,
+          timeTo = term.dateTimeTo.get.toLocalTime.toString
         )
       }
 
@@ -167,7 +167,7 @@ package object util {
 
     def formatDateTime(date: ZonedDateTime, locale: Locale): String = date.format(DateTimeFormat(locale))
 
-    def formatDateTime(date: LocalDateTime, locale: Locale): String = date.format(DateTimeFormat(locale))
+    def formatDateTime(date: LuxmedFunnyDateTime, locale: Locale): String = date.get.format(DateTimeFormat(locale))
 
     private val EpochMinutesTillBeginOf2022: Long = epochMinutes(LocalDateTime.of(2022, 1, 1, 0, 0, 0, 0))
 

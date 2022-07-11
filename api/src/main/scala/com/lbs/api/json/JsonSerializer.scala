@@ -1,13 +1,14 @@
 
 package com.lbs.api.json
 
-import com.lbs.api.json.model.SerializableJsonObject
+import com.lbs.api.json.model.{LuxmedFunnyDateTime, SerializableJsonObject}
 import com.lbs.common.Logger
 import org.json4s._
 import org.json4s.jackson.JsonMethods._
 
 import java.time.format.DateTimeFormatter
 import java.time.{LocalDateTime, LocalTime, ZonedDateTime}
+import scala.util.Try
 
 
 object JsonSerializer extends Logger {
@@ -33,7 +34,19 @@ object JsonSerializer extends Logger {
   }
   ))
 
-  private implicit val formats: Formats = DefaultFormats.withStrictArrayExtraction + zonedDateTimeSerializer + localTimeSerializer + localDateTimeSerializer
+  private val luxmedFunnyDateTimeSerializer = new CustomSerializer[LuxmedFunnyDateTime](_ => ( {
+    case JString(str) =>
+      Try(LocalDateTime.parse(str))
+        .map(v => LuxmedFunnyDateTime(dateTimeLocal = Some(v)))
+        .recoverWith{case _ => Try(ZonedDateTime.parse(str)).map(v => LuxmedFunnyDateTime(dateTimeTz = Some(v)))}
+        .getOrElse(sys.error(s"can't parse date $str"))
+  }, {
+    case time: LocalDateTime => JString(time.toString)
+    case time: ZonedDateTime => JString(time.toString)
+  }
+  ))
+
+  private implicit val formats: Formats = DefaultFormats.withStrictArrayExtraction + zonedDateTimeSerializer + localTimeSerializer + localDateTimeSerializer + luxmedFunnyDateTimeSerializer
 
   def extract[T](jsonString: String)(implicit mf: scala.reflect.Manifest[T]): T = {
     parse(jsonString).camelizeKeys.extract[T]

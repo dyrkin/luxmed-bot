@@ -221,7 +221,7 @@ class MonitoringService extends Logger {
           monitoring.doctorId, monitoring.dateFrom.toLocalDateTime, monitoring.dateTo.toLocalDateTime, timeFrom = monitoring.timeFrom, timeTo = monitoring.timeTo)
         termsEither match {
           case Right(terms) =>
-            val termMaybe = terms.find(term => term.term.scheduleId == scheduleId && minutesSinceBeginOf2018(term.term.dateTimeFrom) == time)
+            val termMaybe = terms.find(term => term.term.scheduleId == scheduleId && minutesSinceBeginOf2018(term.term.dateTimeFrom.get) == time)
             termMaybe match {
               case Some(term) =>
                 bookAppointment(term, monitoring, rebookIfExists = true)

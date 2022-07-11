@@ -1,7 +1,7 @@
 
 package com.lbs.api.json.model
 
-import java.time.LocalDateTime
+import java.time.{LocalDateTime, ZonedDateTime}
 
 /**
  *
@@ -28,7 +28,7 @@ import java.time.LocalDateTime
                         *"clinicGroup": "ul. Fabryczna 6",
                         *"clinicGroupId": 11,
                         *"clinicId": 2222,
-                        *"dateTimeFrom": "2021-05-21T18:45:00",
+                        *"dateTimeFrom": "2021-05-21T18:45:00", or 2021-05-21T18:45:00+02:00 sometimes!!!!
                         *"dateTimeTo": "2021-05-21T19:00:00",
                         *"doctor": {
                             *"academicTitle": "lek. med.",
@@ -126,9 +126,13 @@ case class AdditionalData(isPreparationRequired: Boolean, preparationItems: List
 
 case class TermsForDay(day: LocalDateTime, terms: List[Term]) extends SerializableJsonObject
 
-case class Term(clinic: String, clinicId: Long, dateTimeFrom: LocalDateTime, dateTimeTo: LocalDateTime, doctor: Doctor,
+case class Term(clinic: String, clinicId: Long, dateTimeFrom: LuxmedFunnyDateTime, dateTimeTo: LuxmedFunnyDateTime, doctor: Doctor,
                 impedimentText: String, isAdditional: Boolean, isImpediment: Boolean, isTelemedicine: Boolean, roomId: Long,
                 scheduleId: Long, serviceId: Long) extends SerializableJsonObject
 
 case class TermExt(additionalData: AdditionalData, term: Term)  extends SerializableJsonObject
+
+case class LuxmedFunnyDateTime(dateTimeTz: Option[ZonedDateTime] = None, dateTimeLocal: Option[LocalDateTime] = None) {
+  def get: LocalDateTime = dateTimeLocal.getOrElse(dateTimeTz.map(_.toLocalDateTime).get)
+}
 

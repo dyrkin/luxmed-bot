@@ -261,7 +261,7 @@ object Ua extends Lang {
        |${capitalizeFirstLetter(service)}: ${monitoring.serviceName}
        |${capitalizeFirstLetter(clinic)}: ${term.term.clinic}
        |${capitalizeFirstLetter(city)}: ${monitoring.cityName}
-       |/reserve_${monitoring.recordId}_${term.term.scheduleId}_${minutesSinceBeginOf2018(term.term.dateTimeFrom)}
+       |/reserve_${monitoring.recordId}_${term.term.scheduleId}_${minutesSinceBeginOf2018(term.term.dateTimeFrom.get)}
        |
        |""".stripMargin
 

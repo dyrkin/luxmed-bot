@@ -56,8 +56,8 @@ class ApiService extends SessionSupport {
         )
       termsEither.map { terms =>
         terms.filter { term =>
-          val time = term.term.dateTimeFrom.toLocalTime
-          val date = term.term.dateTimeFrom
+          val time = term.term.dateTimeFrom.get.toLocalTime
+          val date = term.term.dateTimeFrom.get
           (doctorId.isEmpty || doctorId.contains(term.term.doctor.id)) &&
             (clinicId.isEmpty || clinicId.contains(term.term.clinicId)) &&
             (time == timeFrom || time == timeTo || (time.isAfter(timeFrom) && time.isBefore(timeTo))) &&
