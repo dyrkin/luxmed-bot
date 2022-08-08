@@ -1,6 +1,5 @@
 dependencies {
-    compile project(':common')
+    implementation project(':common')
 
-    compile group: "com.bot4s", name: "telegram-core_2.12", version: "5.6.0"
-    compile group: "com.bot4s", name: "telegram-akka_2.12", version: "5.6.0"
+    api "com.bot4s:telegram-akka_$scala:5.6.0"
 }
