@@ -3,14 +3,14 @@ package com.lbs.server.conversation
 
 import akka.actor.ActorSystem
 import com.lbs.bot.model.{Command, MessageSource}
-import com.lbs.common.Logger
 import com.lbs.server.conversation.Login.{LoggedIn, UserId}
 import com.lbs.server.conversation.base.Conversation
 import com.lbs.server.service.DataService
 import com.lbs.server.util.MessageExtractors._
+import com.typesafe.scalalogging.StrictLogging
 
 class Auth(val source: MessageSource, dataService: DataService, unauthorizedHelpFactory: MessageSourceTo[UnauthorizedHelp],
-           loginFactory: MessageSourceWithOriginatorTo[Login], chatFactory: UserIdTo[Chat])(val actorSystem: ActorSystem) extends Conversation[Unit] with Logger {
+           loginFactory: MessageSourceWithOriginatorTo[Login], chatFactory: UserIdTo[Chat])(val actorSystem: ActorSystem) extends Conversation[Unit] with StrictLogging {
 
   private val login = loginFactory(source, self)
   private val unauthorizedHelp = unauthorizedHelpFactory(source)

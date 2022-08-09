@@ -2,7 +2,7 @@
 package com.lbs.api.json
 
 import com.lbs.api.json.model.{LuxmedFunnyDateTime, SerializableJsonObject}
-import com.lbs.common.Logger
+import com.typesafe.scalalogging.StrictLogging
 import org.json4s._
 import org.json4s.jackson.JsonMethods._
 
@@ -11,7 +11,7 @@ import java.time.{LocalDateTime, LocalTime, ZonedDateTime}
 import scala.util.Try
 
 
-object JsonSerializer extends Logger {
+object JsonSerializer extends StrictLogging {
 
   private val zonedDateTimeSerializer = new CustomSerializer[ZonedDateTime](_ => ( {
     case JString(str) => ZonedDateTime.parse(str, DateTimeFormatter.ISO_OFFSET_DATE_TIME)
@@ -54,7 +54,7 @@ object JsonSerializer extends Logger {
 
   def write[T](jsonObject: T): String = {
     val json = pretty(render(Extraction.decompose(jsonObject)))
-    info(json)
+    logger.info(json)
     json
   }
 

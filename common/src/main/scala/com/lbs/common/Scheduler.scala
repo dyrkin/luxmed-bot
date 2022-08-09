@@ -1,10 +1,12 @@
 
 package com.lbs.common
 
+import com.typesafe.scalalogging.LazyLogging
+
 import java.util.concurrent.{Executors, ScheduledFuture}
 import scala.concurrent.duration.FiniteDuration
 
-class Scheduler(poolSize: Int) extends Logger {
+class Scheduler(poolSize: Int) extends LazyLogging {
   private val scheduledThreadPool = Executors.newScheduledThreadPool(poolSize)
 
   def schedule(fn: => Unit, period: FiniteDuration): ScheduledFuture[_] = {
@@ -22,7 +24,7 @@ class Scheduler(poolSize: Int) extends Logger {
         fn
       } catch {
         case ex: Exception =>
-          error(s"Unable to execute scheduler task", ex)
+          logger.error(s"Unable to execute scheduler task", ex)
       }
   }
 }

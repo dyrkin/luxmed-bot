@@ -3,15 +3,15 @@ package com.lbs.server.conversation
 
 import akka.actor.{ActorSystem, Cancellable}
 import com.lbs.bot.model.{Command, MessageSource}
-import com.lbs.common.Logger
 import com.lbs.server.conversation.Account.SwitchAccount
 import com.lbs.server.conversation.base.Conversation
+import com.typesafe.scalalogging.StrictLogging
 
 import scala.collection.mutable
 import scala.concurrent.ExecutionContextExecutor
 import scala.concurrent.duration.DurationLong
 
-class Router(authFactory: MessageSourceTo[Auth])(val actorSystem: ActorSystem) extends Conversation[Unit] with Logger {
+class Router(authFactory: MessageSourceTo[Auth])(val actorSystem: ActorSystem) extends Conversation[Unit] with StrictLogging {
 
   private case class DestroyChat(source: MessageSource)
 
@@ -32,14 +32,14 @@ class Router(authFactory: MessageSourceTo[Auth])(val actorSystem: ActorSystem) e
         chat ! cmd
         stay()
       case Msg(DestroyChat(source), _) =>
-        info(s"Destroying chat for $source due to $idleTimeout of inactivity")
+        logger.info(s"Destroying chat for $source due to $idleTimeout of inactivity")
         destroyChat(source)
         stay()
       case Msg(SwitchAccount(userId), _) =>
         switchAccount(userId)
         stay()
       case msg: Msg =>
-        info(s"Unknown message received: $msg")
+        logger.info(s"Unknown message received: $msg")
         stay()
     }
 

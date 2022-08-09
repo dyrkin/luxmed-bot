@@ -69,7 +69,7 @@ class TimePicker(val userId: UserId, val bot: Bot, val localization: Localizatio
           end()
         } catch {
           case NonFatal(ex) =>
-            error("Unable to parse time", ex)
+            logger.error("Unable to parse time", ex)
             bot.sendMessage(userId.source, "Incorrect time. Please use format HH:mm")
             goto(requestTime)
         }

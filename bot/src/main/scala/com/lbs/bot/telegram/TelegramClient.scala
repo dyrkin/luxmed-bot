@@ -8,11 +8,11 @@ import com.bot4s.telegram.clients.AkkaHttpClient
 import com.bot4s.telegram.future.{Polling, TelegramBot => TelegramBoT}
 import com.bot4s.telegram.methods._
 import com.bot4s.telegram.models.{InlineKeyboardMarkup, InputFile, Message}
-import com.lbs.common.Logger
+import com.typesafe.scalalogging.StrictLogging
 
 import scala.concurrent.Future
 
-class TelegramClient(onReceive: TelegramEvent => Unit, botToken: String) extends AkkaTelegramBot with TelegramBoT with Polling with Commands[Future] with Callbacks[Future] with Logger {
+class TelegramClient(onReceive: TelegramEvent => Unit, botToken: String) extends AkkaTelegramBot with TelegramBoT with Polling with Commands[Future] with Callbacks[Future] with StrictLogging {
 
   override val client: RequestHandler[Future] = new AkkaHttpClient(botToken)
 
@@ -32,18 +32,18 @@ class TelegramClient(onReceive: TelegramEvent => Unit, botToken: String) extends
     loggingRequest(SendDocument(chatId, InputFile(filename, contents), caption = caption))
 
   private def loggingRequest[R: Manifest](req: Request[R]): Future[R] = {
-    debug(s"Sending telegram request: $req")
+    logger.debug(s"Sending telegram request: $req")
     request(req)
   }
 
 
   override def receiveMessage(msg: Message): Future[Unit] = {
-    debug(s"Received telegram message: $msg")
+    logger.debug(s"Received telegram message: $msg")
     Future.successful(onReceive(TelegramEvent(msg, None)))
   }
 
   onCallbackWithTag(TagPrefix) { implicit cbq =>
-    debug(s"Received telegram callback: $cbq")
+    logger.debug(s"Received telegram callback: $cbq")
     val ack = ackCallback()
     val maybeOnReceive = for {
       data <- cbq.data.map(_.stripPrefix(TagPrefix))

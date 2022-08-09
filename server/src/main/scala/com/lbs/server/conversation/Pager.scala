@@ -3,18 +3,18 @@ package com.lbs.server.conversation
 
 import akka.actor.ActorSystem
 import com.lbs.bot.model.{Button, Command}
-import com.lbs.bot.{Bot, _}
-import com.lbs.common.Logger
+import com.lbs.bot._
 import com.lbs.server.conversation.Login.UserId
-import com.lbs.server.conversation.Pager.{Tags, _}
+import com.lbs.server.conversation.Pager._
 import com.lbs.server.conversation.base.{Conversation, Interactional}
 import com.lbs.server.lang.{Localizable, Localization}
 import com.lbs.server.util.MessageExtractors
+import com.typesafe.scalalogging.StrictLogging
 
 class Pager[Data](val userId: UserId, bot: Bot, makeMessage: (Data, Int, Int) => String,
                   makeHeader: (Int, Int) => String, selectionPrefix: Option[String],
                   val localization: Localization, originator: Interactional)(val actorSystem: ActorSystem)
-  extends Conversation[(ItemsProvider[Data], Option[String])] with Localizable with Logger {
+  extends Conversation[(ItemsProvider[Data], Option[String])] with Localizable with StrictLogging {
 
   private val Selection = s"/${selectionPrefix.getOrElse("")}_(\\d+)".r
 

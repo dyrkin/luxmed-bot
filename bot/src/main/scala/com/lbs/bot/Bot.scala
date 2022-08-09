@@ -3,9 +3,9 @@ package com.lbs.bot
 
 import com.lbs.bot.model._
 import com.lbs.bot.telegram.TelegramBot
-import com.lbs.common.Logger
+import com.typesafe.scalalogging.LazyLogging
 
-class Bot(telegram: TelegramBot /* other bots */) extends Logger {
+class Bot(telegram: TelegramBot /* other bots */) extends LazyLogging {
   def sendMessage(source: MessageSource, text: String): Unit =
     resolveAdapter(source).sendMessage(source.chatId, text)
 

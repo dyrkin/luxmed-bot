@@ -130,7 +130,7 @@ class BookWithTemplate(val userId: UserId, bot: Bot, apiService: ApiService, dat
         } yield (lockTermResponse, xsrfToken)
         response match {
           case Left(ex) =>
-            warn(s"Service [${bookingData.serviceId.name}] is already booked. Ask to update term", ex)
+            logger.warn(s"Service [${bookingData.serviceId.name}] is already booked. Ask to update term", ex)
             bot.sendMessage(userId.source, lang.visitAlreadyExists,
               inlineKeyboard = createInlineKeyboard(Seq(Button(lang.no, Tags.No), Button(lang.yes, Tags.Yes))))
             goto(awaitRebookDecision) using bookingData.copy(term = Some(term))
@@ -167,15 +167,15 @@ class BookWithTemplate(val userId: UserId, bot: Bot, apiService: ApiService, dat
       case Msg(CallbackCommand(Tags.Yes), bookingData: BookingData) =>
         apiService.reservationChangeTerm(userId.accountId, bookingData.xsrfToken.get, (bookingData.reservationLocktermResponse.get, bookingData.term.get).mapTo[ReservationChangetermRequest]) match {
           case Right(success) =>
-            debug(s"Successfully confirmed: $success")
+            logger.debug(s"Successfully confirmed: $success")
             bot.sendMessage(userId.source, lang.appointmentIsConfirmed)
           case Left(ex) =>
-            error("Error during reservation", ex)
+            logger.error("Error during reservation", ex)
             bot.sendMessage(userId.source, ex.getMessage)
         }
         end()
       case Msg(CallbackCommand(Tags.No), _) =>
-        info("User doesn't want to change term")
+        logger.info("User doesn't want to change term")
         end()
     }
 
@@ -199,10 +199,10 @@ class BookWithTemplate(val userId: UserId, bot: Bot, apiService: ApiService, dat
       case Some(reservationRequest) =>
         apiService.reservationConfirm(userId.accountId, bookingData.xsrfToken.get, reservationRequest) match {
           case Left(ex) =>
-            error("Error during reservation", ex)
+            logger.error("Error during reservation", ex)
             bot.sendMessage(userId.source, ex.getMessage)
           case Right(success) =>
-            debug(s"Successfully confirmed: $success")
+            logger.debug(s"Successfully confirmed: $success")
             bot.sendMessage(userId.source, lang.appointmentIsConfirmed)
         }
       case _ => sys.error(s"Can not prepare reservation request using booking data $bookingData")
@@ -242,13 +242,13 @@ class BookWithTemplate(val userId: UserId, bot: Bot, apiService: ApiService, dat
 
   private def createMonitoring: Step =
     process { bookingData =>
-      debug(s"Creating monitoring for $bookingData")
+      logger.debug(s"Creating monitoring for $bookingData")
       try {
         monitoringService.createMonitoring((userId -> bookingData).mapTo[Monitoring])
         bot.sendMessage(userId.source, lang.monitoringHasBeenCreated)
       } catch {
         case ex: Exception =>
-          error("Unable to create monitoring", ex)
+          logger.error("Unable to create monitoring", ex)
           bot.sendMessage(userId.source, lang.unableToCreateMonitoring(ex.getMessage))
       }
       end()

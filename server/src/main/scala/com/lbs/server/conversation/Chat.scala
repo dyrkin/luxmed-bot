@@ -3,18 +3,18 @@ package com.lbs.server.conversation
 
 import akka.actor.ActorSystem
 import com.lbs.bot.model.Command
-import com.lbs.common.Logger
 import com.lbs.server.conversation.Chat._
 import com.lbs.server.conversation.Login.UserId
 import com.lbs.server.conversation.base.{Conversation, Interactional}
 import com.lbs.server.service.{DataService, MonitoringService}
 import com.lbs.server.util.MessageExtractors._
+import com.typesafe.scalalogging.StrictLogging
 
 import scala.util.matching.Regex
 
 class Chat(val userId: UserId, dataService: DataService, monitoringService: MonitoringService, bookingFactory: UserIdTo[Book],
            helpFactory: UserIdTo[Help], monitoringsFactory: UserIdTo[Monitorings], monitoringsHistoryFactory: UserIdTo[MonitoringsHistory], historyFactory: UserIdTo[HistoryViewer],
-           visitsFactory: UserIdTo[ReservedVisitsViewer], settingsFactory: UserIdTo[Settings], accountFactory: UserIdTo[Account])(val actorSystem: ActorSystem) extends Conversation[Unit] with Logger {
+           visitsFactory: UserIdTo[ReservedVisitsViewer], settingsFactory: UserIdTo[Settings], accountFactory: UserIdTo[Account])(val actorSystem: ActorSystem) extends Conversation[Unit] with StrictLogging {
 
   private val book = bookingFactory(userId)
   private val help = helpFactory(userId)

@@ -1,10 +1,10 @@
 package com.lbs.server.conversation.base
 
-import com.lbs.common.Logger
+import com.typesafe.scalalogging.StrictLogging
 
 import scala.util.control.NonFatal
 
-trait Conversation[D] extends Domain[D] with Interactional with Logger {
+trait Conversation[D] extends Domain[D] with Interactional with StrictLogging {
 
   private var currentData: D = _
 
@@ -16,7 +16,7 @@ trait Conversation[D] extends Domain[D] with Interactional with Logger {
 
   private val defaultMsgHandler: MessageProcessorFn = {
     case Msg(any, data) =>
-      warn(s"Unhandled message received in step '${currentStep.name}'. Message: [$any]. Data: [$data]")
+      logger.warn(s"Unhandled message received in step '${currentStep.name}'. Message: [$any]. Data: [$data]")
       NextStep(currentStep, Some(data))
   }
 
@@ -32,7 +32,7 @@ trait Conversation[D] extends Domain[D] with Interactional with Logger {
         case _ => //do nothing
       }
     } catch {
-      case NonFatal(ex) => error("Step execution failed", ex)
+      case NonFatal(ex) => logger.error("Step execution failed", ex)
     }
   }
 
@@ -42,7 +42,7 @@ trait Conversation[D] extends Domain[D] with Interactional with Logger {
         val nextStep = if (fn.isDefinedAt(unit)) fn(unit) else defaultFn(unit)
         moveToNextStep(nextStep)
       } catch {
-        case NonFatal(ex) => error("Step transition failed", ex)
+        case NonFatal(ex) => logger.error("Step transition failed", ex)
       }
     }
 
@@ -58,7 +58,7 @@ trait Conversation[D] extends Domain[D] with Interactional with Logger {
   }
 
   private def moveToNextStep(nextStep: NextStep): Unit = {
-    trace(s"Moving from step '${currentStep.name}' to step '${nextStep.step.name}'")
+    logger.trace(s"Moving from step '${currentStep.name}' to step '${nextStep.step.name}'")
     currentStep = nextStep.step
     nextStep.data.foreach { data =>
       currentData = data
