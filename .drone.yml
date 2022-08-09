@@ -27,9 +27,9 @@ steps:
         from_secret: docker_password
       dockerfile: docker/Dockerfile
       context: docker/
-      when:
-        branch: master
-        event: push
+    when:
+      branch: master
+      event: push
 
   - name: deploy_and_restart
     image: appleboy/drone-ssh

@@ -1,49 +1,24 @@
-group = 'com.lbs'
-
-ext {
-    scalaVersion = "2.12.8"
+plugins {
+    id "com.github.maiflai.scalatest" version "0.32"
+    id "org.springframework.boot" version "2.7.2"
 }
 
 allprojects {
-    group = 'com.lbs'
-}
-
-apply plugin: 'idea'
-
-subprojects {
-
-    idea {
-        module {
-            downloadSources = true
-        }
-    }
+    apply plugin: "scala"
+    apply plugin: "java-library"
+    apply plugin: "com.github.maiflai.scalatest"
 
     repositories {
         mavenCentral()
-        jcenter()
-        maven { url 'https://repo.spring.io/libs-milestone' }
+        maven { url "https://repo.spring.io/libs-milestone" }
     }
-
-    apply plugin: 'java'
-    apply plugin: 'scala'
 
     dependencies {
-        compile group: 'org.scala-lang', name: "scala-library", version: scalaVersion
+        compileOnly "org.scala-lang:scala-library:$scala.$scala_minor"
 
-        testCompile('org.scalatest:scalatest_2.12:3.0.4')
-        testCompile('org.mockito:mockito-core:2.13.0')
-        testCompile('org.pegdown:pegdown:1.6.0')
+        testImplementation "org.scalatest:scalatest_$scala:3.0.4"
+
+        testImplementation "org.mockito:mockito-core:2.13.0"
+        testImplementation "org.pegdown:pegdown:1.6.0"
     }
-
-    task scalaTest(dependsOn: ['testClasses'], type: JavaExec) {
-        main = 'org.scalatest.tools.Runner'
-        args = ['-R', "build/classes/scala/test",
-                '-u', "build/test-results/$name",
-                '-h', "build/resports/scalaTests/$name",
-                '-o'
-        ]
-        classpath = sourceSets.test.runtimeClasspath
-    }
-
-    test.dependsOn scalaTest
 }

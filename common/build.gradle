@@ -1,6 +1,5 @@
 dependencies {
-    compile group: "org.slf4j", name: "slf4j-api", version: "1.7.25"
-    compile group: "ch.qos.logback", name: "logback-classic", version: "1.2.3"
-    compile group: "ch.qos.logback", name: "logback-core", version: "1.2.3"
-    compile("org.typelevel:cats-core_2.12:2.0.0-M1")
+    api "org.slf4j:slf4j-api:1.7.25"
+    api "ch.qos.logback:logback-classic:1.2.3"
+    api "org.typelevel:cats-core_$scala:2.0.0-M1"
 }
