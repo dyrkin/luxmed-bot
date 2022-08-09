@@ -10,7 +10,8 @@ import scala.reflect.ClassTag
 
 object ConversationTestProbe extends MockitoSugar {
 
-  class ConversationTestProbe[T <: Interactional](actorSystem: ActorSystem, conversationMock: T) extends TestProbe(actorSystem) {
+  class ConversationTestProbe[T <: Interactional](actorSystem: ActorSystem, conversationMock: T)
+      extends TestProbe(actorSystem) {
     when(conversationMock.ref).thenReturn(ref)
     when(conversationMock.!(any())(any())).thenCallRealMethod()
     when(conversationMock.start()).thenCallRealMethod()
@@ -23,8 +24,8 @@ object ConversationTestProbe extends MockitoSugar {
     when(conversationMock.ContinueConversation).thenCallRealMethod()
 
     ignoreMsg {
-      case conversationMock.InitConversation => true
-      case conversationMock.StartConversation => true
+      case conversationMock.InitConversation     => true
+      case conversationMock.StartConversation    => true
       case conversationMock.ContinueConversation => true
     }
 

@@ -1,4 +1,3 @@
-
 package com.lbs.api.json
 
 import com.lbs.api.json.model.{LuxmedFunnyDateTime, SerializableJsonObject}
@@ -10,43 +9,58 @@ import java.time.format.DateTimeFormatter
 import java.time.{LocalDateTime, LocalTime, ZonedDateTime}
 import scala.util.Try
 
-
 object JsonSerializer extends StrictLogging {
 
-  private val zonedDateTimeSerializer = new CustomSerializer[ZonedDateTime](_ => ( {
-    case JString(str) => ZonedDateTime.parse(str, DateTimeFormatter.ISO_OFFSET_DATE_TIME)
-  }, {
-    case zonedDateTime: ZonedDateTime => JString(zonedDateTime.format(DateTimeFormatter.ISO_OFFSET_DATE_TIME))
-  }
-  ))
+  private val zonedDateTimeSerializer = new CustomSerializer[ZonedDateTime](_ =>
+    (
+      { case JString(str) =>
+        ZonedDateTime.parse(str, DateTimeFormatter.ISO_OFFSET_DATE_TIME)
+      },
+      { case zonedDateTime: ZonedDateTime =>
+        JString(zonedDateTime.format(DateTimeFormatter.ISO_OFFSET_DATE_TIME))
+      }
+    )
+  )
 
-  private val localTimeSerializer = new CustomSerializer[LocalTime](_ => ( {
-    case JString(str) => LocalTime.parse(str)
-  }, {
-    case localTime: LocalTime => JString(localTime.toString)
-  }
-  ))
+  private val localTimeSerializer = new CustomSerializer[LocalTime](_ =>
+    (
+      { case JString(str) =>
+        LocalTime.parse(str)
+      },
+      { case localTime: LocalTime =>
+        JString(localTime.toString)
+      }
+    )
+  )
 
-  private val localDateTimeSerializer = new CustomSerializer[LocalDateTime](_ => ( {
-    case JString(str) => LocalDateTime.parse(str)
-  }, {
-    case localTime: LocalDateTime => JString(localTime.toString)
-  }
-  ))
+  private val localDateTimeSerializer = new CustomSerializer[LocalDateTime](_ =>
+    (
+      { case JString(str) =>
+        LocalDateTime.parse(str)
+      },
+      { case localTime: LocalDateTime =>
+        JString(localTime.toString)
+      }
+    )
+  )
 
-  private val luxmedFunnyDateTimeSerializer = new CustomSerializer[LuxmedFunnyDateTime](_ => ( {
-    case JString(str) =>
-      Try(LocalDateTime.parse(str))
-        .map(v => LuxmedFunnyDateTime(dateTimeLocal = Some(v)))
-        .recoverWith{case _ => Try(ZonedDateTime.parse(str)).map(v => LuxmedFunnyDateTime(dateTimeTz = Some(v)))}
-        .getOrElse(sys.error(s"can't parse date $str"))
-  }, {
-    case time: LocalDateTime => JString(time.toString)
-    case time: ZonedDateTime => JString(time.toString)
-  }
-  ))
+  private val luxmedFunnyDateTimeSerializer = new CustomSerializer[LuxmedFunnyDateTime](_ =>
+    (
+      { case JString(str) =>
+        Try(LocalDateTime.parse(str))
+          .map(v => LuxmedFunnyDateTime(dateTimeLocal = Some(v)))
+          .recoverWith { case _ => Try(ZonedDateTime.parse(str)).map(v => LuxmedFunnyDateTime(dateTimeTz = Some(v))) }
+          .getOrElse(sys.error(s"can't parse date $str"))
+      },
+      {
+        case time: LocalDateTime => JString(time.toString)
+        case time: ZonedDateTime => JString(time.toString)
+      }
+    )
+  )
 
-  private implicit val formats: Formats = DefaultFormats.withStrictArrayExtraction + zonedDateTimeSerializer + localTimeSerializer + localDateTimeSerializer + luxmedFunnyDateTimeSerializer
+  private implicit val formats: Formats =
+    DefaultFormats.withStrictArrayExtraction + zonedDateTimeSerializer + localTimeSerializer + localDateTimeSerializer + luxmedFunnyDateTimeSerializer
 
   def extract[T](jsonString: String)(implicit mf: scala.reflect.Manifest[T]): T = {
     parse(jsonString).camelizeKeys.extract[T]

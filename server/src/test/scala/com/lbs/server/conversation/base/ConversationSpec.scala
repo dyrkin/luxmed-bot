@@ -22,35 +22,31 @@ class ConversationSpec extends AkkaTestKit {
         private var conf: String = _
 
         def configure: Step =
-          monologue {
-            case Msg(confStr: String, data) =>
-              conf = confStr
-              goto(askHello) using data.copy(configured = true)
+          monologue { case Msg(confStr: String, data) =>
+            conf = confStr
+            goto(askHello) using data.copy(configured = true)
           }
 
         def askHello: Step =
           ask { data =>
             self ! Hello
-          } onReply {
-            case Msg(Hello, data) =>
-              goto(askWorld) using data.copy(hello = "hello")
+          } onReply { case Msg(Hello, data) =>
+            goto(askWorld) using data.copy(hello = "hello")
           }
 
         def askWorld: Step =
           ask { data =>
             self ! World
-          } onReply {
-            case Msg(World, data) =>
-              goto(askDialogue) using data.copy(world = "world")
+          } onReply { case Msg(World, data) =>
+            goto(askDialogue) using data.copy(world = "world")
           }
 
         def askDialogue: Step =
           ask { data =>
             self ! Dialogue
-          } onReply {
-            case Msg(Dialogue, data) =>
-              originator ! data.copy(people = "dialogue") -> conf
-              end()
+          } onReply { case Msg(Dialogue, data) =>
+            originator ! data.copy(people = "dialogue") -> conf
+            end()
           }
 
         entryPoint(configure, Data())
@@ -64,7 +60,7 @@ class ConversationSpec extends AkkaTestKit {
       testConversation ! expected._2
       originator.expectMsg(expected)
 
-      //reinit
+      // reinit
       testConversation.restart()
       testConversation ! expected._2
       originator.expectMsg(expected)
@@ -91,10 +87,9 @@ class ConversationSpec extends AkkaTestKit {
         def askMessage2: Step =
           ask { _ =>
             self ! InvokeEnrichMessage
-          } onReply {
-            case Msg(InvokeEnrichMessage, data) =>
-              originator ! data.copy(message2 = "world")
-              end()
+          } onReply { case Msg(InvokeEnrichMessage, data) =>
+            originator ! data.copy(message2 = "world")
+            end()
           }
 
         entryPoint(configure1, Data())
@@ -107,7 +102,7 @@ class ConversationSpec extends AkkaTestKit {
       actor.start()
       originator.expectMsg(expected)
 
-      //reinit
+      // reinit
       actor.restart()
       originator.expectMsg(expected)
     }

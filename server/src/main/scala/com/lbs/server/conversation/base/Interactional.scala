@@ -29,9 +29,9 @@ trait Interactional extends StrictLogging {
     private implicit val dispatcher: ExecutionContextExecutor = context.system.dispatcher
 
     override def receive: Receive = {
-      case InitConversation => initializeConversation()
+      case InitConversation                         => initializeConversation()
       case StartConversation | ContinueConversation => executeCurrentStep()
-      case any => makeStepTransition(any)
+      case any                                      => makeStepTransition(any)
     }
 
     override def preStart(): Unit = {
@@ -71,4 +71,3 @@ trait Interactional extends StrictLogging {
     ref ! PoisonPill
   }
 }
-

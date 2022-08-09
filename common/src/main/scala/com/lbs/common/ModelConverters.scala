@@ -1,7 +1,6 @@
-
 package com.lbs.common
 
-import scala.collection.{BuildFrom, IterableOps}
+import scala.collection.IterableOps
 import scala.language.implicitConversions
 
 trait ModelConverters {
@@ -14,8 +13,9 @@ trait ModelConverters {
     def mapTo[To](implicit converter: ObjectConverter[From, To]): To = converter.convert(anyRef)
   }
 
-  implicit def sequenceConverters[From, To, Col[+X] <: IterableOps[X, Col, Col[X]]]
-  (implicit objectConverter: ObjectConverter[From, To]): ObjectConverter[Col[From], Col[To]] =
+  implicit def sequenceConverters[From, To, Col[+X] <: IterableOps[X, Col, Col[X]]](implicit
+    objectConverter: ObjectConverter[From, To]
+  ): ObjectConverter[Col[From], Col[To]] =
     (col: Col[From]) => col.map(objectConverter.convert)
 
 }

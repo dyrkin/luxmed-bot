@@ -1,4 +1,3 @@
-
 package com.lbs
 
 import cats.MonadError

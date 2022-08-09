@@ -1,4 +1,3 @@
-
 package com.lbs.server.conversation
 
 import akka.actor.ActorSystem
@@ -11,8 +10,17 @@ import com.lbs.server.service.{ApiService, DataService}
 import com.lbs.server.util.MessageExtractors
 import org.jasypt.util.text.TextEncryptor
 
-class Login(source: MessageSource, bot: Bot, dataService: DataService, apiService: ApiService, textEncryptor: TextEncryptor,
-            val localization: Localization, originator: Interactional)(val actorSystem: ActorSystem) extends Conversation[String] with Localizable {
+class Login(
+  source: MessageSource,
+  bot: Bot,
+  dataService: DataService,
+  apiService: ApiService,
+  textEncryptor: TextEncryptor,
+  val localization: Localization,
+  originator: Interactional
+)(val actorSystem: ActorSystem)
+    extends Conversation[String]
+    with Localizable {
 
   protected var userId: UserId = _
 
@@ -21,38 +29,35 @@ class Login(source: MessageSource, bot: Bot, dataService: DataService, apiServic
   private var forwardCommand: ForwardCommand = _
 
   def logIn: Step =
-    monologue {
-      case Msg(cmd: Command, _) =>
-        forwardCommand = ForwardCommand(cmd)
-        goto(requestUsername)
+    monologue { case Msg(cmd: Command, _) =>
+      forwardCommand = ForwardCommand(cmd)
+      goto(requestUsername)
     }
 
   def requestUsername: Step =
     ask { _ =>
       bot.sendMessage(source, lang.provideUsername)
-    } onReply {
-      case Msg(MessageExtractors.TextCommand(username), _) =>
-        goto(requestPassword) using username
+    } onReply { case Msg(MessageExtractors.TextCommand(username), _) =>
+      goto(requestPassword) using username
     }
 
   def requestPassword: Step =
     ask { _ =>
       bot.sendMessage(source, lang.providePassword)
-    } onReply {
-      case Msg(MessageExtractors.TextCommand(plainPassword), username) =>
-        val password = textEncryptor.encrypt(plainPassword)
-        apiService.fullLogin(username, password) match {
-          case Left(error) =>
-            bot.sendMessage(source, error.getMessage)
-            goto(requestUsername)
-          case Right(session) =>
-            val credentials = dataService.saveCredentials(source, username, password)
-            userId = UserId(credentials.userId, credentials.accountId, source)
-            apiService.addSession(credentials.accountId, session)
-            bot.sendMessage(source, lang.loginAndPasswordAreOk)
-            originator ! LoggedIn(forwardCommand, credentials.userId, credentials.accountId)
-            end()
-        }
+    } onReply { case Msg(MessageExtractors.TextCommand(plainPassword), username) =>
+      val password = textEncryptor.encrypt(plainPassword)
+      apiService.fullLogin(username, password) match {
+        case Left(error) =>
+          bot.sendMessage(source, error.getMessage)
+          goto(requestUsername)
+        case Right(session) =>
+          val credentials = dataService.saveCredentials(source, username, password)
+          userId = UserId(credentials.userId, credentials.accountId, source)
+          apiService.addSession(credentials.accountId, session)
+          bot.sendMessage(source, lang.loginAndPasswordAreOk)
+          originator ! LoggedIn(forwardCommand, credentials.userId, credentials.accountId)
+          end()
+      }
     }
 }
 

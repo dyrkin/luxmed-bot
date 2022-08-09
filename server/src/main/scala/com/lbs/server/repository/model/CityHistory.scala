@@ -1,4 +1,3 @@
-
 package com.lbs.server.repository.model
 
 import java.time.ZonedDateTime

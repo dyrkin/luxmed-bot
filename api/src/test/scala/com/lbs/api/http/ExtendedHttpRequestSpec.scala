@@ -27,11 +27,17 @@ class ExtendedHttpRequestSpec extends AnyFunSuite with Matchers with MockitoSuga
   }
 
   test("error response") {
-    val errorResponse = HttpResponse("""{"Errors":{"ToDate.Date":["'To Date. Date' must be greater than or equal to '06/04/2018 00:00:00'."]}}""", 200, Map())
+    val errorResponse = HttpResponse(
+      """{"Errors":{"ToDate.Date":["'To Date. Date' must be greater than or equal to '06/04/2018 00:00:00'."]}}""",
+      200,
+      Map()
+    )
     when(request.asString).thenReturn(errorResponse)
     val result = invoke(request)
 
-    assert(result == Left(GenericException(200, "'To Date. Date' must be greater than or equal to '06/04/2018 00:00:00'.")))
+    assert(
+      result == Left(GenericException(200, "'To Date. Date' must be greater than or equal to '06/04/2018 00:00:00'."))
+    )
   }
 
   private def invoke(request: HttpRequest) = {

@@ -1,4 +1,3 @@
-
 package com.lbs.server.conversation
 
 import akka.actor.ActorSystem
@@ -9,8 +8,15 @@ import com.lbs.server.service.DataService
 import com.lbs.server.util.MessageExtractors._
 import com.typesafe.scalalogging.StrictLogging
 
-class Auth(val source: MessageSource, dataService: DataService, unauthorizedHelpFactory: MessageSourceTo[UnauthorizedHelp],
-           loginFactory: MessageSourceWithOriginatorTo[Login], chatFactory: UserIdTo[Chat])(val actorSystem: ActorSystem) extends Conversation[Unit] with StrictLogging {
+class Auth(
+  val source: MessageSource,
+  dataService: DataService,
+  unauthorizedHelpFactory: MessageSourceTo[UnauthorizedHelp],
+  loginFactory: MessageSourceWithOriginatorTo[Login],
+  chatFactory: UserIdTo[Chat]
+)(val actorSystem: ActorSystem)
+    extends Conversation[Unit]
+    with StrictLogging {
 
   private val login = loginFactory(source, self)
   private val unauthorizedHelp = unauthorizedHelpFactory(source)
@@ -22,13 +28,13 @@ class Auth(val source: MessageSource, dataService: DataService, unauthorizedHelp
 
   private def processIncoming =
     monologue {
-      case Msg(cmd@TextCommand("/help"), _) if userId.isEmpty =>
+      case Msg(cmd @ TextCommand("/help"), _) if userId.isEmpty =>
         unauthorizedHelp ! cmd
         stay()
-      case Msg(cmd@TextCommand("/start"), _) if userId.isEmpty =>
+      case Msg(cmd @ TextCommand("/start"), _) if userId.isEmpty =>
         unauthorizedHelp ! cmd
         stay()
-      case Msg(cmd@TextCommand("/login"), _) =>
+      case Msg(cmd @ TextCommand("/login"), _) =>
         userId = None
         login.restart()
         login ! cmd

@@ -1,4 +1,3 @@
-
 package com.lbs.bot.telegram
 
 import com.bot4s.telegram.models.Message

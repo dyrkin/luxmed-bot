@@ -1,17 +1,19 @@
-
 package com.lbs.server.conversation
 
 import akka.actor.ActorSystem
 import com.lbs.api.json.model.{IdName, Identified}
+import com.lbs.bot._
 import com.lbs.bot.model.{Button, Command, TaggedButton}
-import com.lbs.bot.{Bot, _}
 import com.lbs.server.ThrowableOr
 import com.lbs.server.conversation.Login.UserId
 import com.lbs.server.conversation.StaticData._
 import com.lbs.server.conversation.base.{Conversation, Interactional}
 import com.lbs.server.lang.{Localizable, Localization}
 
-class StaticData(val userId: UserId, bot: Bot, val localization: Localization, originator: Interactional)(val actorSystem: ActorSystem) extends Conversation[List[TaggedButton]] with Localizable {
+class StaticData(val userId: UserId, bot: Bot, val localization: Localization, originator: Interactional)(
+  val actorSystem: ActorSystem
+) extends Conversation[List[TaggedButton]]
+    with Localizable {
 
   private def anySelectOption: List[TaggedButton] = if (config.isAnyAllowed) List(Button(lang.any, -1L)) else List()
 
@@ -20,10 +22,9 @@ class StaticData(val userId: UserId, bot: Bot, val localization: Localization, o
   entryPoint(AwaitConfig)
 
   def AwaitConfig: Step =
-    monologue {
-      case Msg(newConfig: StaticDataConfig, _) =>
-        config = newConfig
-        goto(askForLatestOption)
+    monologue { case Msg(newConfig: StaticDataConfig, _) =>
+      config = newConfig
+      goto(askForLatestOption)
     }
 
   def askForLatestOption: Step =
@@ -40,12 +41,16 @@ class StaticData(val userId: UserId, bot: Bot, val localization: Localization, o
 
   def askForUserInput: Step =
     ask { callbackTags =>
-      bot.sendMessage(userId.source, lang.pleaseEnterStaticDataNameOrPrevious(config),
-        inlineKeyboard = createInlineKeyboard(callbackTags, columns = 1))
+      bot.sendMessage(
+        userId.source,
+        lang.pleaseEnterStaticDataNameOrPrevious(config),
+        inlineKeyboard = createInlineKeyboard(callbackTags, columns = 1)
+      )
     } onReply {
       case Msg(Command(_, msg, Some(tag)), callbackTags) =>
         val id = tag.toLong
-        val label = callbackTags.find(_.tag == tag).map(_.label).getOrElse(sys.error("Unable to get callback tag label"))
+        val label =
+          callbackTags.find(_.tag == tag).map(_.label).getOrElse(sys.error("Unable to get callback tag label"))
         bot.sendEditMessage(userId.source, msg.messageId, lang.staticDataIs(config, label))
         originator ! IdName(id, label)
         end()

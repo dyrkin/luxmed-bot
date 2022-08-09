@@ -1,4 +1,3 @@
-
 package com.lbs.server.conversation
 
 import akka.actor.ActorSystem
@@ -12,9 +11,21 @@ import com.typesafe.scalalogging.StrictLogging
 
 import scala.util.matching.Regex
 
-class Chat(val userId: UserId, dataService: DataService, monitoringService: MonitoringService, bookingFactory: UserIdTo[Book],
-           helpFactory: UserIdTo[Help], monitoringsFactory: UserIdTo[Monitorings], monitoringsHistoryFactory: UserIdTo[MonitoringsHistory], historyFactory: UserIdTo[HistoryViewer],
-           visitsFactory: UserIdTo[ReservedVisitsViewer], settingsFactory: UserIdTo[Settings], accountFactory: UserIdTo[Account])(val actorSystem: ActorSystem) extends Conversation[Unit] with StrictLogging {
+class Chat(
+  val userId: UserId,
+  dataService: DataService,
+  monitoringService: MonitoringService,
+  bookingFactory: UserIdTo[Book],
+  helpFactory: UserIdTo[Help],
+  monitoringsFactory: UserIdTo[Monitorings],
+  monitoringsHistoryFactory: UserIdTo[MonitoringsHistory],
+  historyFactory: UserIdTo[HistoryViewer],
+  visitsFactory: UserIdTo[ReservedVisitsViewer],
+  settingsFactory: UserIdTo[Settings],
+  accountFactory: UserIdTo[Account]
+)(val actorSystem: ActorSystem)
+    extends Conversation[Unit]
+    with StrictLogging {
 
   private val book = bookingFactory(userId)
   private val help = helpFactory(userId)
@@ -29,99 +40,91 @@ class Chat(val userId: UserId, dataService: DataService, monitoringService: Moni
 
   private def helpChat: Step =
     dialogue(help) {
-      case Msg(cmd@TextCommand("/help"), _) =>
+      case Msg(cmd @ TextCommand("/help"), _) =>
         help ! cmd
         stay()
-      case Msg(cmd@TextCommand("/start"), _) =>
+      case Msg(cmd @ TextCommand("/start"), _) =>
         help ! cmd
         stay()
     }
 
   private def bookChat: Step =
-    dialogue(book) {
-      case Msg(TextCommand("/book"), _) =>
-        book.restart()
-        stay()
+    dialogue(book) { case Msg(TextCommand("/book"), _) =>
+      book.restart()
+      stay()
     }
 
   private def historyChat: Step =
-    dialogue(history) {
-      case Msg(TextCommand("/history"), _) =>
-        history.restart()
-        stay()
+    dialogue(history) { case Msg(TextCommand("/history"), _) =>
+      history.restart()
+      stay()
     }
 
   private def visitsChat: Step =
-    dialogue(visits) {
-      case Msg(TextCommand("/reserved"), _) =>
-        visits.restart()
-        stay()
+    dialogue(visits) { case Msg(TextCommand("/reserved"), _) =>
+      visits.restart()
+      stay()
     }
 
   private def monitoringsChat: Step =
-    dialogue(monitorings) {
-      case Msg(TextCommand("/monitorings"), _) =>
-        monitorings.restart()
-        stay()
+    dialogue(monitorings) { case Msg(TextCommand("/monitorings"), _) =>
+      monitorings.restart()
+      stay()
     }
 
   private def monitoringsHistoryChat: Step =
-    dialogue(monitoringsHistory) {
-      case Msg(TextCommand("/monitorings_history"), _) =>
-        monitoringsHistory.restart()
-        stay()
+    dialogue(monitoringsHistory) { case Msg(TextCommand("/monitorings_history"), _) =>
+      monitoringsHistory.restart()
+      stay()
     }
 
   private def settingsChat: Step =
-    dialogue(settings) {
-      case Msg(TextCommand("/settings"), _) =>
-        settings.restart()
-        stay()
+    dialogue(settings) { case Msg(TextCommand("/settings"), _) =>
+      settings.restart()
+      stay()
     }
 
   private def accountChat: Step =
-    dialogue(account) {
-      case Msg(TextCommand("/accounts"), _) =>
-        account.restart()
-        stay()
+    dialogue(account) { case Msg(TextCommand("/accounts"), _) =>
+      account.restart()
+      stay()
     }
 
   private def dialogue(interactional: Interactional)(mainMessageProcessor: MessageProcessorFn): Step =
-    monologue {
-      case event: Msg =>
-        if (mainMessageProcessor.isDefinedAt(event)) mainMessageProcessor(event)
-        else {
-          val defaultMessageProcessor = secondaryState(interactional)
-          defaultMessageProcessor(event)
-        }
+    monologue { case event: Msg =>
+      if (mainMessageProcessor.isDefinedAt(event)) mainMessageProcessor(event)
+      else {
+        val defaultMessageProcessor = secondaryState(interactional)
+        defaultMessageProcessor(event)
+      }
     }
 
   private def secondaryState(interactional: Interactional): MessageProcessorFn = {
-    case Msg(cmd@TextCommand("/help"), _) =>
+    case Msg(cmd @ TextCommand("/help"), _) =>
       self ! cmd
       goto(helpChat)
-    case Msg(cmd@TextCommand("/start"), _) =>
+    case Msg(cmd @ TextCommand("/start"), _) =>
       self ! cmd
       goto(helpChat)
-    case Msg(cmd@TextCommand("/book"), _) =>
+    case Msg(cmd @ TextCommand("/book"), _) =>
       self ! cmd
       goto(bookChat)
-    case Msg(cmd@TextCommand("/monitorings"), _) =>
+    case Msg(cmd @ TextCommand("/monitorings"), _) =>
       self ! cmd
       goto(monitoringsChat)
-    case Msg(cmd@TextCommand("/monitorings_history"), _) =>
+    case Msg(cmd @ TextCommand("/monitorings_history"), _) =>
       self ! cmd
       goto(monitoringsHistoryChat)
-    case Msg(cmd@TextCommand("/history"), _) =>
+    case Msg(cmd @ TextCommand("/history"), _) =>
       self ! cmd
       goto(historyChat)
-    case Msg(cmd@TextCommand("/reserved"), _) =>
+    case Msg(cmd @ TextCommand("/reserved"), _) =>
       self ! cmd
       goto(visitsChat)
-    case Msg(cmd@TextCommand("/settings"), _) =>
+    case Msg(cmd @ TextCommand("/settings"), _) =>
       self ! cmd
       goto(settingsChat)
-    case Msg(cmd@TextCommand("/accounts"), _) =>
+    case Msg(cmd @ TextCommand("/accounts"), _) =>
       self ! cmd
       goto(accountChat)
     case Msg(TextCommand(ReserveTerm(monitoringIdStr, scheduleIdStr, timeStr)), _) =>

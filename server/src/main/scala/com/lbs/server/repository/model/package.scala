@@ -1,4 +1,3 @@
-
 package com.lbs.server.repository
 
 import scala.language.implicitConversions

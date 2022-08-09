@@ -1,4 +1,3 @@
-
 package com.lbs.api
 
 import com.lbs.api.http.Session
@@ -7,9 +6,11 @@ import scalaj.http.{BaseHttp, HttpRequest}
 
 import java.net.HttpCookie
 
-object ApiHttp extends BaseHttp(
-  userAgent = "Mozilla/5.0 (iPhone; CPU iPhone OS 15_5 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Mobile/15E148"
-)
+object ApiHttp
+    extends BaseHttp(
+      userAgent =
+        "Mozilla/5.0 (iPhone; CPU iPhone OS 15_5 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Mobile/15E148"
+    )
 
 trait ApiBase {
   private val CommonHeaders =
@@ -22,12 +23,10 @@ trait ApiBase {
       `Accept-Language` -> "pl;q=1.0, pl;q=0.9, en;q=0.8"
     )
 
-
   protected def httpUnauthorized(url: String): HttpRequest = {
     ApiHttp(s"https://portalpacjenta.luxmed.pl/PatientPortalMobileAPI/api/$url")
       .headers(CommonHeaders)
   }
-
 
   protected def http(url: String, session: Session): HttpRequest = {
     ApiHttp(s"https://portalpacjenta.luxmed.pl/PatientPortalMobileAPI/api/$url")

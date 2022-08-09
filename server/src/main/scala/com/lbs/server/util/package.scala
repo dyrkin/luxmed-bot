@@ -1,4 +1,3 @@
-
 package com.lbs.server
 
 import com.lbs.api.json.model._
@@ -14,13 +13,11 @@ import java.util.Locale
 import scala.language.{higherKinds, implicitConversions}
 import scala.util.Try
 
-
 package object util {
 
   object ServerModelConverters extends ModelConverters {
 
-    implicit val BookingDataToMonitoringConverter:
-      ObjectConverter[(UserId, BookingData), Monitoring] =
+    implicit val BookingDataToMonitoringConverter: ObjectConverter[(UserId, BookingData), Monitoring] =
       (data: (UserId, BookingData)) => {
         val (userId, bookingData) = data
         Monitoring(
@@ -47,8 +44,8 @@ package object util {
         )
       }
 
-    implicit val ReservationLocktermResponseAndTermToReservationConfirmRequestConverter:
-      ObjectConverter[(ReservationLocktermResponse, TermExt), ReservationConfirmRequest] =
+    implicit val ReservationLocktermResponseAndTermToReservationConfirmRequestConverter
+      : ObjectConverter[(ReservationLocktermResponse, TermExt), ReservationConfirmRequest] =
       (data: (ReservationLocktermResponse, TermExt)) => {
         val (reservationLocktermResponse, termExt) = data
         val term = termExt.term
@@ -65,8 +62,8 @@ package object util {
         )
       }
 
-    implicit val ReservationLocktermResponseAndTermToReservationChangeTermRequestConverter:
-      ObjectConverter[(ReservationLocktermResponse, TermExt), ReservationChangetermRequest] =
+    implicit val ReservationLocktermResponseAndTermToReservationChangeTermRequestConverter
+      : ObjectConverter[(ReservationLocktermResponse, TermExt), ReservationChangetermRequest] =
       (data: (ReservationLocktermResponse, TermExt)) => {
         val (reservationLocktermResponse, termExt) = data
         val term = termExt.term
@@ -89,8 +86,7 @@ package object util {
         )
       }
 
-    implicit val TermToReservationLocktermRequest:
-      ObjectConverter[TermExt, ReservationLocktermRequest] =
+    implicit val TermToReservationLocktermRequest: ObjectConverter[TermExt, ReservationLocktermRequest] =
       termExt => {
         val term = termExt.term
         val additionalData = termExt.additionalData
@@ -113,7 +109,6 @@ package object util {
         )
       }
 
-
     implicit val HistoryToIdNameConverter: ObjectConverter[History, IdName] =
       (history: History) => IdName(history.id, history.name)
   }
@@ -121,11 +116,13 @@ package object util {
   object MessageExtractors {
 
     object TextCommand {
-      def unapply(cmd: Command): Option[String] = if (cmd.callbackData.isEmpty) cmd.message.text.filter(_.nonEmpty) else None
+      def unapply(cmd: Command): Option[String] =
+        if (cmd.callbackData.isEmpty) cmd.message.text.filter(_.nonEmpty) else None
     }
 
     object OptionalTextCommand {
-      def unapply(cmd: Command): Option[Option[String]] = if (cmd.callbackData.isEmpty) Some(TextCommand.unapply(cmd)) else None
+      def unapply(cmd: Command): Option[Option[String]] =
+        if (cmd.callbackData.isEmpty) Some(TextCommand.unapply(cmd)) else None
     }
 
     object CallbackCommand {
@@ -155,7 +152,8 @@ package object util {
 
     private val TimeFormat: DateTimeFormatter = DateTimeFormatter.ofPattern("HH:mm")
 
-    private val DateTimeFormat: Locale => DateTimeFormatter = locale => DateTimeFormatter.ofPattern("EEE',' dd MMM yyyy',' HH:mm", locale)
+    private val DateTimeFormat: Locale => DateTimeFormatter = locale =>
+      DateTimeFormatter.ofPattern("EEE',' dd MMM yyyy',' HH:mm", locale)
 
     def formatDate(date: LocalDateTime, locale: Locale): String = date.format(DateFormat(locale))
 

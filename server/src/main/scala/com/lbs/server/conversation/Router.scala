@@ -1,4 +1,3 @@
-
 package com.lbs.server.conversation
 
 import akka.actor.{ActorSystem, Cancellable}
@@ -11,7 +10,9 @@ import scala.collection.mutable
 import scala.concurrent.ExecutionContextExecutor
 import scala.concurrent.duration.DurationLong
 
-class Router(authFactory: MessageSourceTo[Auth])(val actorSystem: ActorSystem) extends Conversation[Unit] with StrictLogging {
+class Router(authFactory: MessageSourceTo[Auth])(val actorSystem: ActorSystem)
+    extends Conversation[Unit]
+    with StrictLogging {
 
   private case class DestroyChat(source: MessageSource)
 
@@ -27,7 +28,7 @@ class Router(authFactory: MessageSourceTo[Auth])(val actorSystem: ActorSystem) e
 
   private def routeMessage: Step =
     monologue {
-      case Msg(cmd@Command(source, _, _), _) =>
+      case Msg(cmd @ Command(source, _, _), _) =>
         val chat = instantiateChatOrGet(source)
         chat ! cmd
         stay()

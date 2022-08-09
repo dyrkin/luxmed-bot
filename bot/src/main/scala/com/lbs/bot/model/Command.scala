@@ -1,4 +1,3 @@
-
 package com.lbs.bot.model
 
 case class Message(messageId: String, text: Option[String] = None)

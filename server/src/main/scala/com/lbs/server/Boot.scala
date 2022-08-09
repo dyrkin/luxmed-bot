@@ -1,10 +1,8 @@
-
 package com.lbs.server
 
 import com.typesafe.scalalogging.StrictLogging
 import org.springframework.boot.SpringApplication
 import org.springframework.boot.autoconfigure.SpringBootApplication
-
 
 @SpringBootApplication
 class Boot

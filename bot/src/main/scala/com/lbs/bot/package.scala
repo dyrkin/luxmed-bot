@@ -1,4 +1,3 @@
-
 package com.lbs
 
 import com.lbs.bot.model.{Button, InlineKeyboard}

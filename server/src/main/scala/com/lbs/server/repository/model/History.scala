@@ -1,6 +1,4 @@
-
 package com.lbs.server.repository.model
-
 
 trait History {
   def id: JLong

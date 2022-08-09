@@ -1,4 +1,3 @@
-
 package com.lbs.api
 
 import cats.MonadError
@@ -33,7 +32,7 @@ package object http extends StrictLogging {
 
   private val SensitiveHeaders = List("passw", "access_token", "refresh_token", "authorization")
 
-  implicit class ExtendedHttpRequest[F[_] : ThrowableMonad](httpRequest: HttpRequest) {
+  implicit class ExtendedHttpRequest[F[_]: ThrowableMonad](httpRequest: HttpRequest) {
     def invoke: F[HttpResponse[String]] = {
       val me = MonadError[F, Throwable]
       logger.debug(s"Sending request:\n${hideSensitive(httpRequest)}")
@@ -75,7 +74,9 @@ package object http extends StrictLogging {
       code match {
         case HttpURLConnection.HTTP_MOVED_TEMP if httpResponse.header("Location").exists(_.contains("/LogOn")) =>
           Some(new SessionExpiredException)
-        case HttpURLConnection.HTTP_CONFLICT if lowercasedBody.contains("nieprawidłowy login lub hasło") || lowercasedBody.contains("invalid login or password") =>
+        case HttpURLConnection.HTTP_CONFLICT
+            if lowercasedBody
+              .contains("nieprawidłowy login lub hasło") || lowercasedBody.contains("invalid login or password") =>
           Some(new InvalidLoginOrPasswordException)
         case _ =>
           Try(body.as[LuxmedErrorsMap])

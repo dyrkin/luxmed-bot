@@ -13,7 +13,7 @@ steps:
       GRADLE_USER_HOME: ~/.gradle
     command: [ /bin/bash ]
     commands:
-      - ./gradlew test
+      - ./gradlew checkScalafmtAll test
       - ./gradlew prepare
       - echo -n "1.0.$DRONE_BUILD_NUMBER,latest" > .tags
       - echo -n "1.0.$DRONE_BUILD_NUMBER" > ./docker/version

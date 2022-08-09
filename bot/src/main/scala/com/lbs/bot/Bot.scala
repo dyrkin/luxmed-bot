@@ -1,11 +1,10 @@
-
 package com.lbs.bot
 
 import com.lbs.bot.model._
 import com.lbs.bot.telegram.TelegramBot
 import com.typesafe.scalalogging.LazyLogging
 
-class Bot(telegram: TelegramBot /* other bots */) extends LazyLogging {
+class Bot(telegram: TelegramBot /* other bots */ ) extends LazyLogging {
   def sendMessage(source: MessageSource, text: String): Unit =
     resolveAdapter(source).sendMessage(source.chatId, text)
 
@@ -15,7 +14,12 @@ class Bot(telegram: TelegramBot /* other bots */) extends LazyLogging {
   def sendEditMessage(source: MessageSource, messageId: String, inlineKeyboard: Option[InlineKeyboard]): Unit =
     resolveAdapter(source).sendEditMessage(source.chatId, messageId, inlineKeyboard)
 
-  def sendEditMessage(source: MessageSource, messageId: String, text: String, inlineKeyboard: Option[InlineKeyboard] = None): Unit =
+  def sendEditMessage(
+    source: MessageSource,
+    messageId: String,
+    text: String,
+    inlineKeyboard: Option[InlineKeyboard] = None
+  ): Unit =
     resolveAdapter(source).sendEditMessage(source.chatId, messageId, text, inlineKeyboard)
 
   def sendFile(source: MessageSource, filename: String, contents: Array[Byte], caption: Option[String] = None): Unit =

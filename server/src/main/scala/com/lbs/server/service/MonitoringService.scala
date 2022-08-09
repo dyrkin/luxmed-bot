@@ -1,4 +1,3 @@
-
 package com.lbs.server.service
 
 import com.lbs.api.exception.InvalidLoginOrPasswordException
@@ -54,7 +53,7 @@ class MonitoringService extends StrictLogging {
   def notifyUserAboutTerms(terms: Seq[TermExt], monitoring: Monitoring): Unit = {
     deactivateMonitoring(monitoring.accountId, monitoring.recordId)
 
-    val fiveTerms = terms.take(5).zipWithIndex //send only 5 closest terms
+    val fiveTerms = terms.take(5).zipWithIndex // send only 5 closest terms
     val messages = lang(monitoring.userId)
 
     val message = messages.availableTermsHeader(terms.length) + "\n\n" +
@@ -68,8 +67,17 @@ class MonitoringService extends StrictLogging {
   private def monitor(monitoring: Monitoring): Unit = {
     logger.debug(s"Looking for available terms. Monitoring [#${monitoring.recordId}]")
     val dateFrom = optimizeDateFrom(monitoring.dateFrom.toLocalDateTime, monitoring.offset)
-    val termsEither = apiService.getAvailableTerms(monitoring.accountId, monitoring.cityId, monitoring.clinicId, monitoring.serviceId,
-      monitoring.doctorId, dateFrom, monitoring.dateTo.toLocalDateTime, timeFrom = monitoring.timeFrom, timeTo = monitoring.timeTo)
+    val termsEither = apiService.getAvailableTerms(
+      monitoring.accountId,
+      monitoring.cityId,
+      monitoring.clinicId,
+      monitoring.serviceId,
+      monitoring.doctorId,
+      dateFrom,
+      monitoring.dateTo.toLocalDateTime,
+      timeFrom = monitoring.timeFrom,
+      timeTo = monitoring.timeTo
+    )
     termsEither match {
       case Right(terms) =>
         if (terms.nonEmpty) {
@@ -105,7 +113,9 @@ class MonitoringService extends StrictLogging {
         val delaySnapshot = delay
         val periodSnapshot = period
         val future = monitoringExecutor.schedule(monitor(monitoring), delaySnapshot, periodSnapshot)
-        logger.debug(s"Scheduled monitoring: [#${monitoring.recordId}] with delay: $delaySnapshot and period: $periodSnapshot")
+        logger.debug(
+          s"Scheduled monitoring: [#${monitoring.recordId}] with delay: $delaySnapshot and period: $periodSnapshot"
+        )
         activeMonitorings += (monitoring.recordId -> (monitoring -> future))
       }
     }
@@ -127,8 +137,9 @@ class MonitoringService extends StrictLogging {
 
   private def disableOutdated(): Unit = {
     val now = ZonedDateTime.now()
-    val toDisable = activeMonitorings.collect { case (id, (monitoring, _)) if monitoring.dateTo.isBefore(now) =>
-      id -> monitoring
+    val toDisable = activeMonitorings.collect {
+      case (id, (monitoring, _)) if monitoring.dateTo.isBefore(now) =>
+        id -> monitoring
     }
 
     toDisable.foreach { case (id, monitoring) =>
@@ -150,14 +161,37 @@ class MonitoringService extends StrictLogging {
   private def bookAppointment(term: TermExt, monitoring: Monitoring, rebookIfExists: Boolean): Unit = {
     val bookingResult = for {
       xsrfToken <- apiService.getXsrfToken(monitoring.accountId)
-      reservationLocktermResponse <- apiService.reservationLockterm(monitoring.accountId, xsrfToken, term.mapTo[ReservationLocktermRequest])
+      reservationLocktermResponse <- apiService.reservationLockterm(
+        monitoring.accountId,
+        xsrfToken,
+        term.mapTo[ReservationLocktermRequest]
+      )
       temporaryReservationId = reservationLocktermResponse.value.temporaryReservationId
-      response <- if (reservationLocktermResponse.value.changeTermAvailable && rebookIfExists) {
-        logger.info(s"Service [${monitoring.serviceName}] is already booked. Trying to update term")
-        bookOrUnlockTerm(monitoring.accountId, xsrfToken, temporaryReservationId, apiService.reservationChangeTerm(_, xsrfToken, (reservationLocktermResponse, term).mapTo[ReservationChangetermRequest]))
-      } else {
-        bookOrUnlockTerm(monitoring.accountId, xsrfToken, temporaryReservationId, apiService.reservationConfirm(_, xsrfToken, (reservationLocktermResponse, term).mapTo[ReservationConfirmRequest]))
-      }
+      response <-
+        if (reservationLocktermResponse.value.changeTermAvailable && rebookIfExists) {
+          logger.info(s"Service [${monitoring.serviceName}] is already booked. Trying to update term")
+          bookOrUnlockTerm(
+            monitoring.accountId,
+            xsrfToken,
+            temporaryReservationId,
+            apiService.reservationChangeTerm(
+              _,
+              xsrfToken,
+              (reservationLocktermResponse, term).mapTo[ReservationChangetermRequest]
+            )
+          )
+        } else {
+          bookOrUnlockTerm(
+            monitoring.accountId,
+            xsrfToken,
+            temporaryReservationId,
+            apiService.reservationConfirm(
+              _,
+              xsrfToken,
+              (reservationLocktermResponse, term).mapTo[ReservationConfirmRequest]
+            )
+          )
+        }
     } yield response
     bookingResult match {
       case Right(_) =>
@@ -168,9 +202,14 @@ class MonitoringService extends StrictLogging {
     }
   }
 
-  private def bookOrUnlockTerm[T](accountId: Long, xsrfToken: XsrfToken, temporaryReservationId: Long, fn: (Long) => Either[Throwable, T]): Either[Throwable, T] = {
+  private def bookOrUnlockTerm[T](
+    accountId: Long,
+    xsrfToken: XsrfToken,
+    temporaryReservationId: Long,
+    fn: (Long) => Either[Throwable, T]
+  ): Either[Throwable, T] = {
     fn(accountId) match {
-      case r@Left(_) =>
+      case r @ Left(_) =>
         apiService.deleteTemporaryReservation(accountId, xsrfToken, temporaryReservationId)
         r
       case r => r
@@ -218,11 +257,22 @@ class MonitoringService extends StrictLogging {
     val monitoringMaybe = dataService.findMonitoring(accountId, monitoringId)
     monitoringMaybe match {
       case Some(monitoring) =>
-        val termsEither = apiService.getAvailableTerms(monitoring.accountId, monitoring.cityId, monitoring.clinicId, monitoring.serviceId,
-          monitoring.doctorId, monitoring.dateFrom.toLocalDateTime, monitoring.dateTo.toLocalDateTime, timeFrom = monitoring.timeFrom, timeTo = monitoring.timeTo)
+        val termsEither = apiService.getAvailableTerms(
+          monitoring.accountId,
+          monitoring.cityId,
+          monitoring.clinicId,
+          monitoring.serviceId,
+          monitoring.doctorId,
+          monitoring.dateFrom.toLocalDateTime,
+          monitoring.dateTo.toLocalDateTime,
+          timeFrom = monitoring.timeFrom,
+          timeTo = monitoring.timeTo
+        )
         termsEither match {
           case Right(terms) =>
-            val termMaybe = terms.find(term => term.term.scheduleId == scheduleId && minutesSinceBeginOf2018(term.term.dateTimeFrom.get) == time)
+            val termMaybe = terms.find(term =>
+              term.term.scheduleId == scheduleId && minutesSinceBeginOf2018(term.term.dateTimeFrom.get) == time
+            )
             termMaybe match {
               case Some(term) =>
                 bookAppointment(term, monitoring, rebookIfExists = true)
@@ -232,7 +282,8 @@ class MonitoringService extends StrictLogging {
           case Left(ex: InvalidLoginOrPasswordException) =>
             logger.error(s"User entered invalid name or password. Monitoring will be disabled", ex)
             bot.sendMessage(monitoring.source, lang(monitoring.userId).loginHasChangedOrWrong)
-          case Left(ex) => logger.error(s"Error occurred during receiving terms for monitoring [#${monitoring.recordId}]", ex)
+          case Left(ex) =>
+            logger.error(s"Error occurred during receiving terms for monitoring [#${monitoring.recordId}]", ex)
         }
       case None =>
         logger.debug(s"Monitoring [#$monitoringId] not found in db")
@@ -240,9 +291,7 @@ class MonitoringService extends StrictLogging {
   }
 
   implicit class MonitoringAsSource(monitoring: Monitoring) {
-    def source: MessageSource = MessageSource(
-      MessageSourceSystem(monitoring.sourceSystemId), monitoring.chatId
-    )
+    def source: MessageSource = MessageSource(MessageSourceSystem(monitoring.sourceSystemId), monitoring.chatId)
   }
 
   private def lang(userId: Long) = localization.lang(userId)

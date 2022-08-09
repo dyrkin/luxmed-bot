@@ -1,4 +1,3 @@
-
 package com.lbs.server.repository.model
 
 import javax.persistence.{Access, AccessType, Column, Entity}
@@ -13,7 +12,7 @@ class Settings extends RecordId {
 
   @BeanProperty
   @Column(nullable = false)
-  var lang: Int = 0 //En by default
+  var lang: Int = 0 // En by default
 
   @BeanProperty
   @Column(nullable = false)

@@ -1,4 +1,3 @@
-
 package com.lbs.api.json.model
 
 /**
@@ -9,4 +8,5 @@ package com.lbs.api.json.model
   *   "token_type": "bearer"
   * }
   */
-case class LoginResponse(accessToken: String, expiresIn: Int, refreshToken: String, tokenType: String) extends SerializableJsonObject
+case class LoginResponse(accessToken: String, expiresIn: Int, refreshToken: String, tokenType: String)
+    extends SerializableJsonObject

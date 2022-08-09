@@ -1,4 +1,3 @@
-
 package com.lbs.bot.model
 
 trait MessageSourceSystem {
@@ -10,10 +9,7 @@ trait MessageSourceSystem {
 }
 
 object MessageSourceSystem {
-  val MessageSourceSystems: Seq[MessageSourceSystem] = Seq(
-    TelegramMessageSourceSystem,
-    FacebookMessageSourceSystem
-  )
+  val MessageSourceSystems: Seq[MessageSourceSystem] = Seq(TelegramMessageSourceSystem, FacebookMessageSourceSystem)
 
   private val MessageSourceSystemsMap = MessageSourceSystems.map(e => e.id -> e).toMap
 

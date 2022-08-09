@@ -1,9 +1,8 @@
-
 package com.lbs.server.conversation
 
 import akka.actor.ActorSystem
+import com.lbs.bot._
 import com.lbs.bot.model.Button
-import com.lbs.bot.{Bot, _}
 import com.lbs.server.conversation.Login.UserId
 import com.lbs.server.conversation.TimePicker.{Mode, Tags, TimeFromMode, TimeToMode}
 import com.lbs.server.conversation.base.{Conversation, Interactional}
@@ -20,9 +19,11 @@ import scala.util.control.NonFatal
   * ⬆   ⬆
   * HH   mm
   * ⬇   ⬇
-  *
   */
-class TimePicker(val userId: UserId, val bot: Bot, val localization: Localization, originator: Interactional)(val actorSystem: ActorSystem) extends Conversation[LocalTime] with Localizable {
+class TimePicker(val userId: UserId, val bot: Bot, val localization: Localization, originator: Interactional)(
+  val actorSystem: ActorSystem
+) extends Conversation[LocalTime]
+    with Localizable {
 
   private var mode: Mode = TimeFromMode
 
@@ -41,11 +42,11 @@ class TimePicker(val userId: UserId, val bot: Bot, val localization: Localizatio
     ask { initialTime =>
       val message = mode match {
         case TimeFromMode => lang.chooseTimeFrom(initialTime)
-        case TimeToMode => lang.chooseTimeTo(initialTime)
+        case TimeToMode   => lang.chooseTimeTo(initialTime)
       }
       bot.sendMessage(userId.source, message, inlineKeyboard = timeButtons(initialTime))
     } onReply {
-      case Msg(cmd@CallbackCommand(Tags.Done), selectedTime) =>
+      case Msg(cmd @ CallbackCommand(Tags.Done), selectedTime) =>
         val message = mode match {
           case TimeFromMode =>
             lang.timeFromIs(selectedTime)
@@ -73,7 +74,7 @@ class TimePicker(val userId: UserId, val bot: Bot, val localization: Localizatio
             bot.sendMessage(userId.source, "Incorrect time. Please use format HH:mm")
             goto(requestTime)
         }
-      case Msg(cmd@CallbackCommand(tag), time) =>
+      case Msg(cmd @ CallbackCommand(tag), time) =>
         val modifiedTime = modifyTime(time, tag)
         bot.sendEditMessage(userId.source, cmd.message.messageId, inlineKeyboard = timeButtons(modifiedTime))
         stay() using modifiedTime
@@ -81,9 +82,9 @@ class TimePicker(val userId: UserId, val bot: Bot, val localization: Localizatio
 
   private def modifyTime(time: LocalTime, tag: String) = {
     tag match {
-      case Tags.HourInc => time.plusHours(1)
+      case Tags.HourInc   => time.plusHours(1)
       case Tags.MinuteInc => time.plusMinutes(30)
-      case Tags.HourDec => time.minusHours(1)
+      case Tags.HourDec   => time.minusHours(1)
       case Tags.MinuteDec => time.minusMinutes(30)
     }
   }
@@ -92,12 +93,14 @@ class TimePicker(val userId: UserId, val bot: Bot, val localization: Localizatio
     val hour = f"${time.getHour}%02d"
     val minute = f"${time.getMinute}%02d"
 
-    createInlineKeyboard(Seq(
-      Seq(Button("⬆", Tags.HourInc), Button("⬆", Tags.MinuteInc)),
-      Seq(Button(hour), Button(minute)),
-      Seq(Button("⬇", Tags.HourDec), Button("⬇", Tags.MinuteDec)),
-      Seq(Button("Done", Tags.Done))
-    ))
+    createInlineKeyboard(
+      Seq(
+        Seq(Button("⬆", Tags.HourInc), Button("⬆", Tags.MinuteInc)),
+        Seq(Button(hour), Button(minute)),
+        Seq(Button("⬇", Tags.HourDec), Button("⬇", Tags.MinuteDec)),
+        Seq(Button("Done", Tags.Done))
+      )
+    )
   }
 }
 
@@ -118,4 +121,3 @@ object TimePicker {
   }
 
 }
-

@@ -1,4 +1,3 @@
-
 package com.lbs.server.service
 
 import cats.instances.either._
@@ -32,7 +31,9 @@ class ApiService extends SessionSupport {
 
   def getAllFacilities(accountId: Long, cityId: Long, serviceVariantId: Long): ThrowableOr[List[IdName]] =
     withSession(accountId) { session =>
-      luxmedApi.dictionaryFacilitiesAndDoctors(session, cityId = Some(cityId), serviceVariantId = Some(serviceVariantId)).map(_.facilities)
+      luxmedApi
+        .dictionaryFacilitiesAndDoctors(session, cityId = Some(cityId), serviceVariantId = Some(serviceVariantId))
+        .map(_.facilities)
     }
 
   def getAllServices(accountId: Long): ThrowableOr[List[DictionaryServiceVariants]] =
@@ -42,60 +43,98 @@ class ApiService extends SessionSupport {
 
   def getAllDoctors(accountId: Long, cityId: Long, serviceVariantId: Long): ThrowableOr[List[Doctor]] =
     withSession(accountId) { session =>
-      luxmedApi.dictionaryFacilitiesAndDoctors(session, cityId = Some(cityId), serviceVariantId = Some(serviceVariantId)).map(_.doctors)
+      luxmedApi
+        .dictionaryFacilitiesAndDoctors(session, cityId = Some(cityId), serviceVariantId = Some(serviceVariantId))
+        .map(_.doctors)
     }
 
-  def getAvailableTerms(accountId: Long, cityId: Long, clinicId: Option[Long], serviceId: Long, doctorId: Option[Long],
-                        fromDate: LocalDateTime, toDate: LocalDateTime, timeFrom: LocalTime, timeTo: LocalTime,
-                        languageId: Long = 10): ThrowableOr[List[TermExt]] =
+  def getAvailableTerms(
+    accountId: Long,
+    cityId: Long,
+    clinicId: Option[Long],
+    serviceId: Long,
+    doctorId: Option[Long],
+    fromDate: LocalDateTime,
+    toDate: LocalDateTime,
+    timeFrom: LocalTime,
+    timeTo: LocalTime,
+    languageId: Long = 10
+  ): ThrowableOr[List[TermExt]] =
     withSession(accountId) { session =>
-      val termsEither = luxmedApi.termsIndex(session, cityId, clinicId, serviceId, doctorId,
-        fromDate, toDate, languageId = languageId)
-        .map(termsIndexResponse => termsIndexResponse.termsForService.termsForDays
-          .flatMap(_.terms.map(term => TermExt(termsIndexResponse.termsForService.additionalData, term)))
+      val termsEither = luxmedApi
+        .termsIndex(session, cityId, clinicId, serviceId, doctorId, fromDate, toDate, languageId = languageId)
+        .map(termsIndexResponse =>
+          termsIndexResponse.termsForService.termsForDays
+            .flatMap(_.terms.map(term => TermExt(termsIndexResponse.termsForService.additionalData, term)))
         )
       termsEither.map { terms =>
         terms.filter { term =>
           val time = term.term.dateTimeFrom.get.toLocalTime
           val date = term.term.dateTimeFrom.get
           (doctorId.isEmpty || doctorId.contains(term.term.doctor.id)) &&
-            (clinicId.isEmpty || clinicId.contains(term.term.clinicId)) &&
-            (time == timeFrom || time == timeTo || (time.isAfter(timeFrom) && time.isBefore(timeTo))) &&
-            (date == fromDate || date == toDate || (date.isAfter(fromDate) && date.isBefore(toDate)))
+          (clinicId.isEmpty || clinicId.contains(term.term.clinicId)) &&
+          (time == timeFrom || time == timeTo || (time.isAfter(timeFrom) && time.isBefore(timeTo))) &&
+          (date == fromDate || date == toDate || (date.isAfter(fromDate) && date.isBefore(toDate)))
         }
       }
     }
 
-  def reservationLockterm(accountId: Long, xsrfToken: XsrfToken, reservationLocktermRequest: ReservationLocktermRequest): ThrowableOr[ReservationLocktermResponse] =
+  def reservationLockterm(
+    accountId: Long,
+    xsrfToken: XsrfToken,
+    reservationLocktermRequest: ReservationLocktermRequest
+  ): ThrowableOr[ReservationLocktermResponse] =
     withSession(accountId) { session =>
       luxmedApi.reservationLockterm(session, xsrfToken, reservationLocktermRequest)
     }
 
-  def deleteTemporaryReservation(accountId: Long, xsrfToken: XsrfToken, temporaryReservationId: Long): ThrowableOr[Unit] =
+  def deleteTemporaryReservation(
+    accountId: Long,
+    xsrfToken: XsrfToken,
+    temporaryReservationId: Long
+  ): ThrowableOr[Unit] =
     withSession(accountId) { session =>
       luxmedApi.deleteTemporaryReservation(session, xsrfToken, temporaryReservationId)
     }
 
-  def reservationConfirm(accountId: Long, xsrfToken: XsrfToken, reservationConfirmRequest: ReservationConfirmRequest): ThrowableOr[ReservationConfirmResponse] =
+  def reservationConfirm(
+    accountId: Long,
+    xsrfToken: XsrfToken,
+    reservationConfirmRequest: ReservationConfirmRequest
+  ): ThrowableOr[ReservationConfirmResponse] =
     withSession(accountId) { session =>
       luxmedApi.reservationConfirm(session, xsrfToken, reservationConfirmRequest)
     }
 
-  def reservationChangeTerm(accountId: Long, xsrfToken: XsrfToken, reservationChangetermRequest: ReservationChangetermRequest): ThrowableOr[ReservationConfirmResponse] =
+  def reservationChangeTerm(
+    accountId: Long,
+    xsrfToken: XsrfToken,
+    reservationChangetermRequest: ReservationChangetermRequest
+  ): ThrowableOr[ReservationConfirmResponse] =
     withSession(accountId) { session =>
       luxmedApi.reservationChangeTerm(session, xsrfToken, reservationChangetermRequest)
     }
 
-  def history(accountId: Long, fromDate: LocalDateTime = LocalDateTime.now().minusYears(1),
-              toDate: LocalDateTime = LocalDateTime.now()): ThrowableOr[List[Event]] =
+  def history(
+    accountId: Long,
+    fromDate: LocalDateTime = LocalDateTime.now().minusYears(1),
+    toDate: LocalDateTime = LocalDateTime.now()
+  ): ThrowableOr[List[Event]] =
     withSession(accountId) { session =>
-      luxmedApi.events(session, fromDate.atZone(DateTimeUtil.Zone), toDate.atZone(DateTimeUtil.Zone)).map(_.events.filter(_.status == "Realized"))
+      luxmedApi
+        .events(session, fromDate.atZone(DateTimeUtil.Zone), toDate.atZone(DateTimeUtil.Zone))
+        .map(_.events.filter(_.status == "Realized"))
     }
 
-  def reserved(accountId: Long, fromDate: LocalDateTime = LocalDateTime.now(),
-               toDate: LocalDateTime = LocalDateTime.now().plusMonths(3)): ThrowableOr[List[Event]] =
+  def reserved(
+    accountId: Long,
+    fromDate: LocalDateTime = LocalDateTime.now(),
+    toDate: LocalDateTime = LocalDateTime.now().plusMonths(3)
+  ): ThrowableOr[List[Event]] =
     withSession(accountId) { session =>
-      luxmedApi.events(session, fromDate.atZone(DateTimeUtil.Zone), toDate.atZone(DateTimeUtil.Zone)).map(_.events.filter(_.status == "Reserved"))
+      luxmedApi
+        .events(session, fromDate.atZone(DateTimeUtil.Zone), toDate.atZone(DateTimeUtil.Zone))
+        .map(_.events.filter(_.status == "Reserved"))
     }
 
   def deleteReservation(accountId: Long, reservationId: Long): ThrowableOr[HttpResponse[String]] =

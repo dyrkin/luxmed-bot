@@ -1,4 +1,3 @@
-
 package com.lbs.server.lang
 
 import com.lbs.api.json.model.{Event, TermExt}
@@ -32,7 +31,7 @@ trait Lang {
 
   def label: String
 
-  protected def capitalizeFirstLetter(str: String): String = {
+  protected def capitalize(str: String): String = {
     if (str != null && str != "") {
       val fistCapitalLetter = str.head.toTitleCase
       s"$fistCapitalLetter${str.tail.toLowerCase}"

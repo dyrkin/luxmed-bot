@@ -1,4 +1,3 @@
-
 package com.lbs.server.conversation
 
 import akka.actor.ActorSystem
@@ -20,9 +19,21 @@ import com.lbs.server.util.ServerModelConverters._
 
 import java.time.{LocalDateTime, LocalTime}
 
-class Book(val userId: UserId, bot: Bot, apiService: ApiService, dataService: DataService, monitoringService: MonitoringService,
-           val localization: Localization, datePickerFactory: UserIdWithOriginatorTo[DatePicker], timePickerFactory: UserIdWithOriginatorTo[TimePicker],
-           staticDataFactory: UserIdWithOriginatorTo[StaticData], termsPagerFactory: UserIdWithOriginatorTo[Pager[TermExt]])(implicit val actorSystem: ActorSystem) extends Conversation[BookingData] with StaticDataForBooking with Localizable {
+class Book(
+  val userId: UserId,
+  bot: Bot,
+  apiService: ApiService,
+  dataService: DataService,
+  monitoringService: MonitoringService,
+  val localization: Localization,
+  datePickerFactory: UserIdWithOriginatorTo[DatePicker],
+  timePickerFactory: UserIdWithOriginatorTo[TimePicker],
+  staticDataFactory: UserIdWithOriginatorTo[StaticData],
+  termsPagerFactory: UserIdWithOriginatorTo[Pager[TermExt]]
+)(implicit val actorSystem: ActorSystem)
+    extends Conversation[BookingData]
+    with StaticDataForBooking
+    with Localizable {
 
   private val datePicker = datePickerFactory(userId, self)
   private val timePicker = timePickerFactory(userId, self)
@@ -36,7 +47,8 @@ class Book(val userId: UserId, bot: Bot, apiService: ApiService, dataService: Da
       withFunctions[DictionaryCity](
         latestOptions = dataService.getLatestCities(userId.accountId),
         staticOptions = apiService.getAllCities(userId.accountId),
-        applyId = id => bd.copy(cityId = id.toIdName))
+        applyId = id => bd.copy(cityId = id.toIdName)
+      )
     }(requestNext = askService)
 
   private def askService: Step =
@@ -44,7 +56,8 @@ class Book(val userId: UserId, bot: Bot, apiService: ApiService, dataService: Da
       withFunctions[DictionaryServiceVariants](
         latestOptions = dataService.getLatestServicesByCityIdAndClinicId(userId.accountId, bd.cityId.id, None),
         staticOptions = apiService.getAllServices(userId.accountId),
-        applyId = id => bd.copy(serviceId = id.toIdName))
+        applyId = id => bd.copy(serviceId = id.toIdName)
+      )
     }(requestNext = askClinic)
 
   private def askClinic: Step =
@@ -52,17 +65,27 @@ class Book(val userId: UserId, bot: Bot, apiService: ApiService, dataService: Da
       withFunctions[IdName](
         latestOptions = dataService.getLatestClinicsByCityId(userId.accountId, bd.cityId.id),
         staticOptions = apiService.getAllFacilities(userId.accountId, bd.cityId.id, bd.serviceId.id),
-        applyId = id => bd.copy(clinicId = id))
+        applyId = id => bd.copy(clinicId = id)
+      )
     }(requestNext = askDoctor)
 
   private def askDoctor: Step =
     staticData(doctorConfig) { bd: BookingData =>
       withFunctions[IdName](
-        latestOptions = dataService.getLatestDoctorsByCityIdAndClinicIdAndServiceId(userId.accountId, bd.cityId.id, bd.clinicId.optionalId, bd.serviceId.id),
-        staticOptions = apiService.getAllDoctors(userId.accountId, bd.cityId.id, bd.serviceId.id)
-          .map(_.filterNot(_.facilityGroupIds.exists(z => bd.clinicId == null || z.contains(bd.clinicId.id)))
-            .map(_.toIdName)),
-        applyId = id => bd.copy(doctorId = id.toIdName))
+        latestOptions = dataService.getLatestDoctorsByCityIdAndClinicIdAndServiceId(
+          userId.accountId,
+          bd.cityId.id,
+          bd.clinicId.optionalId,
+          bd.serviceId.id
+        ),
+        staticOptions = apiService
+          .getAllDoctors(userId.accountId, bd.cityId.id, bd.serviceId.id)
+          .map(
+            _.filterNot(_.facilityGroupIds.exists(z => bd.clinicId == null || z.contains(bd.clinicId.id)))
+              .map(_.toIdName)
+          ),
+        applyId = id => bd.copy(doctorId = id.toIdName)
+      )
     }(requestNext = requestDateFrom)
 
   private def requestDateFrom: Step =
@@ -120,24 +143,35 @@ class Book(val userId: UserId, bot: Bot, apiService: ApiService, dataService: Da
   private def requestAction: Step =
     ask { bookingData =>
       dataService.storeAppointment(userId.accountId, bookingData)
-      bot.sendMessage(userId.source,
+      bot.sendMessage(
+        userId.source,
         lang.bookingSummary(bookingData),
-        inlineKeyboard = createInlineKeyboard(
-          Seq(Button(lang.findTerms, Tags.FindTerms), Button(lang.modifyDate, Tags.ModifyDate))
-        ))
+        inlineKeyboard =
+          createInlineKeyboard(Seq(Button(lang.findTerms, Tags.FindTerms), Button(lang.modifyDate, Tags.ModifyDate)))
+      )
     } onReply {
       case Msg(CallbackCommand(Tags.FindTerms), _) =>
         goto(requestTerm)
       case Msg(CallbackCommand(Tags.ModifyDate), bookingData) =>
-        goto(requestDateFrom) using bookingData.copy(dateFrom = LocalDateTime.now(),
-          dateTo = LocalDateTime.now().plusDays(1L))
+        goto(requestDateFrom) using bookingData.copy(
+          dateFrom = LocalDateTime.now(),
+          dateTo = LocalDateTime.now().plusDays(1L)
+        )
     }
 
   private def requestTerm: Step =
     ask { bookingData =>
-      val availableTerms = apiService.getAvailableTerms(userId.accountId, bookingData.cityId.id,
-        bookingData.clinicId.optionalId, bookingData.serviceId.id, bookingData.doctorId.optionalId,
-        bookingData.dateFrom, bookingData.dateTo, timeFrom = bookingData.timeFrom, timeTo = bookingData.timeTo)
+      val availableTerms = apiService.getAvailableTerms(
+        userId.accountId,
+        bookingData.cityId.id,
+        bookingData.clinicId.optionalId,
+        bookingData.serviceId.id,
+        bookingData.doctorId.optionalId,
+        bookingData.dateFrom,
+        bookingData.dateTo,
+        timeFrom = bookingData.timeFrom,
+        timeTo = bookingData.timeTo
+      )
       termsPager.restart()
       termsPager ! availableTerms.map(new SimpleItemsProvider(_))
     } onReply {
@@ -147,7 +181,11 @@ class Book(val userId: UserId, bot: Bot, apiService: ApiService, dataService: Da
       case Msg(term: TermExt, bookingData) =>
         val response = for {
           xsrfToken <- apiService.getXsrfToken(userId.accountId)
-          lockTermResponse <- apiService.reservationLockterm(userId.accountId, xsrfToken, term.mapTo[ReservationLocktermRequest])
+          lockTermResponse <- apiService.reservationLockterm(
+            userId.accountId,
+            xsrfToken,
+            term.mapTo[ReservationLocktermRequest]
+          )
         } yield (lockTermResponse, xsrfToken)
         response match {
           case Left(ex) =>
@@ -157,13 +195,28 @@ class Book(val userId: UserId, bot: Bot, apiService: ApiService, dataService: Da
           case Right((reservationLocktermResponse, xsrfToken)) =>
             if (reservationLocktermResponse.value.changeTermAvailable) {
               logger.warn(s"Service [${bookingData.serviceId.name}] is already booked. Ask to update term")
-              bot.sendMessage(userId.source, lang.visitAlreadyExists,
-                inlineKeyboard = createInlineKeyboard(Seq(Button(lang.no, Tags.No), Button(lang.yes, Tags.Yes))))
-              goto(awaitRebookDecision) using bookingData.copy(term = Some(term), xsrfToken = Some(xsrfToken), reservationLocktermResponse = Some(reservationLocktermResponse))
+              bot.sendMessage(
+                userId.source,
+                lang.visitAlreadyExists,
+                inlineKeyboard = createInlineKeyboard(Seq(Button(lang.no, Tags.No), Button(lang.yes, Tags.Yes)))
+              )
+              goto(awaitRebookDecision) using bookingData.copy(
+                term = Some(term),
+                xsrfToken = Some(xsrfToken),
+                reservationLocktermResponse = Some(reservationLocktermResponse)
+              )
             } else {
-              bot.sendMessage(userId.source, lang.confirmAppointment(term),
-                inlineKeyboard = createInlineKeyboard(Seq(Button(lang.cancel, Tags.Cancel), Button(lang.book, Tags.Book))))
-              goto(awaitReservation) using bookingData.copy(term = Some(term), xsrfToken = Some(xsrfToken), reservationLocktermResponse = Some(reservationLocktermResponse))
+              bot.sendMessage(
+                userId.source,
+                lang.confirmAppointment(term),
+                inlineKeyboard =
+                  createInlineKeyboard(Seq(Button(lang.cancel, Tags.Cancel), Button(lang.book, Tags.Book)))
+              )
+              goto(awaitReservation) using bookingData.copy(
+                term = Some(term),
+                xsrfToken = Some(xsrfToken),
+                reservationLocktermResponse = Some(reservationLocktermResponse)
+              )
             }
         }
       case Msg(Pager.NoItemsFound, _) =>
@@ -172,17 +225,24 @@ class Book(val userId: UserId, bot: Bot, apiService: ApiService, dataService: Da
 
   private def askNoTermsAction: Step =
     ask { _ =>
-      bot.sendMessage(userId.source, lang.noTermsFound, inlineKeyboard =
-        createInlineKeyboard(Seq(Button(lang.modifyDate, Tags.ModifyDate), Button(lang.createMonitoring, Tags.CreateMonitoring))))
+      bot.sendMessage(
+        userId.source,
+        lang.noTermsFound,
+        inlineKeyboard = createInlineKeyboard(
+          Seq(Button(lang.modifyDate, Tags.ModifyDate), Button(lang.createMonitoring, Tags.CreateMonitoring))
+        )
+      )
     } onReply {
       case Msg(CallbackCommand(Tags.ModifyDate), bookingData) =>
-        goto(requestDateFrom) using bookingData.copy(dateFrom = LocalDateTime.now(),
-          dateTo = LocalDateTime.now().plusDays(1L))
+        goto(requestDateFrom) using bookingData.copy(
+          dateFrom = LocalDateTime.now(),
+          dateTo = LocalDateTime.now().plusDays(1L)
+        )
       case Msg(CallbackCommand(Tags.CreateMonitoring), bookingData) =>
         val settingsMaybe = dataService.findSettings(userId.userId)
         val (defaultOffset, askOffset) = settingsMaybe match {
           case Some(settings) => (settings.defaultOffset, settings.alwaysAskOffset)
-          case None => (0, false)
+          case None           => (0, false)
         }
         val newData = bookingData.copy(offset = defaultOffset)
         if (askOffset) goto(askMonitoringOffsetOption) using newData
@@ -192,8 +252,11 @@ class Book(val userId: UserId, bot: Bot, apiService: ApiService, dataService: Da
   private def awaitRebookDecision: Step =
     monologue {
       case Msg(CallbackCommand(Tags.Yes), bookingData: BookingData) =>
-        apiService.reservationChangeTerm(userId.accountId, bookingData.xsrfToken.get,
-          (bookingData.reservationLocktermResponse.get, bookingData.term.get).mapTo[ReservationChangetermRequest]) match {
+        apiService.reservationChangeTerm(
+          userId.accountId,
+          bookingData.xsrfToken.get,
+          (bookingData.reservationLocktermResponse.get, bookingData.term.get).mapTo[ReservationChangetermRequest]
+        ) match {
           case Right(success) =>
             logger.debug(s"Successfully confirmed: $success")
             bot.sendMessage(userId.source, lang.appointmentIsConfirmed)
@@ -210,7 +273,11 @@ class Book(val userId: UserId, bot: Bot, apiService: ApiService, dataService: Da
   private def awaitReservation: Step =
     monologue {
       case Msg(CallbackCommand(Tags.Cancel), bookingData: BookingData) =>
-        apiService.deleteTemporaryReservation(userId.accountId, bookingData.xsrfToken.get, bookingData.reservationLocktermResponse.get.value.temporaryReservationId)
+        apiService.deleteTemporaryReservation(
+          userId.accountId,
+          bookingData.xsrfToken.get,
+          bookingData.reservationLocktermResponse.get.value.temporaryReservationId
+        )
         stay()
       case Msg(CallbackCommand(Tags.Book), bookingData: BookingData) =>
         makeReservation(bookingData)
@@ -239,8 +306,11 @@ class Book(val userId: UserId, bot: Bot, apiService: ApiService, dataService: Da
 
   private def askMonitoringOffsetOption: Step =
     ask { _ =>
-      bot.sendMessage(userId.source, lang.pleaseSpecifyOffset,
-        inlineKeyboard = createInlineKeyboard(Seq(Button(lang.no, Tags.No))))
+      bot.sendMessage(
+        userId.source,
+        lang.pleaseSpecifyOffset,
+        inlineKeyboard = createInlineKeyboard(Seq(Button(lang.no, Tags.No)))
+      )
     } onReply {
       case Msg(TextCommand(IntString(offset)), bookingData: BookingData) =>
         goto(askMonitoringAutobookOption) using bookingData.copy(offset = offset)
@@ -250,22 +320,29 @@ class Book(val userId: UserId, bot: Bot, apiService: ApiService, dataService: Da
 
   private def askMonitoringAutobookOption: Step =
     ask { _ =>
-      bot.sendMessage(userId.source, lang.chooseTypeOfMonitoring,
-        inlineKeyboard = createInlineKeyboard(Seq(Button(lang.bookByApplication, Tags.BookByApplication), Button(lang.bookManually, Tags.BookManually)), columns = 1))
-    } onReply {
-      case Msg(CallbackCommand(BooleanString(autobook)), bookingData: BookingData) =>
-        val data = bookingData.copy(autobook = autobook)
-        if (autobook) goto(askMonitoringRebookOption) using data
-        else goto(createMonitoring) using data
+      bot.sendMessage(
+        userId.source,
+        lang.chooseTypeOfMonitoring,
+        inlineKeyboard = createInlineKeyboard(
+          Seq(Button(lang.bookByApplication, Tags.BookByApplication), Button(lang.bookManually, Tags.BookManually)),
+          columns = 1
+        )
+      )
+    } onReply { case Msg(CallbackCommand(BooleanString(autobook)), bookingData: BookingData) =>
+      val data = bookingData.copy(autobook = autobook)
+      if (autobook) goto(askMonitoringRebookOption) using data
+      else goto(createMonitoring) using data
     }
 
   private def askMonitoringRebookOption: Step =
     ask { _ =>
-      bot.sendMessage(userId.source, lang.rebookIfExists,
-        inlineKeyboard = createInlineKeyboard(Seq(Button(lang.no, Tags.No), Button(lang.yes, Tags.Yes))))
-    } onReply {
-      case Msg(CallbackCommand(BooleanString(rebookIfExists)), bookingData: BookingData) =>
-        goto(createMonitoring) using bookingData.copy(rebookIfExists = rebookIfExists)
+      bot.sendMessage(
+        userId.source,
+        lang.rebookIfExists,
+        inlineKeyboard = createInlineKeyboard(Seq(Button(lang.no, Tags.No), Button(lang.yes, Tags.Yes)))
+      )
+    } onReply { case Msg(CallbackCommand(BooleanString(rebookIfExists)), bookingData: BookingData) =>
+      goto(createMonitoring) using bookingData.copy(rebookIfExists = rebookIfExists)
     }
 
   private def createMonitoring: Step =
@@ -300,12 +377,24 @@ class Book(val userId: UserId, bot: Bot, apiService: ApiService, dataService: Da
 
 object Book {
 
-  case class BookingData(cityId: IdName = null, clinicId: IdName = null,
-                         serviceId: IdName = null, doctorId: IdName = null, dateFrom: LocalDateTime = LocalDateTime.now(),
-                         dateTo: LocalDateTime = LocalDateTime.now().plusDays(1L), timeFrom: LocalTime = LocalTime.of(7, 0),
-                         timeTo: LocalTime = LocalTime.of(21, 0), autobook: Boolean = false, rebookIfExists: Boolean = false,
-                         term: Option[TermExt] = None, reservationLocktermResponse: Option[ReservationLocktermResponse] = None,
-                         offset: Int = 0, payerId: Long = 0, payers: Seq[IdName] = Seq(), xsrfToken: Option[XsrfToken] = None)
+  case class BookingData(
+    cityId: IdName = null,
+    clinicId: IdName = null,
+    serviceId: IdName = null,
+    doctorId: IdName = null,
+    dateFrom: LocalDateTime = LocalDateTime.now(),
+    dateTo: LocalDateTime = LocalDateTime.now().plusDays(1L),
+    timeFrom: LocalTime = LocalTime.of(7, 0),
+    timeTo: LocalTime = LocalTime.of(21, 0),
+    autobook: Boolean = false,
+    rebookIfExists: Boolean = false,
+    term: Option[TermExt] = None,
+    reservationLocktermResponse: Option[ReservationLocktermResponse] = None,
+    offset: Int = 0,
+    payerId: Long = 0,
+    payers: Seq[IdName] = Seq(),
+    xsrfToken: Option[XsrfToken] = None
+  )
 
   object Tags {
     val Cancel = "cancel"
