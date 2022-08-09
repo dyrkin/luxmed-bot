@@ -3,11 +3,13 @@ package com.lbs.api.http
 import cats.instances.either._
 import com.lbs.api.exception.GenericException
 import org.mockito.Mockito._
-import org.scalatest.mockito.MockitoSugar
-import org.scalatest.{BeforeAndAfterEach, FunSuiteLike, Matchers}
+import org.scalatest.BeforeAndAfterEach
+import org.scalatest.funsuite.AnyFunSuite
+import org.scalatest.matchers.should.Matchers
+import org.scalatestplus.mockito.MockitoSugar
 import scalaj.http.{HttpRequest, HttpResponse}
 
-class ExtendedHttpRequestSpec extends FunSuiteLike with Matchers with MockitoSugar with BeforeAndAfterEach {
+class ExtendedHttpRequestSpec extends AnyFunSuite with Matchers with MockitoSugar with BeforeAndAfterEach {
 
   private val request = mock[HttpRequest]
   private type ThrowableOr[T] = Either[Throwable, T]

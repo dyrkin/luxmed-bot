@@ -1,4 +1,4 @@
-FROM azul/zulu-openjdk-alpine:8u282-jre
+FROM openjdk:11-jre-slim
 
 RUN apk update && apk upgrade && apk add netcat-openbsd tzdata && apk add --no-cache nss
 RUN mkdir -p /app

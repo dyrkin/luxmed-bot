@@ -20,19 +20,19 @@ class DataService {
   private[service] var dataRepository: DataRepository = _
 
   def getLatestCities(accountId: Long): Seq[IdName] = {
-    dataRepository.getCityHistory(accountId).mapTo[Seq[IdName]]
+    dataRepository.getCityHistory(accountId).mapTo[Iterable[IdName]].toSeq
   }
 
   def getLatestClinicsByCityId(userId: Long, cityId: Long): Seq[IdName] = {
-    dataRepository.getClinicHistory(userId, cityId).mapTo[Seq[IdName]]
+    dataRepository.getClinicHistory(userId, cityId).mapTo[Iterable[IdName]].toSeq
   }
 
   def getLatestServicesByCityIdAndClinicId(userId: Long, cityId: Long, clinicId: Option[Long]): Seq[IdName] = {
-    dataRepository.getServiceHistory(userId, cityId, clinicId).mapTo[Seq[IdName]]
+    dataRepository.getServiceHistory(userId, cityId, clinicId).mapTo[Iterable[IdName]].toSeq
   }
 
   def getLatestDoctorsByCityIdAndClinicIdAndServiceId(userId: Long, cityId: Long, clinicId: Option[Long], serviceId: Long): Seq[IdName] = {
-    dataRepository.getDoctorHistory(userId, cityId, clinicId, serviceId).mapTo[Seq[IdName]]
+    dataRepository.getDoctorHistory(userId, cityId, clinicId, serviceId).mapTo[Iterable[IdName]].toSeq
   }
 
   def getCredentials(accountId: Long): Option[Credentials] = {

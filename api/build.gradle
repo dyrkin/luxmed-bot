@@ -2,6 +2,5 @@ dependencies {
     implementation project(':common')
 
     api "org.scalaj:scalaj-http_$scala:2.4.2"
-    api "org.json4s:json4s-jackson_$scala:3.6.0-M3"
-    api "com.softwaremill.quicklens:quicklens_$scala:1.4.12"
+    api "org.json4s:json4s-jackson_$scala:3.6.12"
 }
