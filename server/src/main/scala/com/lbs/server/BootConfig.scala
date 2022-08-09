@@ -1,4 +1,3 @@
-
 package com.lbs.server
 
 import akka.actor.ActorSystem
@@ -44,23 +43,45 @@ class BootConfig {
   }
 
   @Bean
-  def authFactory: MessageSourceTo[Auth] = source => new Auth(source,
-    dataService, unauthorizedHelpFactory, loginFactory, chatFactory)(actorSystem)
+  def authFactory: MessageSourceTo[Auth] = source =>
+    new Auth(source, dataService, unauthorizedHelpFactory, loginFactory, chatFactory)(actorSystem)
 
   @Bean
-  def loginFactory: MessageSourceWithOriginatorTo[Login] = (source, originator) => new Login(source, bot,
-    dataService, apiService, textEncryptor, localization, originator)(actorSystem)
+  def loginFactory: MessageSourceWithOriginatorTo[Login] = (source, originator) =>
+    new Login(source, bot, dataService, apiService, textEncryptor, localization, originator)(actorSystem)
 
   @Bean
-  def bookFactory: UserIdTo[Book] = userId => new Book(userId, bot, apiService, dataService,
-    monitoringService, localization, datePickerFactory, timePickerFactory, staticDataFactory, termsPagerFactory)(actorSystem)
+  def bookFactory: UserIdTo[Book] = userId =>
+    new Book(
+      userId,
+      bot,
+      apiService,
+      dataService,
+      monitoringService,
+      localization,
+      datePickerFactory,
+      timePickerFactory,
+      staticDataFactory,
+      termsPagerFactory
+    )(actorSystem)
 
   @Bean
-  def bookWithTemplateFactory: UserIdTo[BookWithTemplate] = userId => new BookWithTemplate(userId, bot, apiService, dataService,
-    monitoringService, localization, datePickerFactory, timePickerFactory, termsPagerFactory)(actorSystem)
+  def bookWithTemplateFactory: UserIdTo[BookWithTemplate] = userId =>
+    new BookWithTemplate(
+      userId,
+      bot,
+      apiService,
+      dataService,
+      monitoringService,
+      localization,
+      datePickerFactory,
+      timePickerFactory,
+      termsPagerFactory
+    )(actorSystem)
 
   @Bean
-  def unauthorizedHelpFactory: MessageSourceTo[UnauthorizedHelp] = source => new UnauthorizedHelp(source, bot)(actorSystem)
+  def unauthorizedHelpFactory: MessageSourceTo[UnauthorizedHelp] = source =>
+    new UnauthorizedHelp(source, bot)(actorSystem)
 
   @Bean
   def helpFactory: UserIdTo[Help] = userId => new Help(userId, bot, localization)(actorSystem)
@@ -71,7 +92,15 @@ class BootConfig {
 
   @Bean
   def monitoringsHistoryFactory: UserIdTo[MonitoringsHistory] =
-    userId => new MonitoringsHistory(userId, bot, monitoringService, localization, monitoringsHistoryPagerFactory, bookWithTemplateFactory)(actorSystem)
+    userId =>
+      new MonitoringsHistory(
+        userId,
+        bot,
+        monitoringService,
+        localization,
+        monitoringsHistoryPagerFactory,
+        bookWithTemplateFactory
+      )(actorSystem)
 
   @Bean
   def historyFactory: UserIdTo[HistoryViewer] =
@@ -91,8 +120,20 @@ class BootConfig {
 
   @Bean
   def chatFactory: UserIdTo[Chat] =
-    userId => new Chat(userId, dataService, monitoringService, bookFactory, helpFactory,
-      monitoringsFactory, monitoringsHistoryFactory, historyFactory, reservedVisitsFactory, settingsFactory, accountFactory)(actorSystem)
+    userId =>
+      new Chat(
+        userId,
+        dataService,
+        monitoringService,
+        bookFactory,
+        helpFactory,
+        monitoringsFactory,
+        monitoringsHistoryFactory,
+        historyFactory,
+        reservedVisitsFactory,
+        settingsFactory,
+        accountFactory
+      )(actorSystem)
 
   @Bean
   def datePickerFactory: UserIdWithOriginatorTo[DatePicker] = (userId, originator) =>
@@ -108,39 +149,63 @@ class BootConfig {
 
   @Bean
   def termsPagerFactory: UserIdWithOriginatorTo[Pager[TermExt]] = (userId, originator) =>
-    new Pager[TermExt](userId, bot,
+    new Pager[TermExt](
+      userId,
+      bot,
       (term: TermExt, page: Int, index: Int) => lang(userId).termEntry(term, page, index),
       (page: Int, pages: Int) => lang(userId).termsHeader(page, pages),
-      Some("book"), localization, originator)(actorSystem)
-
+      Some("book"),
+      localization,
+      originator
+    )(actorSystem)
 
   @Bean
   def reservedVisitsPagerFactory: UserIdWithOriginatorTo[Pager[Event]] = (userId, originator) =>
-    new Pager[Event](userId, bot,
+    new Pager[Event](
+      userId,
+      bot,
       (visit: Event, page: Int, index: Int) => lang(userId).reservedVisitEntry(visit, page, index),
       (page: Int, pages: Int) => lang(userId).reservedVisitsHeader(page, pages),
-      Some("cancel"), localization, originator)(actorSystem)
+      Some("cancel"),
+      localization,
+      originator
+    )(actorSystem)
 
   @Bean
   def historyPagerFactory: UserIdWithOriginatorTo[Pager[Event]] = (userId, originator) =>
-    new Pager[Event](userId, bot,
+    new Pager[Event](
+      userId,
+      bot,
       (event: Event, page: Int, index: Int) => lang(userId).historyEntry(event, page, index),
       (page: Int, pages: Int) => lang(userId).historyHeader(page, pages),
-      None, localization, originator)(actorSystem)
+      None,
+      localization,
+      originator
+    )(actorSystem)
 
   @Bean
   def monitoringsPagerFactory: UserIdWithOriginatorTo[Pager[Monitoring]] = (userId, originator) =>
-    new Pager[Monitoring](userId, bot,
+    new Pager[Monitoring](
+      userId,
+      bot,
       (monitoring: Monitoring, page: Int, index: Int) => lang(userId).monitoringEntry(monitoring, page, index),
       (page: Int, pages: Int) => lang(userId).monitoringsHeader(page, pages),
-      Some("cancel"), localization, originator)(actorSystem)
+      Some("cancel"),
+      localization,
+      originator
+    )(actorSystem)
 
   @Bean
   def monitoringsHistoryPagerFactory: UserIdWithOriginatorTo[Pager[Monitoring]] = (userId, originator) =>
-    new Pager[Monitoring](userId, bot,
+    new Pager[Monitoring](
+      userId,
+      bot,
       (monitoring: Monitoring, page: Int, index: Int) => lang(userId).monitoringHistoryEntry(monitoring, page, index),
       (page: Int, pages: Int) => lang(userId).monitoringsHistoryHeader(page, pages),
-      Some("repeat"), localization, originator)(actorSystem)
+      Some("repeat"),
+      localization,
+      originator
+    )(actorSystem)
 
   @Bean
   def router: Router = new Router(authFactory)(actorSystem)

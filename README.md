@@ -32,7 +32,7 @@ to the same folder and rename it to **secrets.env**
 ### Develop run
 
 1. Run `docker-compose up` to launch PostgreSQL database
-2. Set env `TELEGRAM_TOKEN="YOUR_TOKEN"`
+2. Set env `TELEGRAM_TOKEN=YOUR_TOKEN`
 3. Run `Boot.scala` app
 
 

@@ -1,4 +1,3 @@
-
 package com.lbs.server.conversation
 
 import akka.actor.ActorSystem
@@ -11,7 +10,16 @@ import com.lbs.server.lang.{Localizable, Localization}
 import com.lbs.server.repository.model.Monitoring
 import com.lbs.server.service.MonitoringService
 
-class MonitoringsHistory(val userId: UserId, bot: Bot, monitoringService: MonitoringService, val localization: Localization, monitoringsPagerFactory: UserIdWithOriginatorTo[Pager[Monitoring]], bookWithTemplateFactory: UserIdTo[BookWithTemplate])(val actorSystem: ActorSystem) extends Conversation[Monitoring] with Localizable {
+class MonitoringsHistory(
+  val userId: UserId,
+  bot: Bot,
+  monitoringService: MonitoringService,
+  val localization: Localization,
+  monitoringsPagerFactory: UserIdWithOriginatorTo[Pager[Monitoring]],
+  bookWithTemplateFactory: UserIdTo[BookWithTemplate]
+)(val actorSystem: ActorSystem)
+    extends Conversation[Monitoring]
+    with Localizable {
 
   private val monitoringsPager = monitoringsPagerFactory(userId, self)
   private val bookWithTemplate = bookWithTemplateFactory(userId)
@@ -42,10 +50,9 @@ class MonitoringsHistory(val userId: UserId, bot: Bot, monitoringService: Monito
     ask { monitoring =>
       bookWithTemplate.restart()
       bookWithTemplate ! monitoring
-    } onReply {
-      case Msg(cmd: Command, _) =>
-        bookWithTemplate ! cmd
-        stay()
+    } onReply { case Msg(cmd: Command, _) =>
+      bookWithTemplate ! cmd
+      stay()
     }
 
   beforeDestroy {
@@ -62,7 +69,8 @@ class MonitoringsHistory(val userId: UserId, bot: Bot, monitoringService: Monito
 
     override def previous(): Unit = index -= 1
 
-    override def items: Seq[Monitoring] = monitoringService.getMonitoringsPage(userId.accountId, index * Pager.PageSize, Pager.PageSize)
+    override def items: Seq[Monitoring] =
+      monitoringService.getMonitoringsPage(userId.accountId, index * Pager.PageSize, Pager.PageSize)
 
     override def currentPage: Int = index
 
@@ -70,4 +78,3 @@ class MonitoringsHistory(val userId: UserId, bot: Bot, monitoringService: Monito
   }
 
 }
-

@@ -1,4 +1,3 @@
-
 package com.lbs.server.service
 
 import com.lbs.api.exception.SessionExpiredException
@@ -27,7 +26,7 @@ trait SessionSupport extends StrictLogging {
         val credentialsMaybe = dataService.getCredentials(accountId)
         credentialsMaybe match {
           case Some(credentials) => fullLogin(credentials.username, credentials.password)
-          case None => Left(UserNotFoundException(accountId))
+          case None              => Left(UserNotFoundException(accountId))
         }
       }
 

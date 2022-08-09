@@ -1,4 +1,3 @@
-
 package com.lbs.common
 
 import com.typesafe.scalalogging.LazyLogging
@@ -18,13 +17,12 @@ class Scheduler(poolSize: Int) extends LazyLogging {
     scheduledThreadPool.scheduleAtFixedRate(silentFn(fn), delay.length, period.length, period.unit)
   }
 
-  private def silentFn(fn: => Unit): Runnable = {
-    () =>
-      try {
-        fn
-      } catch {
-        case ex: Exception =>
-          logger.error(s"Unable to execute scheduler task", ex)
-      }
+  private def silentFn(fn: => Unit): Runnable = { () =>
+    try {
+      fn
+    } catch {
+      case ex: Exception =>
+        logger.error(s"Unable to execute scheduler task", ex)
+    }
   }
 }

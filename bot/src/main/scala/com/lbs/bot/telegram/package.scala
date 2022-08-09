@@ -1,4 +1,3 @@
-
 package com.lbs.bot
 
 import com.bot4s.telegram.models.{InlineKeyboardButton, InlineKeyboardMarkup, Message => BMessage}
@@ -10,8 +9,7 @@ package object telegram {
   protected[bot] val TagPrefix = "callback"
 
   object TelegramModelConverters extends ModelConverters {
-    implicit val TelegramCommandToCommandConverter:
-      ObjectConverter[TelegramEvent, Command] =
+    implicit val TelegramCommandToCommandConverter: ObjectConverter[TelegramEvent, Command] =
       (data: TelegramEvent) => {
         Command(
           source = MessageSource(TelegramMessageSourceSystem, data.msg.chat.id.toString),
@@ -20,14 +18,12 @@ package object telegram {
         )
       }
 
-    implicit val TelegramMessageToMessageConverter:
-      ObjectConverter[BMessage, Message] =
+    implicit val TelegramMessageToMessageConverter: ObjectConverter[BMessage, Message] =
       (data: BMessage) => {
         Message(data.messageId.toString, data.text)
       }
 
-    implicit val InlineKeyboardToInlineKeyboardMarkup:
-      ObjectConverter[InlineKeyboard, InlineKeyboardMarkup] =
+    implicit val InlineKeyboardToInlineKeyboardMarkup: ObjectConverter[InlineKeyboard, InlineKeyboardMarkup] =
       (inlineKeyboard: InlineKeyboard) => {
         val buttons = inlineKeyboard.buttons.map { row =>
           row.map(createInlineKeyboardButton)
@@ -37,7 +33,7 @@ package object telegram {
 
     private def createInlineKeyboardButton(button: Button) = {
       button match {
-        case b: TaggedButton => InlineKeyboardButton.callbackData(b.label, tag(b.tag))
+        case b: TaggedButton  => InlineKeyboardButton.callbackData(b.label, tag(b.tag))
         case b: LabeledButton => InlineKeyboardButton.callbackData(b.label, b.label)
       }
     }

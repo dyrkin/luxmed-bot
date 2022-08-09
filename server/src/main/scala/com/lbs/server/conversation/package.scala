@@ -1,4 +1,3 @@
-
 package com.lbs.server
 
 import com.lbs.bot.model.MessageSource

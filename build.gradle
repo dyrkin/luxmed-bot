@@ -1,6 +1,7 @@
 plugins {
     id "com.github.maiflai.scalatest" version "0.32"
     id "org.springframework.boot" version "2.7.2"
+    id "cz.alenkacz.gradle.scalafmt" version "1.16.2"
 }
 
 allprojects {
@@ -17,7 +18,7 @@ allprojects {
         compileOnly "org.scala-lang:scala-library:$scala.$scala_minor"
 
         testImplementation "org.scalatest:scalatest_$scala:3.2.11"
-        testRuntimeOnly 'com.vladsch.flexmark:flexmark-all:0.62.2' // version depends on scalatest dependency
+        testRuntimeOnly "com.vladsch.flexmark:flexmark-all:0.62.2" // version depends on scalatest dependency
 
         testImplementation "org.scalatestplus:mockito-4-2_$scala:3.2.11.0"
         testImplementation "org.pegdown:pegdown:1.6.0"

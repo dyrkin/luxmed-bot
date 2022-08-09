@@ -24,7 +24,6 @@ class AuthSpec extends AkkaTestKit {
       when(dataService.findUserAndAccountIdBySource(source)).thenReturn(None)
       val auth = new Auth(source, dataService, unauthorizedHelpFactory, loginActorFactory, chatActorFactory)(system)
 
-
       "send english help on /start command" in {
         val cmd = Command(source, Message("1", Some("/start")))
         auth ! cmd
@@ -79,7 +78,6 @@ class AuthSpec extends AkkaTestKit {
       when(dataService.findUserAndAccountIdBySource(source)).thenReturn(Some(userId.userId, userId.accountId))
 
       val auth = new Auth(source, dataService, unauthorizedHelpFactory, loginActorFactory, chatActorFactory)(system)
-
 
       "forward all commands to chat actor" in {
         val cmd = Command(source, Message("1", Some("any")))

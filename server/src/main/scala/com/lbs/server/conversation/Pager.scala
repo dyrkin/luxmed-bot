@@ -1,9 +1,8 @@
-
 package com.lbs.server.conversation
 
 import akka.actor.ActorSystem
-import com.lbs.bot.model.{Button, Command}
 import com.lbs.bot._
+import com.lbs.bot.model.{Button, Command}
 import com.lbs.server.conversation.Login.UserId
 import com.lbs.server.conversation.Pager._
 import com.lbs.server.conversation.base.{Conversation, Interactional}
@@ -11,10 +10,18 @@ import com.lbs.server.lang.{Localizable, Localization}
 import com.lbs.server.util.MessageExtractors
 import com.typesafe.scalalogging.StrictLogging
 
-class Pager[Data](val userId: UserId, bot: Bot, makeMessage: (Data, Int, Int) => String,
-                  makeHeader: (Int, Int) => String, selectionPrefix: Option[String],
-                  val localization: Localization, originator: Interactional)(val actorSystem: ActorSystem)
-  extends Conversation[(ItemsProvider[Data], Option[String])] with Localizable with StrictLogging {
+class Pager[Data](
+  val userId: UserId,
+  bot: Bot,
+  makeMessage: (Data, Int, Int) => String,
+  makeHeader: (Int, Int) => String,
+  selectionPrefix: Option[String],
+  val localization: Localization,
+  originator: Interactional
+)(val actorSystem: ActorSystem)
+    extends Conversation[(ItemsProvider[Data], Option[String])]
+    with Localizable
+    with StrictLogging {
 
   private val Selection = s"/${selectionPrefix.getOrElse("")}_(\\d+)".r
 
@@ -49,10 +56,17 @@ class Pager[Data](val userId: UserId, bot: Bot, makeMessage: (Data, Int, Int) =>
     }
 
   private def sendPage(itemsProvider: ItemsProvider[Data], messageId: Option[String] = None): Unit = {
-    val message = makeHeader(itemsProvider.currentPage, itemsProvider.pages) + "\n\n" + itemsProvider.items.zipWithIndex.map { case (d, index) => makeMessage(d, itemsProvider.currentPage, index) }.mkString
+    val message =
+      makeHeader(itemsProvider.currentPage, itemsProvider.pages) + "\n\n" + itemsProvider.items.zipWithIndex.map {
+        case (d, index) =>
+          makeMessage(d, itemsProvider.currentPage, index)
+      }.mkString
 
     val previousButton = if (itemsProvider.currentPage > 0) Some(Button(lang.previous, Tags.Previous)) else None
-    val nextButton = if (itemsProvider.currentPage >= 0 && itemsProvider.currentPage < itemsProvider.pages - 1) Some(Button(lang.next, Tags.Next)) else None
+    val nextButton =
+      if (itemsProvider.currentPage >= 0 && itemsProvider.currentPage < itemsProvider.pages - 1)
+        Some(Button(lang.next, Tags.Next))
+      else None
     val buttons = previousButton.toSeq ++ nextButton.toSeq
 
     messageId match {

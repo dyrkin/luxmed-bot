@@ -1,9 +1,8 @@
-
 package com.lbs.server.conversation
 
 import akka.actor.ActorSystem
+import com.lbs.bot._
 import com.lbs.bot.model.Button
-import com.lbs.bot.{Bot, _}
 import com.lbs.server.conversation.DatePicker._
 import com.lbs.server.conversation.Login.UserId
 import com.lbs.server.conversation.base.{Conversation, Interactional}
@@ -16,15 +15,16 @@ import java.time.{LocalDateTime, LocalTime}
 import scala.util.control.NonFatal
 
 /**
- * Date picker Inline Keyboard
- *
- * ⬆   ⬆    ⬆
- * dd   MM   yyyy
- * ⬇   ⬇    ⬇
- *
- */
-class DatePicker(val userId: UserId, val bot: Bot, val localization: Localization, originator: Interactional)
-                (val actorSystem: ActorSystem) extends Conversation[LocalDateTime] with Localizable {
+  * Date picker Inline Keyboard
+  *
+  * ⬆   ⬆    ⬆
+  * dd   MM   yyyy
+  * ⬇   ⬇    ⬇
+  */
+class DatePicker(val userId: UserId, val bot: Bot, val localization: Localization, originator: Interactional)(
+  val actorSystem: ActorSystem
+) extends Conversation[LocalDateTime]
+    with Localizable {
 
   private var mode: Mode = DateFromMode
 
@@ -43,11 +43,11 @@ class DatePicker(val userId: UserId, val bot: Bot, val localization: Localizatio
     ask { initialDate =>
       val message = mode match {
         case DateFromMode => lang.chooseDateFrom(initialDate)
-        case DateToMode => lang.chooseDateTo(initialDate)
+        case DateToMode   => lang.chooseDateTo(initialDate)
       }
       bot.sendMessage(userId.source, message, inlineKeyboard = dateButtons(initialDate))
     } onReply {
-      case Msg(cmd@CallbackCommand(Tags.Done), finalDate) =>
+      case Msg(cmd @ CallbackCommand(Tags.Done), finalDate) =>
         val (message, updatedDate) = mode match {
           case DateFromMode =>
             val startOfTheDay = finalDate.`with`(LocalTime.MIN)
@@ -78,7 +78,7 @@ class DatePicker(val userId: UserId, val bot: Bot, val localization: Localizatio
             bot.sendMessage(userId.source, "Incorrect date. Please use format dd-MM")
             goto(requestDate)
         }
-      case Msg(cmd@CallbackCommand(tag), date) =>
+      case Msg(cmd @ CallbackCommand(tag), date) =>
         val modifiedDate = modifyDate(date, tag)
         bot.sendEditMessage(userId.source, cmd.message.messageId, inlineKeyboard = dateButtons(modifiedDate))
         stay() using modifiedDate
@@ -86,12 +86,12 @@ class DatePicker(val userId: UserId, val bot: Bot, val localization: Localizatio
 
   private def modifyDate(date: LocalDateTime, tag: String) = {
     val dateModifier = tag match {
-      case Tags.DayInc => date.plusDays _
+      case Tags.DayInc   => date.plusDays _
       case Tags.MonthInc => date.plusMonths _
-      case Tags.YearInc => date.plusYears _
-      case Tags.DayDec => date.minusDays _
+      case Tags.YearInc  => date.plusYears _
+      case Tags.DayDec   => date.minusDays _
       case Tags.MonthDec => date.minusMonths _
-      case Tags.YearDec => date.minusYears _
+      case Tags.YearDec  => date.minusYears _
     }
     dateModifier(1)
   }
@@ -102,12 +102,14 @@ class DatePicker(val userId: UserId, val bot: Bot, val localization: Localizatio
     val month = date.getMonth.getDisplayName(TextStyle.SHORT, lang.locale)
     val year = date.getYear.toString
 
-    createInlineKeyboard(Seq(
-      Seq(Button("⬆", Tags.DayInc), Button("⬆", Tags.MonthInc), Button("⬆", Tags.YearInc)),
-      Seq(Button(s"$day ($dayOfWeek)"), Button(month), Button(year)),
-      Seq(Button("⬇", Tags.DayDec), Button("⬇", Tags.MonthDec), Button("⬇", Tags.YearDec)),
-      Seq(Button("Done", Tags.Done))
-    ))
+    createInlineKeyboard(
+      Seq(
+        Seq(Button("⬆", Tags.DayInc), Button("⬆", Tags.MonthInc), Button("⬆", Tags.YearInc)),
+        Seq(Button(s"$day ($dayOfWeek)"), Button(month), Button(year)),
+        Seq(Button("⬇", Tags.DayDec), Button("⬇", Tags.MonthDec), Button("⬇", Tags.YearDec)),
+        Seq(Button("Done", Tags.Done))
+      )
+    )
   }
 }
 

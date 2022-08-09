@@ -1,4 +1,3 @@
-
 package com.lbs.bot.model
 
 object Button {

@@ -1,4 +1,3 @@
-
 package com.lbs.common
 
 import java.util.Optional

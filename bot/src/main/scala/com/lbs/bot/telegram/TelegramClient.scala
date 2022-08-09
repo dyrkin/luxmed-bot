@@ -1,4 +1,3 @@
-
 package com.lbs.bot.telegram
 
 import cats.implicits.toFunctorOps
@@ -12,7 +11,13 @@ import com.typesafe.scalalogging.StrictLogging
 
 import scala.concurrent.Future
 
-class TelegramClient(onReceive: TelegramEvent => Unit, botToken: String) extends AkkaTelegramBot with TelegramBoT with Polling with Commands[Future] with Callbacks[Future] with StrictLogging {
+class TelegramClient(onReceive: TelegramEvent => Unit, botToken: String)
+    extends AkkaTelegramBot
+    with TelegramBoT
+    with Polling
+    with Commands[Future]
+    with Callbacks[Future]
+    with StrictLogging {
 
   override val client: RequestHandler[Future] = new AkkaHttpClient(botToken)
 
@@ -22,11 +27,28 @@ class TelegramClient(onReceive: TelegramEvent => Unit, botToken: String) extends
   def sendMessage(chatId: Long, text: String, replyMarkup: Option[InlineKeyboardMarkup] = None): Future[Message] =
     loggingRequest(SendMessage(chatId, text, parseMode = Some(ParseMode.HTML), replyMarkup = replyMarkup))
 
-  def sendEditMessage(chatId: Long, messageId: Int, replyMarkup: Option[InlineKeyboardMarkup]): Future[Either[Boolean, Message]] =
+  def sendEditMessage(
+    chatId: Long,
+    messageId: Int,
+    replyMarkup: Option[InlineKeyboardMarkup]
+  ): Future[Either[Boolean, Message]] =
     loggingRequest(EditMessageReplyMarkup(Some(chatId), Some(messageId), replyMarkup = replyMarkup))
 
-  def sendEditMessage(chatId: Long, messageId: Int, text: String, replyMarkup: Option[InlineKeyboardMarkup] = None): Future[Either[Boolean, Message]] =
-    loggingRequest(EditMessageText(Some(chatId), Some(messageId), text = text, parseMode = Some(ParseMode.HTML), replyMarkup = replyMarkup))
+  def sendEditMessage(
+    chatId: Long,
+    messageId: Int,
+    text: String,
+    replyMarkup: Option[InlineKeyboardMarkup] = None
+  ): Future[Either[Boolean, Message]] =
+    loggingRequest(
+      EditMessageText(
+        Some(chatId),
+        Some(messageId),
+        text = text,
+        parseMode = Some(ParseMode.HTML),
+        replyMarkup = replyMarkup
+      )
+    )
 
   def sendFile(chatId: Long, filename: String, contents: Array[Byte], caption: Option[String] = None): Future[Message] =
     loggingRequest(SendDocument(chatId, InputFile(filename, contents), caption = caption))
@@ -35,7 +57,6 @@ class TelegramClient(onReceive: TelegramEvent => Unit, botToken: String) extends
     logger.debug(s"Sending telegram request: $req")
     request(req)
   }
-
 
   override def receiveMessage(msg: Message): Future[Unit] = {
     logger.debug(s"Received telegram message: $msg")

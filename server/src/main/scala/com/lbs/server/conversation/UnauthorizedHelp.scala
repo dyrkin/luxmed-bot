@@ -1,4 +1,3 @@
-
 package com.lbs.server.conversation
 
 import akka.actor.ActorSystem
@@ -11,9 +10,8 @@ class UnauthorizedHelp(source: MessageSource, bot: Bot)(val actorSystem: ActorSy
   entryPoint(displayHelp)
 
   def displayHelp: Step =
-    monologue {
-      case Msg(_: Command, _) =>
-        bot.sendMessage(source, En.help)
-        stay()
+    monologue { case Msg(_: Command, _) =>
+      bot.sendMessage(source, En.help)
+      stay()
     }
 }

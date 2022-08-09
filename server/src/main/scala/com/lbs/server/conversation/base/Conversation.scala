@@ -14,10 +14,9 @@ trait Conversation[D] extends Domain[D] with Interactional with StrictLogging {
 
   private var initialStep: Step = _
 
-  private val defaultMsgHandler: MessageProcessorFn = {
-    case Msg(any, data) =>
-      logger.warn(s"Unhandled message received in step '${currentStep.name}'. Message: [$any]. Data: [$data]")
-      NextStep(currentStep, Some(data))
+  private val defaultMsgHandler: MessageProcessorFn = { case Msg(any, data) =>
+    logger.warn(s"Unhandled message received in step '${currentStep.name}'. Message: [$any]. Data: [$data]")
+    NextStep(currentStep, Some(data))
   }
 
   private var msgHandler: MessageProcessorFn = defaultMsgHandler
@@ -29,7 +28,7 @@ trait Conversation[D] extends Domain[D] with Interactional with StrictLogging {
         case Process(_, fn) =>
           val nextStep = fn(currentData)
           moveToNextStep(nextStep)
-        case _ => //do nothing
+        case _ => // do nothing
       }
     } catch {
       case NonFatal(ex) => logger.error("Step execution failed", ex)
@@ -53,7 +52,7 @@ trait Conversation[D] extends Domain[D] with Interactional with StrictLogging {
       case Monologue(_, fn) =>
         val fact = Msg(any, currentData)
         handle(fact, fn, msgHandler)
-      case _ => //do nothing
+      case _ => // do nothing
     }
   }
 
@@ -71,12 +70,13 @@ trait Conversation[D] extends Domain[D] with Interactional with StrictLogging {
     currentData = initialData
   }
 
-
-  protected def monologue(answerFn: MessageProcessorFn)(implicit functionName: sourcecode.Name): Monologue = Monologue(functionName.value, answerFn)
+  protected def monologue(answerFn: MessageProcessorFn)(implicit functionName: sourcecode.Name): Monologue =
+    Monologue(functionName.value, answerFn)
 
   protected def ask(askFn: D => Unit): Ask = Ask(askFn)
 
-  protected def process(processFn: ProcessFn)(implicit functionName: sourcecode.Name): Process = Process(functionName.value, processFn)
+  protected def process(processFn: ProcessFn)(implicit functionName: sourcecode.Name): Process =
+    Process(functionName.value, processFn)
 
   protected def end(): NextStep = NextStep(End)
 
@@ -106,4 +106,3 @@ trait Conversation[D] extends Domain[D] with Interactional with StrictLogging {
     entryPoint(step, null.asInstanceOf[D])
   }
 }
-

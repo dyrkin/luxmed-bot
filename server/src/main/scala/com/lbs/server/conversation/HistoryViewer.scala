@@ -1,4 +1,3 @@
-
 package com.lbs.server.conversation
 
 import akka.actor.ActorSystem
@@ -11,8 +10,15 @@ import com.lbs.server.conversation.base.Conversation
 import com.lbs.server.lang.{Localizable, Localization}
 import com.lbs.server.service.ApiService
 
-class HistoryViewer(val userId: UserId, bot: Bot, apiService: ApiService, val localization: Localization,
-                    historyPagerFactory: UserIdWithOriginatorTo[Pager[Event]])(val actorSystem: ActorSystem) extends Conversation[Unit] with Localizable {
+class HistoryViewer(
+  val userId: UserId,
+  bot: Bot,
+  apiService: ApiService,
+  val localization: Localization,
+  historyPagerFactory: UserIdWithOriginatorTo[Pager[Event]]
+)(val actorSystem: ActorSystem)
+    extends Conversation[Unit]
+    with Localizable {
 
   private val historyPager = historyPagerFactory(userId, self)
 

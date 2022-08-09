@@ -1,4 +1,3 @@
-
 package com.lbs.server.conversation
 
 import com.lbs.api.json.model.{IdName, Identified}
@@ -12,8 +11,12 @@ trait StaticDataForBooking extends Conversation[BookingData] {
 
   private[conversation] def staticData: StaticData
 
-  protected def withFunctions[T <: Identified](latestOptions: => Seq[IdName], staticOptions: => ThrowableOr[List[T]], applyId: IdName => BookingData): Step => MessageProcessorFn = {
-    nextStep: Step => {
+  protected def withFunctions[T <: Identified](
+    latestOptions: => Seq[IdName],
+    staticOptions: => ThrowableOr[List[T]],
+    applyId: IdName => BookingData
+  ): Step => MessageProcessorFn = { nextStep: Step =>
+    {
       case Msg(cmd: Command, _) =>
         staticData ! cmd
         stay()
@@ -28,14 +31,15 @@ trait StaticDataForBooking extends Conversation[BookingData] {
     }
   }
 
-  protected def staticData(staticDataConfig: => StaticDataConfig)(functions: BookingData => Step => MessageProcessorFn)(requestNext: Step)(implicit functionName: sourcecode.Name): Step = {
+  protected def staticData(staticDataConfig: => StaticDataConfig)(
+    functions: BookingData => Step => MessageProcessorFn
+  )(requestNext: Step)(implicit functionName: sourcecode.Name): Step = {
     ask { _ =>
       staticData.restart()
       staticData ! staticDataConfig
-    } onReply {
-      case msg@Msg(_, bookingData: BookingData) =>
-        val fn = functions(bookingData)(requestNext)
-        fn(msg)
+    } onReply { case msg @ Msg(_, bookingData: BookingData) =>
+      val fn = functions(bookingData)(requestNext)
+      fn(msg)
     }
   }
 

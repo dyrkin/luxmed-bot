@@ -1,4 +1,3 @@
-
 package com.lbs.server.service
 
 import com.lbs.api.json.model.IdName
@@ -31,7 +30,12 @@ class DataService {
     dataRepository.getServiceHistory(userId, cityId, clinicId).mapTo[Seq[IdName]]
   }
 
-  def getLatestDoctorsByCityIdAndClinicIdAndServiceId(userId: Long, cityId: Long, clinicId: Option[Long], serviceId: Long): Seq[IdName] = {
+  def getLatestDoctorsByCityIdAndClinicIdAndServiceId(
+    userId: Long,
+    cityId: Long,
+    clinicId: Option[Long],
+    serviceId: Long
+  ): Seq[IdName] = {
     dataRepository.getDoctorHistory(userId, cityId, clinicId, serviceId).mapTo[Seq[IdName]]
   }
 
@@ -78,7 +82,9 @@ class DataService {
 
   def findUserAndAccountIdBySource(source: MessageSource): Option[(Long, Long)] = {
     val userIdMaybe = dataRepository.findUserId(source.chatId, source.sourceSystem.id).map(_.toLong)
-    userIdMaybe.flatMap(userId => dataRepository.findAccountId(userId).map(_.toLong).map(accountId => userId -> accountId))
+    userIdMaybe.flatMap(userId =>
+      dataRepository.findAccountId(userId).map(_.toLong).map(accountId => userId -> accountId)
+    )
   }
 
   def findCredentialsByUsername(username: String, userId: Long): Option[Credentials] = {
@@ -109,18 +115,18 @@ class DataService {
 
   @Transactional
   def saveCredentials(source: MessageSource, username: String, password: String): Credentials = {
-    val userMaybe = dataRepository.findUserIdBySource(source.chatId, source.sourceSystem.id).flatMap {
-      userId => dataRepository.findUser(userId).map(_ -> userId)
+    val userMaybe = dataRepository.findUserIdBySource(source.chatId, source.sourceSystem.id).flatMap { userId =>
+      dataRepository.findUser(userId).map(_ -> userId)
     }
     userMaybe match {
       case Some((user, userId)) =>
         val credentialsMaybe = findCredentialsByUsername(username, userId)
         credentialsMaybe match {
-          case Some(credentials) => //user already exists
+          case Some(credentials) => // user already exists
             val sourceMaybe = dataRepository.findSource(source.chatId, source.sourceSystem.id, credentials.userId)
             sourceMaybe match {
-              case Some(_) => //source already exists. Just update credentials
-              case None => //add new source
+              case Some(_) => // source already exists. Just update credentials
+              case None => // add new source
                 val src = Source(source.chatId, source.sourceSystem.id, credentials.userId)
                 dataRepository.saveEntity(src)
             }
@@ -135,8 +141,8 @@ class DataService {
             dataRepository.saveEntity(user)
             val sourceMaybe = dataRepository.findSource(source.chatId, source.sourceSystem.id, user.recordId)
             sourceMaybe match {
-              case Some(_) => //source already exists. Just save credentials
-              case None => //add new source
+              case Some(_) => // source already exists. Just save credentials
+              case None => // add new source
                 val src = Source(source.chatId, source.sourceSystem.id, user.recordId)
                 dataRepository.saveEntity(src)
             }
@@ -144,7 +150,7 @@ class DataService {
             dataRepository.saveEntity(credentials)
         }
 
-      case None => //everything is new
+      case None => // everything is new
         val account = dataRepository.saveEntity(new Account)
         val user = dataRepository.saveEntity(SystemUser(account.recordId))
         val src = Source(source.chatId, source.sourceSystem.id, user.recordId)
@@ -171,7 +177,9 @@ class DataService {
     val service = ServiceHistory(accountId, serviceId.id, serviceId.name, cityId.id, clinicId.optionalId, time)
     dataRepository.saveEntity(service)
 
-    val doctorMaybe = doctorId.optionalId.map(id => DoctorHistory(accountId, id, doctorId.name, cityId.id, clinicId.optionalId, serviceId.id, time))
+    val doctorMaybe = doctorId.optionalId.map(id =>
+      DoctorHistory(accountId, id, doctorId.name, cityId.id, clinicId.optionalId, serviceId.id, time)
+    )
     doctorMaybe.foreach(dataRepository.saveEntity)
   }
 }

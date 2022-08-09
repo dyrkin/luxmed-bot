@@ -1,4 +1,3 @@
-
 package com.lbs.server.lang
 
 import com.lbs.server.repository.model
@@ -17,10 +16,13 @@ class Localization {
   private val cachedLangs = new ConcurrentHashMap[Long, Lang]
 
   def lang(userId: Long): Lang = {
-    cachedLangs.computeIfAbsent(userId, _ => {
-      val settings = dataService.findSettings(userId)
-      settings.map(s => Lang(s.lang)).getOrElse(En)
-    })
+    cachedLangs.computeIfAbsent(
+      userId,
+      _ => {
+        val settings = dataService.findSettings(userId)
+        settings.map(s => Lang(s.lang)).getOrElse(En)
+      }
+    )
 
   }
 

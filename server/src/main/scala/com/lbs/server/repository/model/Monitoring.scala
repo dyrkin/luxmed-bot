@@ -1,4 +1,3 @@
-
 package com.lbs.server.repository.model
 
 import java.time.{LocalTime, ZonedDateTime}
@@ -98,10 +97,30 @@ class Monitoring extends RecordId {
 }
 
 object Monitoring {
-  def apply(userId: Long, accountId: Long, chatId: String, sourceSystemId: Long, payerId: Long, cityId: Long, cityName: String, clinicId: Option[Long], clinicName: String,
-            serviceId: Long, serviceName: String, doctorId: Option[Long], doctorName: String, dateFrom: ZonedDateTime,
-            dateTo: ZonedDateTime, autobook: Boolean = false, rebookIfExists: Boolean = false, created: ZonedDateTime = ZonedDateTime.now(), timeFrom: LocalTime, timeTo: LocalTime,
-            active: Boolean = true, offset: Int): Monitoring = {
+  def apply(
+    userId: Long,
+    accountId: Long,
+    chatId: String,
+    sourceSystemId: Long,
+    payerId: Long,
+    cityId: Long,
+    cityName: String,
+    clinicId: Option[Long],
+    clinicName: String,
+    serviceId: Long,
+    serviceName: String,
+    doctorId: Option[Long],
+    doctorName: String,
+    dateFrom: ZonedDateTime,
+    dateTo: ZonedDateTime,
+    autobook: Boolean = false,
+    rebookIfExists: Boolean = false,
+    created: ZonedDateTime = ZonedDateTime.now(),
+    timeFrom: LocalTime,
+    timeTo: LocalTime,
+    active: Boolean = true,
+    offset: Int
+  ): Monitoring = {
     val monitoring = new Monitoring
     monitoring.userId = userId
     monitoring.accountId = accountId

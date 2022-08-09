@@ -1,4 +1,3 @@
-
 package com.lbs.server.repository.model
 
 import java.time.ZonedDateTime
@@ -34,7 +33,14 @@ class ServiceHistory extends History with RecordId {
 }
 
 object ServiceHistory {
-  def apply(accountId: Long, id: Long, name: String, cityId: Long, clinicId: Option[Long], time: ZonedDateTime): ServiceHistory = {
+  def apply(
+    accountId: Long,
+    id: Long,
+    name: String,
+    cityId: Long,
+    clinicId: Option[Long],
+    time: ZonedDateTime
+  ): ServiceHistory = {
     val service = new ServiceHistory
     service.accountId = accountId
     service.id = id

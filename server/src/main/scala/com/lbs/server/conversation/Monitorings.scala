@@ -1,4 +1,3 @@
-
 package com.lbs.server.conversation
 
 import akka.actor.ActorSystem
@@ -12,7 +11,15 @@ import com.lbs.server.lang.{Localizable, Localization}
 import com.lbs.server.repository.model.Monitoring
 import com.lbs.server.service.MonitoringService
 
-class Monitorings(val userId: UserId, bot: Bot, monitoringService: MonitoringService, val localization: Localization, monitoringsPagerFactory: UserIdWithOriginatorTo[Pager[Monitoring]])(val actorSystem: ActorSystem) extends Conversation[Monitoring] with Localizable {
+class Monitorings(
+  val userId: UserId,
+  bot: Bot,
+  monitoringService: MonitoringService,
+  val localization: Localization,
+  monitoringsPagerFactory: UserIdWithOriginatorTo[Pager[Monitoring]]
+)(val actorSystem: ActorSystem)
+    extends Conversation[Monitoring]
+    with Localizable {
 
   private val monitoringsPager = monitoringsPagerFactory(userId, self)
 
@@ -40,8 +47,11 @@ class Monitorings(val userId: UserId, bot: Bot, monitoringService: MonitoringSer
 
   def askToDeactivateMonitoring: Step =
     ask { monitoring =>
-      bot.sendMessage(userId.source, lang.deactivateMonitoring(monitoring), inlineKeyboard =
-        createInlineKeyboard(Seq(Button(lang.no, Tags.No), Button(lang.yes, Tags.Yes))))
+      bot.sendMessage(
+        userId.source,
+        lang.deactivateMonitoring(monitoring),
+        inlineKeyboard = createInlineKeyboard(Seq(Button(lang.no, Tags.No), Button(lang.yes, Tags.Yes)))
+      )
     } onReply {
       case Msg(Command(_, _, Some(Tags.No)), _) =>
         bot.sendMessage(userId.source, lang.monitoringWasNotDeactivated)

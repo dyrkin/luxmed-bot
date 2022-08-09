@@ -1,4 +1,3 @@
-
 package com.lbs.server.lang
 
 import com.lbs.server.conversation.Login.UserId

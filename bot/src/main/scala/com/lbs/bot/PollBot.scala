@@ -1,4 +1,3 @@
-
 package com.lbs.bot
 
 import com.lbs.bot.model.{Event, InlineKeyboard}

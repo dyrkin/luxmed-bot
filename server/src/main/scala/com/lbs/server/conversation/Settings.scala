@@ -1,9 +1,8 @@
-
 package com.lbs.server.conversation
 
 import akka.actor.ActorSystem
+import com.lbs.bot._
 import com.lbs.bot.model.{Button, Command}
-import com.lbs.bot.{Bot, _}
 import com.lbs.server.conversation.Login.UserId
 import com.lbs.server.conversation.Settings._
 import com.lbs.server.conversation.base.Conversation
@@ -12,15 +11,21 @@ import com.lbs.server.repository.model
 import com.lbs.server.service.DataService
 import com.lbs.server.util.MessageExtractors.{CallbackCommand, IntString, TextCommand}
 
-class Settings(val userId: UserId, bot: Bot, dataService: DataService, val localization: Localization)(val actorSystem: ActorSystem) extends Conversation[Unit] with Localizable {
+class Settings(val userId: UserId, bot: Bot, dataService: DataService, val localization: Localization)(
+  val actorSystem: ActorSystem
+) extends Conversation[Unit]
+    with Localizable {
 
   entryPoint(askForAction)
 
   def askForAction: Step =
     ask { _ =>
-      bot.sendMessage(userId.source, lang.settingsHeader, inlineKeyboard =
-        createInlineKeyboard(Seq(Button(lang.language, Tags.Language),
-          Button(lang.offset, Tags.Offset)), columns = 1))
+      bot.sendMessage(
+        userId.source,
+        lang.settingsHeader,
+        inlineKeyboard =
+          createInlineKeyboard(Seq(Button(lang.language, Tags.Language), Button(lang.offset, Tags.Offset)), columns = 1)
+      )
     } onReply {
       case Msg(Command(_, _, Some(Tags.Language)), _) =>
         goto(askLanguage)
@@ -30,29 +35,47 @@ class Settings(val userId: UserId, bot: Bot, dataService: DataService, val local
 
   def askLanguage: Step =
     ask { _ =>
-      bot.sendMessage(userId.source, lang.chooseLanguage,
-        inlineKeyboard = createInlineKeyboard(Lang.Langs.map(l => Button(l.label, l.id)), columns = 1))
-    } onReply {
-      case Msg(CallbackCommand(IntString(langId)), _) =>
-        localization.updateLanguage(userId.userId, Lang(langId))
-        bot.sendMessage(userId.source, lang.languageUpdated)
-        end()
+      bot.sendMessage(
+        userId.source,
+        lang.chooseLanguage,
+        inlineKeyboard = createInlineKeyboard(Lang.Langs.map(l => Button(l.label, l.id)), columns = 1)
+      )
+    } onReply { case Msg(CallbackCommand(IntString(langId)), _) =>
+      localization.updateLanguage(userId.userId, Lang(langId))
+      bot.sendMessage(userId.source, lang.languageUpdated)
+      end()
     }
 
   def showOffsetOptions: Step = {
     ask { _ =>
       val settings = getSettings
-      bot.sendMessage(userId.source, lang.configureOffset,
-        inlineKeyboard = createInlineKeyboard(Seq(Button(lang.alwaysAskOffset(settings.alwaysAskOffset), Tags.ToggleAskOffsetOnOff),
-          Button(lang.changeDefaultOffset(settings.defaultOffset), Tags.ChangeDefaultOffset)), columns = 1))
+      bot.sendMessage(
+        userId.source,
+        lang.configureOffset,
+        inlineKeyboard = createInlineKeyboard(
+          Seq(
+            Button(lang.alwaysAskOffset(settings.alwaysAskOffset), Tags.ToggleAskOffsetOnOff),
+            Button(lang.changeDefaultOffset(settings.defaultOffset), Tags.ChangeDefaultOffset)
+          ),
+          columns = 1
+        )
+      )
     } onReply {
-      case Msg(cmd@CallbackCommand(Tags.ToggleAskOffsetOnOff), _) =>
+      case Msg(cmd @ CallbackCommand(Tags.ToggleAskOffsetOnOff), _) =>
         val settings = getSettings
         settings.alwaysAskOffset = !settings.alwaysAskOffset
         dataService.saveSettings(settings)
-        bot.sendEditMessage(userId.source, cmd.message.messageId,
-          inlineKeyboard = createInlineKeyboard(Seq(Button(lang.alwaysAskOffset(settings.alwaysAskOffset), Tags.ToggleAskOffsetOnOff),
-            Button(lang.changeDefaultOffset(settings.defaultOffset), Tags.ChangeDefaultOffset)), columns = 1))
+        bot.sendEditMessage(
+          userId.source,
+          cmd.message.messageId,
+          inlineKeyboard = createInlineKeyboard(
+            Seq(
+              Button(lang.alwaysAskOffset(settings.alwaysAskOffset), Tags.ToggleAskOffsetOnOff),
+              Button(lang.changeDefaultOffset(settings.defaultOffset), Tags.ChangeDefaultOffset)
+            ),
+            columns = 1
+          )
+        )
         stay()
       case Msg(CallbackCommand(Tags.ChangeDefaultOffset), _) =>
         goto(askDefaultOffset)
@@ -63,17 +86,18 @@ class Settings(val userId: UserId, bot: Bot, dataService: DataService, val local
     ask { _ =>
       val settings = getSettings
       bot.sendMessage(userId.source, lang.pleaseEnterOffset(settings.defaultOffset))
-    } onReply {
-      case Msg(TextCommand(IntString(offset)), _) =>
-        val settings = getSettings
-        settings.defaultOffset = offset
-        dataService.saveSettings(settings)
-        goto(showOffsetOptions)
+    } onReply { case Msg(TextCommand(IntString(offset)), _) =>
+      val settings = getSettings
+      settings.defaultOffset = offset
+      dataService.saveSettings(settings)
+      goto(showOffsetOptions)
     }
   }
 
   private def getSettings = {
-    dataService.findSettings(userId.userId).getOrElse(model.Settings(userId.userId, lang.id, 0, alwaysAskOffset = false))
+    dataService
+      .findSettings(userId.userId)
+      .getOrElse(model.Settings(userId.userId, lang.id, 0, alwaysAskOffset = false))
   }
 }
 
