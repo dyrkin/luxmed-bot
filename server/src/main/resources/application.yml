@@ -13,6 +13,8 @@ spring:
     generate-ddl: "false"
   liquibase:
     change-log: classpath:db/liquibase-changelog.yml
+  main:
+    allow-circular-references: true
 
 banner:
   location: "classpath:/banner.txt"
