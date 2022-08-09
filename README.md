@@ -29,5 +29,11 @@ to the same folder and rename it to **secrets.env**
     ```
 11. Send `/start` command to your bot
 
+### Develop run
+
+1. Run `docker-compose up` to launch PostgreSQL database
+2. Set env `TELEGRAM_TOKEN="YOUR_TOKEN"`
+3. Run `Boot.scala` app
+
 
 

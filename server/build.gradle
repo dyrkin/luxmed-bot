@@ -25,12 +25,11 @@ dependencies {
     implementation "org.liquibase:liquibase-core"
 
     implementation "org.jasypt:jasypt:1.9.2"
-    implementation "org.postgresql:postgresql:42.2.1.jre7"
+    implementation "org.postgresql:postgresql:42.2.26"
 
-    testImplementation "com.typesafe.akka:akka-testkit_2.12:2.6.19"
+    testImplementation "com.typesafe.akka:akka-testkit_$scala:2.6.19"
     testImplementation "org.springframework.boot:spring-boot-starter-test"
     testImplementation "com.h2database:h2"
-    runtimeOnly "org.jetbrains.kotlin:kotlin-stdlib:1.4.10"
 
     // fixme: remove junit
     testImplementation 'junit:junit:4.13.2'
