@@ -1,11 +1,11 @@
 package com.lbs.server.conversation.base
 
 import akka.actor.{Actor, ActorRef, ActorSystem, PoisonPill, Props}
-import com.lbs.common.Logger
+import com.typesafe.scalalogging.StrictLogging
 
 import scala.concurrent.ExecutionContextExecutor
 
-trait Interactional extends Logger {
+trait Interactional extends StrictLogging {
 
   private[base] object StartConversation
 

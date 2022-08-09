@@ -1,4 +1,5 @@
 dependencies {
     api "ch.qos.logback:logback-classic:1.2.11"
     api "org.typelevel:cats-core_$scala:2.8.0"
+    api "com.typesafe.scala-logging:scala-logging_$scala:3.9.5"
 }

@@ -3,13 +3,14 @@ package com.lbs.server.service
 
 import com.lbs.api.exception.SessionExpiredException
 import com.lbs.api.http.Session
-import com.lbs.common.{Logger, ParametrizedLock}
+import com.lbs.common.ParametrizedLock
 import com.lbs.server.ThrowableOr
 import com.lbs.server.exception.UserNotFoundException
+import com.typesafe.scalalogging.StrictLogging
 
 import scala.collection.mutable
 
-trait SessionSupport extends Logger {
+trait SessionSupport extends StrictLogging {
 
   def fullLogin(username: String, password: String): ThrowableOr[Session]
 
@@ -53,11 +54,11 @@ trait SessionSupport extends Logger {
       for {
         result <- doApiCall match {
           case Left(_: SessionExpiredException) =>
-            debug(s"The session for account [#$accountId] has expired. Try to relogin")
+            logger.debug(s"The session for account [#$accountId] has expired. Try to relogin")
             sessions.remove(accountId)
             doApiCall
           case another =>
-            debug(s"Call to remote api function has completed with result:\n$another")
+            logger.debug(s"Call to remote api function has completed with result:\n$another")
             another
         }
       } yield result

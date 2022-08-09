@@ -74,7 +74,7 @@ class DatePicker(val userId: UserId, val bot: Bot, val localization: Localizatio
           end()
         } catch {
           case NonFatal(ex) =>
-            error("Unable to parse date", ex)
+            logger.error("Unable to parse date", ex)
             bot.sendMessage(userId.source, "Incorrect date. Please use format dd-MM")
             goto(requestDate)
         }

@@ -6,14 +6,13 @@ import cats.implicits._
 import com.lbs.api.exception._
 import com.lbs.api.json.JsonSerializer.extensions._
 import com.lbs.api.json.model._
-import com.lbs.common.Logger
+import com.typesafe.scalalogging.StrictLogging
 import scalaj.http.{HttpRequest, HttpResponse}
 
 import java.net.{HttpCookie, HttpURLConnection}
-import scala.language.higherKinds
 import scala.util.{Failure, Success, Try}
 
-package object http extends Logger {
+package object http extends StrictLogging {
 
   case class Session(accessToken: String, tokenType: String, cookies: Seq[HttpCookie])
 
@@ -37,9 +36,9 @@ package object http extends Logger {
   implicit class ExtendedHttpRequest[F[_] : ThrowableMonad](httpRequest: HttpRequest) {
     def invoke: F[HttpResponse[String]] = {
       val me = MonadError[F, Throwable]
-      debug(s"Sending request:\n${hideSensitive(httpRequest)}")
+      logger.debug(s"Sending request:\n${hideSensitive(httpRequest)}")
       val httpResponse = me.pure(httpRequest.asString)
-      debug(s"Received response:\n${hideSensitive(httpResponse)}")
+      logger.debug(s"Received response:\n${hideSensitive(httpResponse)}")
 
       httpResponse.flatMap { response =>
         val errorMaybe = extractLuxmedError(response)

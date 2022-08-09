@@ -46,7 +46,7 @@ class Account(val userId: UserId, bot: Bot, dataService: DataService, val locali
           bot.sendMessage(userId.source, lang.accountSwitched(account.username))
         }
       case None =>
-        error(s"This is not user [#${userId.userId}] account [#$accountId]")
+        logger.error(s"This is not user [#${userId.userId}] account [#$accountId]")
     }
   }
 }
