@@ -1,4 +1,4 @@
-FROM amd64/eclipse-temurin:11-jre-jammy
+FROM amd64/eclipse-temurin:11-jre-focal
 
 RUN ln -fs /usr/share/zoneinfo/Europe/Warsaw /etc/localtime
 RUN dpkg-reconfigure -f noninteractive tzdata
