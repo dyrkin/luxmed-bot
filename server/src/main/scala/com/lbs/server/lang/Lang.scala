@@ -21,7 +21,7 @@ object Lang {
     LangsMap.getOrElse(id, sys.error(s"Unknown language id $id"))
   }
 
-  val version: String = Try(Source.fromFile("version").getLines.mkString).getOrElse("Unknown")
+  val version: String = Try(Source.fromFile("version").getLines().mkString).getOrElse("Unknown")
 }
 
 trait Lang {
@@ -35,7 +35,7 @@ trait Lang {
   protected def capitalizeFirstLetter(str: String): String = {
     if (str != null && str != "") {
       val fistCapitalLetter = str.head.toTitleCase
-      fistCapitalLetter + str.tail.toLowerCase
+      s"$fistCapitalLetter${str.tail.toLowerCase}"
     } else ""
   }
 

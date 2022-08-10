@@ -1,9 +1,8 @@
 
 package com.lbs.common
 
-import scala.collection.TraversableLike
-import scala.collection.generic.CanBuildFrom
-import scala.language.{higherKinds, implicitConversions}
+import scala.collection.{BuildFrom, IterableOps}
+import scala.language.implicitConversions
 
 trait ModelConverters {
 
@@ -15,9 +14,8 @@ trait ModelConverters {
     def mapTo[To](implicit converter: ObjectConverter[From, To]): To = converter.convert(anyRef)
   }
 
-  implicit def sequenceConverters[From, To, Col[+X] <: TraversableLike[X, Col[X]]]
-  (implicit objectConverter: ObjectConverter[From, To], bf: CanBuildFrom[Col[From], To, Col[To]]): ObjectConverter[Col[From], Col[To]] = {
-    col: Col[From] => col.map(objectConverter.convert)
-  }
+  implicit def sequenceConverters[From, To, Col[+X] <: IterableOps[X, Col, Col[X]]]
+  (implicit objectConverter: ObjectConverter[From, To]): ObjectConverter[Col[From], Col[To]] =
+    (col: Col[From]) => col.map(objectConverter.convert)
 
 }

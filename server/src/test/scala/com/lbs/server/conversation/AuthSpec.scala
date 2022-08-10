@@ -63,8 +63,8 @@ class AuthSpec extends AkkaTestKit {
         val cmd = Command(source, Message("1", Some("any")))
         auth ! cmd
         chatActor.expectMsg(cmd)
-        unauthorizedHelpActor.expectNoMsg()
-        loginActor.expectNoMsg()
+        unauthorizedHelpActor.expectNoMessage()
+        loginActor.expectNoMessage()
       }
     }
 
@@ -85,8 +85,8 @@ class AuthSpec extends AkkaTestKit {
         val cmd = Command(source, Message("1", Some("any")))
         auth ! cmd
         chatActor.expectMsg(cmd)
-        unauthorizedHelpActor.expectNoMsg()
-        loginActor.expectNoMsg()
+        unauthorizedHelpActor.expectNoMessage()
+        loginActor.expectNoMessage()
       }
 
       "initialize dialogue with login actor on /login command" in {

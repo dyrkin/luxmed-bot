@@ -7,7 +7,7 @@ import org.springframework.stereotype.Repository
 
 import java.time.ZonedDateTime
 import javax.persistence.EntityManager
-import scala.collection.JavaConverters._
+import scala.jdk.CollectionConverters._
 
 @Repository
 class DataRepository(@Autowired em: EntityManager) {
@@ -21,7 +21,7 @@ class DataRepository(@Autowired em: EntityManager) {
         | order by city.time desc""".stripMargin, classOf[CityHistory])
       .setParameter("accountId", accountId)
       .setMaxResults(maxHistory)
-      .getResultList.asScala
+      .getResultList.asScala.toSeq
   }
 
   def getClinicHistory(accountId: Long, cityId: Long): Seq[ClinicHistory] = {
@@ -32,7 +32,7 @@ class DataRepository(@Autowired em: EntityManager) {
       .setParameter("accountId", accountId)
       .setParameter("cityId", cityId)
       .setMaxResults(maxHistory)
-      .getResultList.asScala
+      .getResultList.asScala.toSeq
   }
 
   def getServiceHistory(accountId: Long, cityId: Long, clinicId: Option[Long]): Seq[ServiceHistory] = {
@@ -45,7 +45,7 @@ class DataRepository(@Autowired em: EntityManager) {
       .setParameter("cityId", cityId)
       .setMaxResults(maxHistory)
 
-    clinicId.map(id => query.setParameter("clinicId", id)).getOrElse(query).getResultList.asScala
+    clinicId.map(id => query.setParameter("clinicId", id)).getOrElse(query).getResultList.asScala.toSeq
   }
 
   def getDoctorHistory(accountId: Long, cityId: Long, clinicId: Option[Long], serviceId: Long): Seq[DoctorHistory] = {
@@ -60,7 +60,7 @@ class DataRepository(@Autowired em: EntityManager) {
       .setParameter("serviceId", serviceId)
       .setMaxResults(maxHistory)
 
-    clinicId.map(id => query.setParameter("clinicId", id)).getOrElse(query).getResultList.asScala
+    clinicId.map(id => query.setParameter("clinicId", id)).getOrElse(query).getResultList.asScala.toSeq
   }
 
   def findCredentials(accountId: Long): Option[Credentials] = {
@@ -73,7 +73,7 @@ class DataRepository(@Autowired em: EntityManager) {
   def getActiveMonitorings: Seq[Monitoring] = {
     em.createQuery(
       """select monitoring from Monitoring monitoring where monitoring.active = true""".stripMargin, classOf[Monitoring])
-      .getResultList.asScala
+      .getResultList.asScala.toSeq
   }
 
   def getActiveMonitoringsCount(accountId: Long): JLong = {
@@ -89,7 +89,7 @@ class DataRepository(@Autowired em: EntityManager) {
       """select monitoring from Monitoring monitoring where monitoring.active = true
         | and monitoring.accountId = :accountId order by monitoring.dateTo asc""".stripMargin, classOf[Monitoring])
       .setParameter("accountId", accountId)
-      .getResultList.asScala
+      .getResultList.asScala.toSeq
   }
 
   def getAllMonitoringsCount(accountId: Long): JLong = {
@@ -107,7 +107,7 @@ class DataRepository(@Autowired em: EntityManager) {
       .setParameter("accountId", accountId)
       .setFirstResult(start)
       .setMaxResults(count)
-      .getResultList.asScala
+      .getResultList.asScala.toSeq
   }
 
 
@@ -131,7 +131,7 @@ class DataRepository(@Autowired em: EntityManager) {
       """select monitoring from Monitoring monitoring where monitoring.active = true
         | and monitoring.created > :since""".stripMargin, classOf[Monitoring])
       .setParameter("since", since)
-      .getResultList.asScala
+      .getResultList.asScala.toSeq
   }
 
   def findMonitoring(accountId: Long, monitoringId: Long): Option[Monitoring] = {
@@ -206,7 +206,7 @@ class DataRepository(@Autowired em: EntityManager) {
     em.createQuery(
       "select credentials from Credentials credentials where credentials.userId = :userId", classOf[Credentials])
       .setParameter("userId", userId)
-      .getResultList.asScala
+      .getResultList.asScala.toSeq
   }
 
   def findUserCredentialsByUserIdAndAccountId(userId: Long, accountId: Long): Option[Credentials] = {

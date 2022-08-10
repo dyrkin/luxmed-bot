@@ -16,9 +16,10 @@ allprojects {
     dependencies {
         compileOnly "org.scala-lang:scala-library:$scala.$scala_minor"
 
-        testImplementation "org.scalatest:scalatest_$scala:3.0.4"
+        testImplementation "org.scalatest:scalatest_$scala:3.2.11"
+        testRuntimeOnly 'com.vladsch.flexmark:flexmark-all:0.62.2' // version depends on scalatest dependency
 
-        testImplementation "org.mockito:mockito-core:2.13.0"
+        testImplementation "org.scalatestplus:mockito-4-2_$scala:3.2.11.0"
         testImplementation "org.pegdown:pegdown:1.6.0"
     }
 }
