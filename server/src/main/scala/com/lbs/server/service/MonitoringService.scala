@@ -2,8 +2,8 @@ package com.lbs.server.service
 
 import com.lbs.api.exception.InvalidLoginOrPasswordException
 import com.lbs.api.json.model._
-import com.lbs.bot.Bot
-import com.lbs.bot.model.{MessageSource, MessageSourceSystem}
+import com.lbs.bot.model.{Button, MessageSource, MessageSourceSystem}
+import com.lbs.bot.{Bot, createInlineKeyboard}
 import com.lbs.common.Scheduler
 import com.lbs.server.lang.Localization
 import com.lbs.server.repository.model._
@@ -13,7 +13,7 @@ import com.typesafe.scalalogging.StrictLogging
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.stereotype.Service
 
-import java.time.{LocalDateTime, ZonedDateTime}
+import java.time.{LocalDateTime, ZoneId, ZonedDateTime}
 import java.util.concurrent.ScheduledFuture
 import javax.annotation.PostConstruct
 import scala.collection.mutable
@@ -29,6 +29,8 @@ class MonitoringService extends StrictLogging {
   private var dataService: DataService = _
   @Autowired
   private var apiService: ApiService = _
+  @Autowired
+  private var reminderService: ReminderService = _
   @Autowired
   private var localization: Localization = _
 
@@ -195,8 +197,23 @@ class MonitoringService extends StrictLogging {
     } yield response
     bookingResult match {
       case Right(_) =>
-        bot.sendMessage(monitoring.source, lang(monitoring.userId).appointmentIsBooked(term, monitoring))
         deactivateMonitoring(monitoring.accountId, monitoring.recordId)
+        val reminder = reminderService.createInactiveReminder((term.term, monitoring).mapTo[Reminder])
+        val remind1h = term.term.dateTimeFrom.get.minusHours(1)
+        val remind1hMillis = remind1h.atZone(ZoneId.systemDefault()).toInstant.toEpochMilli
+        val remind2h = term.term.dateTimeFrom.get.minusHours(2)
+        val remind2hMillis = remind2h.atZone(ZoneId.systemDefault()).toInstant.toEpochMilli
+        val messages = lang(monitoring.userId)
+        bot.sendMessage(
+          monitoring.source,
+          messages.appointmentIsBooked(term, monitoring),
+          inlineKeyboard = createInlineKeyboard(
+            Seq(
+              Button(messages.remindAt(remind1h), s"remind_at_${reminder.recordId}_$remind1hMillis"),
+              Button(messages.remindAt(remind2h), s"remind_at_${reminder.recordId}_$remind2hMillis")
+            )
+          )
+        )
       case Left(ex) =>
         logger.error(s"Unable to book appointment by monitoring [${monitoring.recordId}]", ex)
     }
@@ -206,7 +223,7 @@ class MonitoringService extends StrictLogging {
     accountId: Long,
     xsrfToken: XsrfToken,
     temporaryReservationId: Long,
-    fn: (Long) => Either[Throwable, T]
+    fn: Long => Either[Throwable, T]
   ): Either[Throwable, T] = {
     fn(accountId) match {
       case r @ Left(_) =>

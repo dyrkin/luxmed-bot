@@ -5,12 +5,12 @@ import com.lbs.bot.model.Command
 import com.lbs.common.ModelConverters
 import com.lbs.server.conversation.Book.BookingData
 import com.lbs.server.conversation.Login.UserId
-import com.lbs.server.repository.model.{History, Monitoring}
+import com.lbs.server.repository.model.{History, Monitoring, Reminder}
 
 import java.time._
 import java.time.format.DateTimeFormatter
 import java.util.Locale
-import scala.language.{higherKinds, implicitConversions}
+import scala.language.implicitConversions
 import scala.util.Try
 
 package object util {
@@ -109,6 +109,24 @@ package object util {
         )
       }
 
+    implicit val TermAndMonitoringToReminder: ObjectConverter[(Term, Monitoring), Reminder] =
+      (data: (Term, Monitoring)) => {
+        val (term, monitoring) = data
+        Reminder(
+          userId = monitoring.userId,
+          accountId = monitoring.accountId,
+          chatId = monitoring.chatId,
+          sourceSystemId = monitoring.sourceSystemId,
+          cityName = monitoring.cityName,
+          clinicName = monitoring.clinicName,
+          serviceName = monitoring.serviceName,
+          doctorName = monitoring.doctorName,
+          appointmentTime = term.dateTimeFrom.get,
+          remindAt = null,
+          active = false
+        )
+      }
+
     implicit val HistoryToIdNameConverter: ObjectConverter[History, IdName] =
       (history: History) => IdName(history.id, history.name)
   }
@@ -166,6 +184,8 @@ package object util {
     def formatDateTime(date: ZonedDateTime, locale: Locale): String = date.format(DateTimeFormat(locale))
 
     def formatDateTime(date: LuxmedFunnyDateTime, locale: Locale): String = date.get.format(DateTimeFormat(locale))
+
+    def formatDateTime(date: LocalDateTime, locale: Locale): String = date.format(DateTimeFormat(locale))
 
     private val EpochMinutesTillBeginOf2022: Long = epochMinutes(LocalDateTime.of(2022, 1, 1, 0, 0, 0, 0))
 

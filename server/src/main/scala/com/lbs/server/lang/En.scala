@@ -3,7 +3,7 @@ package com.lbs.server.lang
 import com.lbs.api.json.model.{Event, TermExt}
 import com.lbs.server.conversation.Book
 import com.lbs.server.conversation.StaticData.StaticDataConfig
-import com.lbs.server.repository.model.Monitoring
+import com.lbs.server.repository.model.{Monitoring, Reminder}
 import com.lbs.server.util.DateTimeUtil._
 
 import java.time.{LocalDateTime, LocalTime}
@@ -173,7 +173,7 @@ object En extends Lang {
 
   override def help: String =
     s"""ℹ Non official bot for <b>Portal Pacjenta LUX MED (v.${Lang.version})</b>.
-       |It can help you to book a visit to a doctor, create term monitoring, view upcoming appointments and visit history.
+       |The bot can help you book a visit to a doctor, create term monitorings, view upcoming appointments and visit history.
        |
        |<b>➡</b> Supported commands
        |/book - reserve a visit, or create a monitoring
@@ -377,4 +377,17 @@ object En extends Lang {
   override def canNotDetectPayer(error: String): String = s"Can't determine payer. Reason: $error"
 
   override def pleaseChoosePayer: String = "<b>➡</b> Can't determine default payer. Please choose one"
+
+  override def youHaveAppointmentAt(reminder: Reminder): String =
+    s"""👍 You have an appointment at ⏱ <b>${formatTime(reminder.appointmentTime.toLocalTime)}</b>!
+       |
+       |${capitalize(doctor)}: ${reminder.doctorName}
+       |${capitalize(service)}: ${reminder.serviceName}
+       |${capitalize(clinic)}: ${reminder.clinicName}
+       |${capitalize(city)}: ${reminder.cityName}""".stripMargin
+
+  override def remindAt(time: LocalDateTime): String = s"⏱ Remind at ${formatTime(time.toLocalTime)}"
+
+  override def appointmentIsOutdated(appointmentTime: LocalDateTime): String =
+    s"Your appointment has already taken place at ${formatDateTime(appointmentTime, locale)}"
 }

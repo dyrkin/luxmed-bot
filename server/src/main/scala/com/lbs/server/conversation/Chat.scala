@@ -5,7 +5,7 @@ import com.lbs.bot.model.Command
 import com.lbs.server.conversation.Chat._
 import com.lbs.server.conversation.Login.UserId
 import com.lbs.server.conversation.base.{Conversation, Interactional}
-import com.lbs.server.service.{DataService, MonitoringService}
+import com.lbs.server.service.{MonitoringService, ReminderService}
 import com.lbs.server.util.MessageExtractors._
 import com.typesafe.scalalogging.StrictLogging
 
@@ -13,8 +13,8 @@ import scala.util.matching.Regex
 
 class Chat(
   val userId: UserId,
-  dataService: DataService,
   monitoringService: MonitoringService,
+  reminderService: ReminderService,
   bookingFactory: UserIdTo[Book],
   helpFactory: UserIdTo[Help],
   monitoringsFactory: UserIdTo[Monitorings],
@@ -127,11 +127,11 @@ class Chat(
     case Msg(cmd @ TextCommand("/accounts"), _) =>
       self ! cmd
       goto(accountChat)
-    case Msg(TextCommand(ReserveTerm(monitoringIdStr, scheduleIdStr, timeStr)), _) =>
-      val monitoringId = monitoringIdStr.toLong
-      val scheduleId = scheduleIdStr.toLong
-      val time = timeStr.toLong
+    case Msg(TextCommand(ReserveTermRegex(LongString(monitoringId), LongString(scheduleId), LongString(time))), _) =>
       monitoringService.bookAppointmentByScheduleId(userId.accountId, monitoringId, scheduleId, time)
+      stay()
+    case Msg(CallbackCommand(RemindRegexp(LongString(reminderId), LongString(time))), _) =>
+      reminderService.activateReminder(userId.accountId, reminderId, time)
       stay()
     case Msg(cmd: Command, _) =>
       interactional ! cmd
@@ -151,5 +151,6 @@ class Chat(
 }
 
 object Chat {
-  val ReserveTerm: Regex = s"/reserve_(\\d+)_(\\d+)_(\\d+)".r
+  val ReserveTermRegex: Regex = "/reserve_(\\d+)_(\\d+)_(\\d+)".r
+  val RemindRegexp: Regex = "remind_at_(\\d+)_(\\d+)".r
 }

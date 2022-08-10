@@ -1,6 +1,6 @@
 package com.lbs.server.repository
 
-import com.lbs.server.repository.model.{CityHistory, ClinicHistory, Credentials, DoctorHistory, JLong, Monitoring, ServiceHistory, Settings, Source, SystemUser}
+import com.lbs.server.repository.model.{CityHistory, ClinicHistory, Credentials, DoctorHistory, JLong, Monitoring, Reminder, ServiceHistory, Settings, Source, SystemUser}
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.stereotype.Repository
 
@@ -95,6 +95,15 @@ class DataRepository(@Autowired em: EntityManager) {
       .toSeq
   }
 
+  def getActiveReminders: Seq[Reminder] = {
+    em.createQuery(
+      """select reminder from Reminder reminder where reminder.active = true""".stripMargin,
+      classOf[Reminder]
+    ).getResultList
+      .asScala
+      .toSeq
+  }
+
   def getActiveMonitoringsCount(accountId: Long): JLong = {
     em.createQuery(
       """select count(monitoring) from Monitoring monitoring where monitoring.active = true
@@ -172,6 +181,18 @@ class DataRepository(@Autowired em: EntityManager) {
       classOf[Monitoring]
     ).setParameter("accountId", accountId)
       .setParameter("monitoringId", monitoringId)
+      .getResultList
+      .asScala
+      .headOption
+  }
+
+  def findReminder(accountId: Long, reminderId: Long): Option[Reminder] = {
+    em.createQuery(
+      """select reminder from Reminder reminder where reminder.accountId = :accountId
+        | and reminder.recordId = :reminderId""".stripMargin,
+      classOf[Reminder]
+    ).setParameter("accountId", accountId)
+      .setParameter("reminderId", reminderId)
       .getResultList
       .asScala
       .headOption

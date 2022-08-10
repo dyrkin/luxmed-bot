@@ -7,7 +7,7 @@ import com.lbs.bot.telegram.TelegramBot
 import com.lbs.server.conversation._
 import com.lbs.server.lang.Localization
 import com.lbs.server.repository.model.Monitoring
-import com.lbs.server.service.{ApiService, DataService, MonitoringService}
+import com.lbs.server.service.{ApiService, DataService, MonitoringService, ReminderService}
 import org.jasypt.util.text.{StrongTextEncryptor, TextEncryptor}
 import org.springframework.beans.factory.annotation.{Autowired, Value}
 import org.springframework.context.annotation.{Bean, Configuration}
@@ -28,6 +28,9 @@ class BootConfig {
 
   @Autowired
   private var monitoringService: MonitoringService = _
+
+  @Autowired
+  private var reminderService: ReminderService = _
 
   @Autowired
   private var localization: Localization = _
@@ -123,8 +126,8 @@ class BootConfig {
     userId =>
       new Chat(
         userId,
-        dataService,
         monitoringService,
+        reminderService,
         bookFactory,
         helpFactory,
         monitoringsFactory,

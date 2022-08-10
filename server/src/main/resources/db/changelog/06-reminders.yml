@@ -1,0 +1,75 @@
+databaseChangeLog:
+- changeSet:
+    id: 06
+    author: dyrkin
+    preConditions:
+      onFail: MARK_RAN
+      not:
+        tableExists:
+          tableName: reminder
+    changes:
+      - createTable:
+          tableName: reminder
+          columns:
+            - column:
+                autoIncrement: true
+                constraints:
+                  primaryKey: true
+                  primaryKeyName: bug_pkey
+                name: record_id
+                type: BIGSERIAL
+            - column:
+                constraints:
+                  nullable: false
+                name: user_id
+                type: BIGINT
+            - column:
+                constraints:
+                  nullable: false
+                name: account_id
+                type: BIGINT
+            - column:
+                constraints:
+                  nullable: false
+                name: chat_id
+                type: BIGINT
+            - column:
+                constraints:
+                  nullable: false
+                name: source_system_id
+                type: BIGINT
+            - column:
+                constraints:
+                  nullable: false
+                name: city_name
+                type: VARCHAR(255)
+            - column:
+                constraints:
+                  nullable: false
+                name: clinic_name
+                type: VARCHAR(255)
+            - column:
+                constraints:
+                  nullable: false
+                name: service_name
+                type: VARCHAR(255)
+            - column:
+                constraints:
+                  nullable: false
+                name: doctor_name
+                type: VARCHAR(255)
+            - column:
+                constraints:
+                  nullable: false
+                name: appointment_time
+                type: TIME WITHOUT TIME ZONE
+            - column:
+                constraints:
+                  nullable: true
+                name: remind_at_time
+                type: TIME WITHOUT TIME ZONE
+            - column:
+                constraints:
+                  nullable: true
+                name: active
+                type: BOOLEAN

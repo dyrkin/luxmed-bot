@@ -3,7 +3,7 @@ package com.lbs.server.lang
 import com.lbs.api.json.model.{Event, TermExt}
 import com.lbs.server.conversation.Book.BookingData
 import com.lbs.server.conversation.StaticData.StaticDataConfig
-import com.lbs.server.repository.model.Monitoring
+import com.lbs.server.repository.model.{Monitoring, Reminder}
 
 import java.time.{LocalDateTime, LocalTime}
 import java.util.Locale
@@ -235,4 +235,10 @@ trait Lang {
   def pleaseChooseAccount(currentAccountName: String): String
 
   def accountSwitched(username: String): String
+
+  def youHaveAppointmentAt(reminder: Reminder): String
+
+  def remindAt(time: LocalDateTime): String
+
+  def appointmentIsOutdated(appointmentTime: LocalDateTime): String
 }

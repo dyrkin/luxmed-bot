@@ -48,6 +48,15 @@ class DataService {
     dataRepository.saveEntity(monitoring)
   }
 
+  @Transactional
+  def saveReminder(reminder: Reminder): Reminder = {
+    dataRepository.saveEntity(reminder)
+  }
+
+  def getActiveReminders: Seq[Reminder] = {
+    dataRepository.getActiveReminders
+  }
+
   def getActiveMonitorings: Seq[Monitoring] = {
     dataRepository.getActiveMonitorings
   }
@@ -74,6 +83,10 @@ class DataService {
 
   def findMonitoring(accountId: Long, monitoringId: Long): Option[Monitoring] = {
     dataRepository.findMonitoring(accountId, monitoringId)
+  }
+
+  def findReminder(accountId: Long, reminderId: Long): Option[Reminder] = {
+    dataRepository.findReminder(accountId, reminderId)
   }
 
   def findSettings(userId: Long): Option[Settings] = {

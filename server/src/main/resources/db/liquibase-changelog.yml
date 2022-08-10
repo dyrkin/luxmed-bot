@@ -17,3 +17,6 @@ databaseChangeLog:
 - include:
     file: changelog/05-drop-bugs-table.yml
     relativeToChangelogFile: true
+- include:
+      file: changelog/06-reminders.yml
+      relativeToChangelogFile: true
