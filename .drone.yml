@@ -8,7 +8,7 @@ platform:
 
 steps:
   - name: build
-    image: amd64/openjdk:11-jdk-slim
+    image: amd64/eclipse-temurin:11-jdk-jammy
     environment:
       GRADLE_USER_HOME: ~/.gradle
     commands:
@@ -74,7 +74,7 @@ platform:
 
 steps:
   - name: build
-    image: arm64v8/openjdk:11-jdk-slim
+    image: arm64v8/eclipse-temurin:11-jdk-jammy
     environment:
       GRADLE_USER_HOME: ~/.gradle
     commands:
