@@ -1,9 +1,9 @@
-FROM amd64/openjdk:11-jre-slim
+FROM amd64/eclipse-temurin:11-jre-jammy
 
-RUN apk update && apk upgrade && apk add netcat-openbsd tzdata && apk add --no-cache nss
+RUN ln -fs /usr/share/zoneinfo/Europe/Warsaw /etc/localtime
+RUN dpkg-reconfigure -f noninteractive tzdata
+
 RUN mkdir -p /app
-ENV TZ Europe/Warsaw
-RUN echo "Europe/Warsaw" > /etc/timezone
 ADD server.jar /app
 ADD run.sh run.sh
 ADD version /app/version

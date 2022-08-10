@@ -17,6 +17,21 @@ steps:
       - echo -n "1.0.$DRONE_BUILD_NUMBER,latest" > .tags
       - echo -n "1.0.$DRONE_BUILD_NUMBER" > ./docker/version
 
+  - name: test Dockerfile
+    image: plugins/docker
+    settings:
+      repo: eugenezadyra/luxmed-bot
+      username:
+        from_secret: docker_username
+      password:
+        from_secret: docker_password
+      dockerfile: docker/Dockerfile
+      context: docker/
+      dry_run: yes
+    when:
+      event:
+        - pull_request
+
   - name: publish
     image: plugins/docker
     settings:
@@ -66,6 +81,21 @@ steps:
       - ./gradlew prepare
       - echo -n "1.0.$DRONE_BUILD_NUMBER-arm64,latest-arm64" > .tags
       - echo -n "1.0.$DRONE_BUILD_NUMBER" > ./docker/version
+
+  - name: test Dockerfile.arm64
+    image: plugins/docker
+    settings:
+      repo: eugenezadyra/luxmed-bot
+      username:
+        from_secret: docker_username
+      password:
+        from_secret: docker_password
+      dockerfile: docker/Dockerfile.arm64
+      context: docker/
+      dry_run: yes
+    when:
+      event:
+        - pull_request
 
   - name: publish
     image: plugins/docker
