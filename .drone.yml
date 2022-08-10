@@ -11,6 +11,7 @@ steps:
     image: amd64/eclipse-temurin:11-jdk-jammy
     environment:
       GRADLE_USER_HOME: ~/.gradle
+    command: [ /bin/bash ]
     commands:
       - ./gradlew test
       - ./gradlew prepare
@@ -77,6 +78,7 @@ steps:
     image: arm64v8/eclipse-temurin:11-jdk-jammy
     environment:
       GRADLE_USER_HOME: ~/.gradle
+    command: [ /bin/bash ]
     commands:
       - ./gradlew prepare
       - echo -n "1.0.$DRONE_BUILD_NUMBER-arm64,latest-arm64" > .tags
