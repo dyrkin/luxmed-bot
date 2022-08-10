@@ -8,14 +8,30 @@ platform:
 
 steps:
   - name: build
-    image: amd64/openjdk:11-jdk-slim
+    image: amd64/eclipse-temurin:11-jdk-focal
     environment:
       GRADLE_USER_HOME: ~/.gradle
+    command: [ /bin/bash ]
     commands:
       - ./gradlew test
       - ./gradlew prepare
       - echo -n "1.0.$DRONE_BUILD_NUMBER,latest" > .tags
       - echo -n "1.0.$DRONE_BUILD_NUMBER" > ./docker/version
+
+  - name: test Dockerfile
+    image: plugins/docker
+    settings:
+      repo: eugenezadyra/luxmed-bot
+      username:
+        from_secret: docker_username
+      password:
+        from_secret: docker_password
+      dockerfile: docker/Dockerfile
+      context: docker/
+      dry_run: yes
+    when:
+      event:
+        - pull_request
 
   - name: publish
     image: plugins/docker
@@ -59,13 +75,29 @@ platform:
 
 steps:
   - name: build
-    image: arm64v8/openjdk:11-jdk-slim
+    image: arm64v8/eclipse-temurin:11-jdk-focal
     environment:
       GRADLE_USER_HOME: ~/.gradle
+    command: [ /bin/bash ]
     commands:
       - ./gradlew prepare
       - echo -n "1.0.$DRONE_BUILD_NUMBER-arm64,latest-arm64" > .tags
       - echo -n "1.0.$DRONE_BUILD_NUMBER" > ./docker/version
+
+  - name: test Dockerfile.arm64
+    image: plugins/docker
+    settings:
+      repo: eugenezadyra/luxmed-bot
+      username:
+        from_secret: docker_username
+      password:
+        from_secret: docker_password
+      dockerfile: docker/Dockerfile.arm64
+      context: docker/
+      dry_run: yes
+    when:
+      event:
+        - pull_request
 
   - name: publish
     image: plugins/docker
