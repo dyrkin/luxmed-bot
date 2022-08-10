@@ -8,7 +8,7 @@ platform:
 
 steps:
   - name: build
-    image: amd64/eclipse-temurin:11-jdk-jammy
+    image: amd64/eclipse-temurin:11-jdk-focal
     environment:
       GRADLE_USER_HOME: ~/.gradle
     command: [ /bin/bash ]
@@ -75,7 +75,7 @@ platform:
 
 steps:
   - name: build
-    image: arm64v8/eclipse-temurin:11-jdk-jammy
+    image: arm64v8/eclipse-temurin:11-jdk-focal
     environment:
       GRADLE_USER_HOME: ~/.gradle
     command: [ /bin/bash ]
