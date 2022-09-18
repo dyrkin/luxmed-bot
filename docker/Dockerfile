@@ -1,4 +1,4 @@
-FROM amd64/eclipse-temurin:11-jre-focal
+FROM eclipse-temurin:11-jre-focal
 
 RUN apt-get update -y && apt-get install -y netcat # nc command
 

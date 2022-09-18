@@ -8,7 +8,7 @@ platform:
 
 steps:
   - name: build
-    image: amd64/eclipse-temurin:11-jdk-focal
+    image: eclipse-temurin:11-jre-focal
     environment:
       GRADLE_USER_HOME: ~/.gradle
     command: [ /bin/bash ]
@@ -75,7 +75,7 @@ platform:
 
 steps:
   - name: build
-    image: arm64v8/eclipse-temurin:11-jdk-focal
+    image: eclipse-temurin:11-jre-focal
     environment:
       GRADLE_USER_HOME: ~/.gradle
     command: [ /bin/bash ]
@@ -84,7 +84,7 @@ steps:
       - echo -n "1.0.$DRONE_BUILD_NUMBER-arm64,latest-arm64" > .tags
       - echo -n "1.0.$DRONE_BUILD_NUMBER" > ./docker/version
 
-  - name: test Dockerfile.arm64
+  - name: test Dockerfile
     image: plugins/docker
     settings:
       repo: eugenezadyra/luxmed-bot
@@ -92,7 +92,7 @@ steps:
         from_secret: docker_username
       password:
         from_secret: docker_password
-      dockerfile: docker/Dockerfile.arm64
+      dockerfile: docker/Dockerfile
       context: docker/
       dry_run: yes
     when:
@@ -107,7 +107,7 @@ steps:
         from_secret: docker_username
       password:
         from_secret: docker_password
-      dockerfile: docker/Dockerfile.arm64
+      dockerfile: docker/Dockerfile
       context: docker/
     when:
       branch: master
