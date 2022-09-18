@@ -123,7 +123,7 @@ class ApiService extends SessionSupport {
     withSession(accountId) { session =>
       luxmedApi
         .events(session, fromDate.atZone(DateTimeUtil.Zone), toDate.atZone(DateTimeUtil.Zone))
-        .map(_.events.filter(_.status == "Realized"))
+        .map(_.events.filter(_.status == "Realized").sortBy(_.date).reverse)
     }
 
   def reserved(
@@ -134,7 +134,7 @@ class ApiService extends SessionSupport {
     withSession(accountId) { session =>
       luxmedApi
         .events(session, fromDate.atZone(DateTimeUtil.Zone), toDate.atZone(DateTimeUtil.Zone))
-        .map(_.events.filter(_.status == "Reserved"))
+        .map(_.events.filter(_.status == "Reserved").sortBy(_.date))
     }
 
   def deleteReservation(accountId: Long, reservationId: Long): ThrowableOr[HttpResponse[String]] =
