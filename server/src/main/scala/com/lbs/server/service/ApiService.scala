@@ -11,6 +11,7 @@ import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.stereotype.Service
 import scalaj.http.HttpResponse
 
+import java.net.HttpCookie
 import java.time.{LocalDateTime, LocalTime}
 
 @Service
@@ -142,13 +143,17 @@ class ApiService extends SessionSupport {
       luxmedApi.reservationDelete(session, reservationId)
     }
 
+  private def joinCookies(cookies: Seq[HttpCookie]*): Seq[HttpCookie] = {
+    cookies.map(_.map(v => v.getName -> v).toMap).reduce(_ ++ _).values.toSeq
+  }
+
   override def fullLogin(username: String, encryptedPassword: String): ThrowableOr[Session] = {
     val password = textEncryptor.decrypt(encryptedPassword)
     for {
       r1 <- luxmedApi.login(username, password)
       tmpSession = Session(r1.body.accessToken, r1.body.accessToken, r1.cookies)
       r2 <- luxmedApi.loginToApp(tmpSession)
-      cookies = r1.cookies ++ r2.cookies
+      cookies = joinCookies(r1.cookies, r2.cookies, Seq(new HttpCookie("GlobalLang", "pl")))
       accessToken = r1.body.accessToken
       tokenType = r1.body.tokenType
     } yield Session(accessToken, tokenType, cookies)
