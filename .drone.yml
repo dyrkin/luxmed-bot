@@ -1,22 +1,18 @@
 ---
 kind: pipeline
+type: docker
 name: amd64
-
-platform:
-  os: linux
-  arch: amd64
 
 steps:
   - name: build
     image: eclipse-temurin:11-jre-focal
     environment:
       GRADLE_USER_HOME: ~/.gradle
-    command: [ /bin/bash ]
     commands:
       - ./gradlew checkScalafmtAll test
       - ./gradlew prepare
-      - echo -n "1.0.$DRONE_BUILD_NUMBER,latest" > .tags
-      - echo -n "1.0.$DRONE_BUILD_NUMBER" > ./docker/version
+      - echo -n "1.1.$DRONE_BUILD_NUMBER,latest" > .tags
+      - echo -n "1.1.$DRONE_BUILD_NUMBER" > ./docker/version
 
   - name: test Dockerfile
     image: plugins/docker
@@ -67,6 +63,7 @@ steps:
 
 ---
 kind: pipeline
+type: docker
 name: arm64
 
 platform:
@@ -78,11 +75,10 @@ steps:
     image: eclipse-temurin:11-jre-focal
     environment:
       GRADLE_USER_HOME: ~/.gradle
-    command: [ /bin/bash ]
     commands:
       - ./gradlew prepare
-      - echo -n "1.0.$DRONE_BUILD_NUMBER-arm64,latest-arm64" > .tags
-      - echo -n "1.0.$DRONE_BUILD_NUMBER" > ./docker/version
+      - echo -n "1.1.$DRONE_BUILD_NUMBER-arm64,latest-arm64" > .tags
+      - echo -n "1.1.$DRONE_BUILD_NUMBER" > ./docker/version
 
   - name: test Dockerfile
     image: plugins/docker
