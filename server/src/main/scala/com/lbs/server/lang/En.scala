@@ -26,7 +26,7 @@ object En extends Lang {
     s"⚠ Unable to cancel upcoming visit! Reason: $reason"
 
   override def appointmentHasBeenCancelled: String =
-    s"👍 Your appointment has canceled!"
+    s"👍 Your appointment has been canceled!"
 
   override def yes: String = "Yes"
 
