@@ -73,7 +73,7 @@ class ApiService extends SessionSupport {
           val time = term.term.dateTimeFrom.get.toLocalTime
           val date = term.term.dateTimeFrom.get
           (doctorId.isEmpty || doctorId.contains(term.term.doctor.id)) &&
-          (clinicId.isEmpty || clinicId.contains(term.term.clinicId)) &&
+          (clinicId.isEmpty || clinicId.contains(term.term.clinicGroupId)) &&
           (time == timeFrom || time == timeTo || (time.isAfter(timeFrom) && time.isBefore(timeTo))) &&
           (date == fromDate || date == toDate || (date.isAfter(fromDate) && date.isBefore(toDate)))
         }

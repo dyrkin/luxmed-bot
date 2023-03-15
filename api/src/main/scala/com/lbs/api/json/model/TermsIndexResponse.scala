@@ -127,6 +127,7 @@ case class TermsForDay(day: LuxmedFunnyDateTime, terms: List[Term]) extends Seri
 case class Term(
   clinic: String,
   clinicId: Long,
+  clinicGroupId: Long,
   dateTimeFrom: LuxmedFunnyDateTime,
   dateTimeTo: LuxmedFunnyDateTime,
   doctor: Doctor,
