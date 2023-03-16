@@ -39,7 +39,9 @@ object En extends Lang {
     s"""<b>➡</b> Are you sure want to cancel appointment?
        |
        |⏱ <b>${formatDateTime(event.date, locale)}</b>
-       |${capitalize(doctor)}: ${capitalize(event.doctor.name)} ${capitalize(event.doctor.lastname)}
+       |${capitalize(doctor)}: ${event.doctor
+        .map(d => s"${capitalize(d.name)} ${capitalize(d.lastname)}")
+        .getOrElse("No specified")}
        |${capitalize(service)}: ${event.title}
        |${capitalize(clinic)}: ${event.clinic
         .map(c => s"${capitalize(c.city)} - ${capitalize(c.address)}")
@@ -203,7 +205,9 @@ object En extends Lang {
 
   override def historyEntry(event: Event, page: Int, index: Int): String =
     s"""⏱ <b>${formatDateTime(event.date, locale)}</b>
-       |${capitalize(doctor)}: ${capitalize(event.doctor.name)} ${capitalize(event.doctor.lastname)}
+       |${capitalize(doctor)}: ${event.doctor
+        .map(d => s"${capitalize(d.name)} ${capitalize(d.lastname)}")
+        .getOrElse("No specified")}
        |${capitalize(service)}: ${event.title}
        |${capitalize(clinic)}: ${event.clinic
         .map(c => s"${capitalize(c.city)} - ${capitalize(c.address)}")
@@ -216,7 +220,9 @@ object En extends Lang {
 
   override def reservedVisitEntry(event: Event, page: Int, index: Int): String =
     s"""⏱ <b>${formatDateTime(event.date, locale)}</b>
-       |${capitalize(doctor)}: ${capitalize(event.doctor.name)} ${capitalize(event.doctor.lastname)}
+       |${capitalize(doctor)}: ${event.doctor
+        .map(d => s"${capitalize(d.name)} ${capitalize(d.lastname)}")
+        .getOrElse("No specified")}
        |${capitalize(service)}: ${event.title}
        |${capitalize(clinic)}: ${event.clinic
         .map(c => s"${capitalize(c.city)} - ${capitalize(c.address)}")

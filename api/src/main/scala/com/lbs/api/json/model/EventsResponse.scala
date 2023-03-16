@@ -104,7 +104,7 @@ case class EventsResponse(events: List[Event]) extends SerializableJsonObject
 case class Event(
   date: ZonedDateTime,
   clinic: Option[EventClinic],
-  doctor: EventDoctor,
+  doctor: Option[EventDoctor],
   eventId: Long,
   status: String,
   title: String
