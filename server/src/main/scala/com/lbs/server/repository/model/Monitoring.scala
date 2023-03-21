@@ -12,6 +12,10 @@ class Monitoring extends RecordId {
   var userId: JLong = _
 
   @BeanProperty
+  @Column(name = "username", nullable = false)
+  var username: String = _
+
+  @BeanProperty
   @Column(name = "account_id", nullable = false)
   var accountId: JLong = _
 
@@ -99,6 +103,7 @@ class Monitoring extends RecordId {
 object Monitoring {
   def apply(
     userId: Long,
+    username: String,
     accountId: Long,
     chatId: String,
     sourceSystemId: Long,
@@ -123,6 +128,7 @@ object Monitoring {
   ): Monitoring = {
     val monitoring = new Monitoring
     monitoring.userId = userId
+    monitoring.username = username
     monitoring.accountId = accountId
     monitoring.chatId = chatId
     monitoring.sourceSystemId = sourceSystemId

@@ -265,6 +265,16 @@ class DataRepository(@Autowired em: EntityManager) {
       .toSeq
   }
 
+  def getUsernameById(userId: Long): Option[String] = {
+    em.createQuery(
+      "select credentials.username from Credentials credentials where credentials.userId = :userId",
+      classOf[String]
+    ).setParameter("userId", userId)
+      .getResultList
+      .asScala
+      .headOption
+  }
+
   def findUserCredentialsByUserIdAndAccountId(userId: Long, accountId: Long): Option[Credentials] = {
     em.createQuery(
       """select credentials from Credentials credentials where credentials.userId = :userId

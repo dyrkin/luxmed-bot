@@ -52,10 +52,10 @@ class Login(
           goto(requestUsername)
         case Right(session) =>
           val credentials = dataService.saveCredentials(source, username, password)
-          userId = UserId(credentials.userId, credentials.accountId, source)
+          userId = UserId(credentials.userId, credentials.username, credentials.accountId, source)
           apiService.addSession(credentials.accountId, session)
           bot.sendMessage(source, lang.loginAndPasswordAreOk)
-          originator ! LoggedIn(forwardCommand, credentials.userId, credentials.accountId)
+          originator ! LoggedIn(forwardCommand, credentials.userId, credentials.username, credentials.accountId)
           end()
       }
     }
@@ -65,8 +65,8 @@ object Login {
 
   case class ForwardCommand(cmd: Command)
 
-  case class UserId(userId: Long, accountId: Long, source: MessageSource)
+  case class UserId(userId: Long, username: String, accountId: Long, source: MessageSource)
 
-  case class LoggedIn(forwardCommand: ForwardCommand, userId: Long, accountId: Long)
+  case class LoggedIn(forwardCommand: ForwardCommand, userId: Long, username: String, accountId: Long)
 
 }

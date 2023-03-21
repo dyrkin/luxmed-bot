@@ -80,11 +80,12 @@ class DataService {
     dataRepository.findSettings(userId)
   }
 
-  def findUserAndAccountIdBySource(source: MessageSource): Option[(Long, Long)] = {
-    val userIdMaybe = dataRepository.findUserId(source.chatId, source.sourceSystem.id).map(_.toLong)
-    userIdMaybe.flatMap(userId =>
-      dataRepository.findAccountId(userId).map(_.toLong).map(accountId => userId -> accountId)
-    )
+  def findUserAndAccountIdBySource(source: MessageSource): Option[(Long, String, Long)] = {
+    for {
+      userId <-  dataRepository.findUserId(source.chatId, source.sourceSystem.id).map(_.toLong)
+      accountId <- dataRepository.findAccountId(userId).map(_.toLong)
+      username <- dataRepository.getUsernameById(userId)
+    } yield (userId, username, accountId)
   }
 
   def findCredentialsByUsername(username: String, userId: Long): Option[Credentials] = {
@@ -93,6 +94,10 @@ class DataService {
 
   def getUserCredentials(userId: Long): Seq[Credentials] = {
     dataRepository.getUserCredentials(userId)
+  }
+
+  def getUsernameById(userId: Long): Option[String] = {
+    dataRepository.getUsernameById(userId)
   }
 
   def findUserCredentialsByAccountId(userId: Long, accountId: Long): Option[Credentials] = {

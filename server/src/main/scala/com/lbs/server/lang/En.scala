@@ -300,7 +300,7 @@ object En extends Lang {
        |<b>➡</b> Create new monitoring /book""".stripMargin
 
   override def appointmentIsBooked(term: TermExt, monitoring: Monitoring): String =
-    s"""👍 We just booked an appointment for you!
+    s"""👍 We just booked an appointment for ${monitoring.username}!
        |
        |⏱ <b>${formatDateTime(term.term.dateTimeFrom, locale)}</b>
        |${capitalize(doctor)}: ${term.term.doctor.firstName} ${term.term.doctor.lastName}

@@ -22,6 +22,7 @@ package object util {
         val (userId, bookingData) = data
         Monitoring(
           userId = userId.userId,
+          username = userId.username,
           accountId = userId.accountId,
           chatId = userId.source.chatId,
           sourceSystemId = userId.source.sourceSystem.id,

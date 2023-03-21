@@ -51,7 +51,7 @@ class Account(val userId: UserId, bot: Bot, dataService: DataService, val locali
         userMaybe.foreach { user =>
           user.activeAccountId = accountId
           dataService.saveUser(user)
-          router ! SwitchAccount(UserId(account.userId, account.accountId, userId.source))
+          router ! SwitchAccount(UserId(account.userId, account.username, account.accountId, userId.source))
           bot.sendMessage(userId.source, lang.accountSwitched(account.username))
         }
       case None =>

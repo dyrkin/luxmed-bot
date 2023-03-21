@@ -1,0 +1,23 @@
+databaseChangeLog:
+  - changeSet:
+      id: 06
+      author: dyrkin
+      preConditions:
+        onFail: MARK_RAN
+        not:
+          columnExists:
+            tableName: monitoring
+            columnName: username
+      changes:
+        - addColumn:
+            tableName: monitoring
+            columns:
+              - column:
+                  name: username
+                  type: VARCHAR(255)
+
+        - addNotNullConstraint:
+            tableName: monitoring
+            columnName: username
+            columnDataType: VARCHAR(255)
+            defaultNullValue: "you"

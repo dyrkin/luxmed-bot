@@ -46,8 +46,8 @@ class Auth(
         chat = getChat(userId.get)
         chat ! cmd
         stay()
-      case Msg(LoggedIn(forwardCommand, uId, aId), _) =>
-        val id = UserId(uId, aId, source)
+      case Msg(LoggedIn(forwardCommand, uId, username, aId), _) =>
+        val id = UserId(uId, username, aId, source)
         val cmd = forwardCommand.cmd
         userId = Some(id)
         chat = getChat(id, reInit = true)
@@ -72,7 +72,7 @@ class Auth(
 
   def getUserId: Option[UserId] = {
     val userIdMaybe = dataService.findUserAndAccountIdBySource(source)
-    userIdMaybe.map { case (uId, aId) => UserId(uId, aId, source) }
+    userIdMaybe.map { case (uId, username, aId) => UserId(uId, username, aId, source) }
   }
 
   beforeDestroy {
