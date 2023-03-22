@@ -84,7 +84,7 @@ class DataService {
     for {
       userId <-  dataRepository.findUserId(source.chatId, source.sourceSystem.id).map(_.toLong)
       accountId <- dataRepository.findAccountId(userId).map(_.toLong)
-      username <- dataRepository.getUsernameById(userId)
+      username <- dataRepository.getUsernameByUserIdAndAccountId(userId, accountId)
     } yield (userId, username, accountId)
   }
 
@@ -94,10 +94,6 @@ class DataService {
 
   def getUserCredentials(userId: Long): Seq[Credentials] = {
     dataRepository.getUserCredentials(userId)
-  }
-
-  def getUsernameById(userId: Long): Option[String] = {
-    dataRepository.getUsernameById(userId)
   }
 
   def findUserCredentialsByAccountId(userId: Long, accountId: Long): Option[Credentials] = {
