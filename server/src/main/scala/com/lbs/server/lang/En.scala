@@ -23,7 +23,7 @@ object En extends Lang {
   }
 
   override def unableToCancelUpcomingVisit(reason: String): String =
-    s"⚠ Unable to cancel upcoming visit! Reason: $reason"
+    s"⚠ Unable to cancel the upcoming visit! Reason: $reason"
 
   override def appointmentHasBeenCancelled: String =
     s"👍 Your appointment has been canceled!"
@@ -36,7 +36,7 @@ object En extends Lang {
     "ℹ No upcoming visits found"
 
   override def areYouSureToCancelAppointment(event: Event): String =
-    s"""<b>➡</b> Are you sure want to cancel appointment?
+    s"""<b>➡</b> Are you sure you want to cancel the appointment?
        |
        |⏱ <b>${formatDateTime(event.date, locale)}</b>
        |${capitalize(doctor)}: ${event.doctor
@@ -52,7 +52,7 @@ object En extends Lang {
     s"<b>➡</b> Please choose date from or write it manually using format dd-MM, e.g. ${formatDateShort(exampleDate)}"
 
   override def chooseDateTo(exampleDate: LocalDateTime): String =
-    s"<b>➡</b> Please choose date to or write it manually using format dd-MM, e.g. ${formatDateShort(exampleDate)}"
+    s"<b>➡</b> Please choose a date to or write it manually using format dd-MM, e.g. ${formatDateShort(exampleDate)}"
 
   override def findTerms: String = "🔍 Find terms"
 
@@ -68,7 +68,7 @@ object En extends Lang {
       s"\n\n<b>➡</b> Now choose an action"
 
   override def noTermsFound: String =
-    s"""ℹ No available terms found
+    s"""ℹ No available terms has been found
        |
        |What do you want to do next?""".stripMargin
 
@@ -79,7 +79,7 @@ object En extends Lang {
   override def book: String = "Book"
 
   override def confirmAppointment(term: TermExt): String =
-    s"""<b>➡</b> Would you like to confirm your appointment booking?
+    s"""<b>➡</b> Would you like to confirm your appointment?
        |
        |⏱ <b>${formatDateTime(term.term.dateTimeFrom, locale)}</b>
        |${capitalize(doctor)}: ${term.term.doctor.firstName} ${term.term.doctor.lastName}
@@ -91,15 +91,15 @@ object En extends Lang {
 
   override def unableToCreateMonitoring(reason: String): String = s"👎 Unable to create monitoring. Reason: $reason."
 
-  override def chooseTypeOfMonitoring: String = "<b>➡</b> Please choose type of monitoring you want"
+  override def chooseTypeOfMonitoring: String = "<b>➡</b> Please choose the type of monitoring you want"
 
   override def bookByApplication: String = "👾 Book by the application"
 
   override def bookManually: String = "👤 Book manually"
 
-  override def rebookIfExists: String = "<b>➡</b> Do you want to update term if reservation already exists?"
+  override def rebookIfExists: String = "<b>➡</b> Do you want to update a term if a reservation already exists?"
 
-  override def pleaseSpecifyOffset: String = "<b>➡</b> Please send me offset in hours or press No button"
+  override def pleaseSpecifyOffset: String = "<b>➡</b> Please send me an offset in hours or press the No button"
 
   override def visitAlreadyExists: String =
     "<b>➡</b> The same service is already booked. Do you want to update the term?"
@@ -116,10 +116,10 @@ object En extends Lang {
 
   override def next: String = "Next"
 
-  override def noActiveMonitorings: String = "ℹ You don't have active monitorings. Create new one /book"
+  override def noActiveMonitorings: String = "ℹ You don't have active monitorings. Create a new one /book"
 
   override def deactivateMonitoring(monitoring: Monitoring): String =
-    s"""<b>➡</b> Are you sure want to deactivate monitoring?
+    s"""<b>➡</b> Are you sure you want to deactivate the monitoring?
        |
        |📅 <b>${formatDate(monitoring.dateFrom, locale)}</b> -> <b>${formatDate(monitoring.dateTo, locale)}</b>
        |⏱ <b>${formatTime(monitoring.timeFrom)}</b> -> <b>${formatTime(monitoring.timeTo)}</b>
@@ -154,7 +154,7 @@ object En extends Lang {
 
   override def staticNotFound(config: StaticDataConfig): String =
     withAnyVariant(
-      s"""<b>➡</b> Nothing was found 😔
+      s"""<b>➡</b> Nothing has been found 😔
          |Please enter a ${config.name} name again""",
       config.isAnyAllowed
     )
@@ -283,12 +283,12 @@ object En extends Lang {
        |""".stripMargin
 
   override def availableTermsHeader(size: Int): String =
-    s"""✅ <b>$size</b> terms were found by monitoring. We showed you the closest 5.
+    s"""✅ <b>$size</b> terms have been found. We've shown you the closest 5.
        |
        |<b>➡</b> Please choose one to reserve""".stripMargin
 
   override def nothingWasFoundByMonitoring(monitoring: Monitoring): String =
-    s"""❗ Nothing was found by your monitoring. Monitoring has been <b>disabled</b> as outdated.
+    s"""❗ Nothing has been found. Monitoring has been <b>disabled</b> as outdated.
        |
        |📅 <b>${formatDate(monitoring.dateFrom, locale)}</b> -> <b>${formatDate(monitoring.dateTo, locale)}</b>
        |⏱ <b>${formatTime(monitoring.timeFrom)}</b> -> <b>${formatTime(monitoring.timeTo)}</b>
@@ -297,10 +297,10 @@ object En extends Lang {
        |${capitalize(clinic)}: ${monitoring.clinicName}
        |${capitalize(city)}: ${monitoring.cityName}
        |
-       |<b>➡</b> Create new monitoring /book""".stripMargin
+       |<b>➡</b> Create a new monitoring /book""".stripMargin
 
   override def appointmentIsBooked(term: TermExt, monitoring: Monitoring): String =
-    s"""👍 We just booked an appointment for ${monitoring.username}!
+    s"""👍 We've booked the appointment for ${monitoring.username}!
        |
        |⏱ <b>${formatDateTime(term.term.dateTimeFrom, locale)}</b>
        |${capitalize(doctor)}: ${term.term.doctor.firstName} ${term.term.doctor.lastName}
