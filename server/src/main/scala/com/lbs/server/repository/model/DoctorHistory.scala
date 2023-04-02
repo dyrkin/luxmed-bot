@@ -24,6 +24,10 @@ class DoctorHistory extends History with RecordId {
   var cityId: JLong = _
 
   @BeanProperty
+  @Column(name = "language_id", nullable = false)
+  var languageId: JLong = _
+
+  @BeanProperty
   @Column(name = "clinic_id", nullable = true)
   var clinicId: JLong = _
 
@@ -43,6 +47,7 @@ object DoctorHistory {
     name: String,
     cityId: Long,
     clinicId: Option[Long],
+    languageId: Long,
     serviceId: Long,
     time: ZonedDateTime
   ): DoctorHistory = {
@@ -52,6 +57,7 @@ object DoctorHistory {
     doctor.name = name
     doctor.time = time
     doctor.cityId = cityId
+    doctor.languageId = languageId
     doctor.clinicId = clinicId
     doctor.serviceId = serviceId
     doctor

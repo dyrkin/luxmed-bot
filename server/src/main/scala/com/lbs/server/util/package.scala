@@ -41,7 +41,9 @@ package object util {
           timeTo = bookingData.timeTo,
           autobook = bookingData.autobook,
           rebookIfExists = bookingData.rebookIfExists,
-          offset = bookingData.offset
+          offset = bookingData.offset,
+          lanuageId = bookingData.languageId.id,
+          lanuageName = bookingData.languageId.name
         )
       }
 

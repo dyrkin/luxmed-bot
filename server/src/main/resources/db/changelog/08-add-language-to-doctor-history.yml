@@ -1,0 +1,23 @@
+databaseChangeLog:
+  - changeSet:
+      id: 08
+      author: qnex
+      preConditions:
+        onFail: MARK_RAN
+        not:
+          columnExists:
+            tableName: doctor_history
+            columnName: language_id
+      changes:
+        - addColumn:
+            tableName: doctor_history
+            columns:
+              - column:
+                  name: language_id
+                  type: BIGINT
+
+        - addNotNullConstraint:
+            tableName: doctor_history
+            columnName: language_id
+            columnDataType: BIGINT
+            defaultNullValue: 10 #Polish

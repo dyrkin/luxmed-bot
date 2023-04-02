@@ -20,3 +20,12 @@ databaseChangeLog:
 - include:
       file: changelog/06-add-username-to-monitoring.yml
       relativeToChangelogFile: true
+- include:
+      file: changelog/07-add-language-to-monitoring.yml
+      relativeToChangelogFile: true
+- include:
+        file: changelog/08-add-language-to-doctor-history.yml
+        relativeToChangelogFile: true
+- include:
+        file: changelog/09-add-language-to-service-history.yml
+        relativeToChangelogFile: true

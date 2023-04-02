@@ -60,6 +60,7 @@ object Pl extends Lang {
 
   override def bookingSummary(bookingData: Book.BookingData): String =
     s"🦄 Ok! Zarezerwujemy wizytę typu <b>${bookingData.serviceId.name}</b>" +
+      s" z językiem <b>${bookingData.languageId.name}</b>" +
       s" z lekarzem: <b>${bookingData.doctorId.name}</b>" +
       s" w klinice: <b>${bookingData.clinicId.name}</b>" +
       s" w mieście <b>${bookingData.cityId.name}</b>." +
@@ -108,6 +109,8 @@ object Pl extends Lang {
 
   override def city: String = "miasto"
 
+  override def visitLanguage: String = "język"
+
   override def clinic: String = "klinika"
 
   override def service: String = "usługa"
@@ -125,6 +128,7 @@ object Pl extends Lang {
        |
        |📅 <b>${formatDate(monitoring.dateFrom, locale)}</b> -> <b>${formatDate(monitoring.dateTo, locale)}</b>
        |⏱ <b>${formatTime(monitoring.timeFrom)}</b> -> <b>${formatTime(monitoring.timeTo)}</b>
+       |${capitalize(visitLanguage)}: ${monitoring.languageName}
        |${capitalize(doctor)}: ${monitoring.doctorName}
        |${capitalize(service)}: ${monitoring.serviceName}
        |${capitalize(clinic)}: ${monitoring.clinicName}""".stripMargin
@@ -242,6 +246,7 @@ object Pl extends Lang {
   override def monitoringEntry(monitoring: Monitoring, page: Int, index: Int): String =
     s"""📅 <b>${formatDate(monitoring.dateFrom, locale)}</b> -> <b>${formatDate(monitoring.dateTo, locale)}</b>
        |⏱ <b>${formatTime(monitoring.timeFrom)}</b> -> <b>${formatTime(monitoring.timeTo)}</b>
+       |${capitalize(visitLanguage)}: ${monitoring.languageName}
        |${capitalize(doctor)}: ${monitoring.doctorName}
        |${capitalize(service)}: ${monitoring.serviceName}
        |${capitalize(clinic)}: ${monitoring.clinicName}
@@ -254,6 +259,7 @@ object Pl extends Lang {
   override def monitoringHistoryEntry(monitoring: Monitoring, page: Int, index: Int): String =
     s"""📅 <b>${formatDate(monitoring.dateFrom, locale)}</b> -> <b>${formatDate(monitoring.dateTo, locale)}</b>
        |⏱ <b>${formatTime(monitoring.timeFrom)}</b> -> <b>${formatTime(monitoring.timeTo)}</b>
+       |${capitalize(visitLanguage)}: ${monitoring.languageName}
        |${capitalize(doctor)}: ${monitoring.doctorName}
        |${capitalize(service)}: ${monitoring.serviceName}
        |${capitalize(clinic)}: ${monitoring.clinicName}
@@ -277,6 +283,7 @@ object Pl extends Lang {
   override def availableTermEntry(term: TermExt, monitoring: Monitoring, index: Int): String =
     s"""⏱ <b>${formatDateTime(term.term.dateTimeFrom, locale)}</b>
        |${capitalize(doctor)}: ${term.term.doctor.firstName} ${term.term.doctor.lastName}
+       |${capitalize(visitLanguage)}: ${monitoring.languageName}
        |${capitalize(service)}: ${monitoring.serviceName}
        |${capitalize(clinic)}: ${term.term.clinic}
        |${capitalize(city)}: ${monitoring.cityName}
@@ -294,6 +301,7 @@ object Pl extends Lang {
        |
        |📅 <b>${formatDate(monitoring.dateFrom, locale)}</b> -> <b>${formatDate(monitoring.dateTo, locale)}</b>
        |⏱ <b>${formatTime(monitoring.timeFrom)}</b> -> <b>${formatTime(monitoring.timeTo)}</b>
+       |${capitalize(visitLanguage)}: ${monitoring.languageName}
        |${capitalize(doctor)}: ${monitoring.doctorName}
        |${capitalize(service)}: ${monitoring.serviceName}
        |${capitalize(clinic)}: ${monitoring.clinicName}
@@ -306,6 +314,7 @@ object Pl extends Lang {
        |
        |⏱ <b>${formatDateTime(term.term.dateTimeFrom, locale)}</b>
        |${capitalize(doctor)}: ${term.term.doctor.firstName} ${term.term.doctor.lastName}
+       |${capitalize(visitLanguage)}: ${monitoring.serviceName}
        |${capitalize(service)}: ${monitoring.serviceName}
        |${capitalize(clinic)}: ${term.term.clinic}
        |${capitalize(city)}: ${monitoring.cityName}""".stripMargin

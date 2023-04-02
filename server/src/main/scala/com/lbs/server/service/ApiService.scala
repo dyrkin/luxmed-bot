@@ -24,10 +24,17 @@ class ApiService extends SessionSupport {
 
   private val luxmedApi = new LuxmedApi[ThrowableOr]
 
+  def getAllVisitLanguages(accountId: Long): ThrowableOr[List[VisitLanguage]] =
+    withSession(accountId) { session =>
+      luxmedApi.dictionaryVisitLanguages(
+        // GlobalLang=en cookie is required to get all languages, not only polish
+        session.copy(cookies = joinCookies(session.cookies, Seq(new HttpCookie("GlobalLang", "en"))
+      )))
+    }
+
   def getAllCities(accountId: Long): ThrowableOr[List[DictionaryCity]] =
     withSession(accountId) { session =>
       luxmedApi.dictionaryCities(session)
-
     }
 
   def getAllFacilities(accountId: Long, cityId: Long, serviceVariantId: Long): ThrowableOr[List[IdName]] =
@@ -73,9 +80,9 @@ class ApiService extends SessionSupport {
           val time = term.term.dateTimeFrom.get.toLocalTime
           val date = term.term.dateTimeFrom.get
           (doctorId.isEmpty || doctorId.contains(term.term.doctor.id)) &&
-          (clinicId.isEmpty || clinicId.contains(term.term.clinicGroupId)) &&
-          (time == timeFrom || time == timeTo || (time.isAfter(timeFrom) && time.isBefore(timeTo))) &&
-          (date == fromDate || date == toDate || (date.isAfter(fromDate) && date.isBefore(toDate)))
+            (clinicId.isEmpty || clinicId.contains(term.term.clinicGroupId)) &&
+            (time == timeFrom || time == timeTo || (time.isAfter(timeFrom) && time.isBefore(timeTo))) &&
+            (date == fromDate || date == toDate || (date.isAfter(fromDate) && date.isBefore(toDate)))
         }
       }
     }
