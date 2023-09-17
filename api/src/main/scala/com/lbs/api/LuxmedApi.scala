@@ -94,6 +94,7 @@ class LuxmedApi[F[_]: ThrowableMonad] extends ApiBase {
       .param("doctorsIds", doctorId.map(_.toString))
       .param("nextSearch", false.toString)
       .param("searchByMedicalSpecialist", false.toString)
+      .param("delocalized", false.toString)
     get[TermsIndexResponse](request).map(_.body)
   }
 
