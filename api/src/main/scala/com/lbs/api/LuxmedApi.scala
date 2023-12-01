@@ -84,7 +84,8 @@ class LuxmedApi[F[_]: ThrowableMonad] extends ApiBase {
   ): F[TermsIndexResponse] = {
     val request = httpNewApi("NewPortal/terms/index", session)
       .header(`Content-Type`, "application/json")
-      .param("cityId", cityId.toString)
+      .param("searchPlace.id", cityId.toString)
+      .param("searchPlace.type", 0.toString)
       .param("serviceVariantId", serviceId.toString)
       .param("languageId", languageId.toString)
       .param("searchDateFrom", dateFormatNewPortal.format(fromDate))
