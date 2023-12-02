@@ -81,6 +81,7 @@ package object http extends StrictLogging {
         case _ =>
           Try(body.as[LuxmedErrorsMap])
             .orElse(Try(body.as[LuxmedError]))
+            .orElse(Try(body.as[LuxmedErrorsList]))
             .map(error => luxmedErrorToApiException(code, error))
             .toOption
       }
