@@ -45,9 +45,8 @@ class DataRepository(@Autowired em: EntityManager) {
       .createQuery(
         s"""select service from ServiceHistory service where service.recordId in
          | (select max(s.recordId) from ServiceHistory s where s.accountId = :accountId and s.cityId = :cityId
-         | and s.clinicId ${clinicId
-            .map(_ => "= :clinicId")
-            .getOrElse("IS NULL")} group by s.name order by MAX(s.time) desc)
+         | ${clinicId.map(_ => "and s.clinicId = :clinicId").getOrElse("")}
+         | group by s.name order by MAX(s.time) desc)
          | order by service.time desc""".stripMargin,
         classOf[ServiceHistory]
       )
