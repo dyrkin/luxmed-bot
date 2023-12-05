@@ -245,6 +245,7 @@ object En extends Lang {
        |${capitalize(clinic)}: ${monitoring.clinicName}
        |${capitalize(city)}: ${monitoring.cityName}
        |Type: ${if (monitoring.autobook) "Auto" else "Manual"}
+       |Rebook existing reservation: ${if (monitoring.rebookIfExists) "Yes" else "No"}
        |<b>➡</b> /cancel_$index
        |
        |""".stripMargin
