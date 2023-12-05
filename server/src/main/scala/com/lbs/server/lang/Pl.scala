@@ -247,6 +247,7 @@ object Pl extends Lang {
        |${capitalize(clinic)}: ${monitoring.clinicName}
        |${capitalize(city)}: ${monitoring.cityName}
        |Sposób rejestracji: ${if (monitoring.autobook) "Automatyczny" else "Ręczny"}
+       |Nadpisz istniejącą wizytę: ${if (monitoring.rebookIfExists) "Tak" else "Nie"}
        |<b>➡</b> /cancel_$index
        |
        |""".stripMargin

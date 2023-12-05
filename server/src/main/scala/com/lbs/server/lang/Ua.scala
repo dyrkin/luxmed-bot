@@ -245,6 +245,7 @@ object Ua extends Lang {
        |${capitalize(clinic)}: ${monitoring.clinicName}
        |${capitalize(city)}: ${monitoring.cityName}
        |Тип: ${if (monitoring.autobook) "Автоматичний" else "Ручний"}
+       |Оновити наявне бронювання: ${if (monitoring.rebookIfExists) "Так" else "Ні"}
        |<b>➡</b> /cancel_$index
        |
        |""".stripMargin
