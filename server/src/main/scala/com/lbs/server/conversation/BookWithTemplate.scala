@@ -48,7 +48,8 @@ class BookWithTemplate(
         dateFrom = monitoring.dateFrom.toLocalDateTime,
         dateTo = monitoring.dateTo.toLocalDateTime,
         timeFrom = monitoring.timeFrom,
-        timeTo = monitoring.timeTo
+        timeTo = monitoring.timeTo,
+        languageId = IdName.from(monitoring.languageId, monitoring.languageName)
       )
       goto(requestDateFrom) using bookingData
     }
@@ -135,7 +136,8 @@ class BookWithTemplate(
         bookingData.dateFrom,
         bookingData.dateTo,
         timeFrom = bookingData.timeFrom,
-        timeTo = bookingData.timeTo
+        timeTo = bookingData.timeTo,
+        languageId = bookingData.languageId.id
       )
       termsPager.restart()
       termsPager ! availableTerms.map(new SimpleItemsProvider(_))

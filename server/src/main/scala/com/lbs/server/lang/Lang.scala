@@ -102,6 +102,8 @@ trait Lang {
 
   def city: String
 
+  def visitLanguage: String
+
   def clinic: String
 
   def service: String

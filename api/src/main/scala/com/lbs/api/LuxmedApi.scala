@@ -49,6 +49,11 @@ class LuxmedApi[F[_]: ThrowableMonad] extends ApiBase {
     get[EventsResponse](request).map(_.body)
   }
 
+  def dictionaryVisitLanguages(session: Session): F[List[VisitLanguage]] = {
+    val request = httpNewApi("NewPortal/Dictionary/visitLanguages", session).header(`Content-Type`, "application/json")
+    getList[VisitLanguage](request).map(_.body)
+  }
+
   def dictionaryCities(session: Session): F[List[DictionaryCity]] = {
     val request = httpNewApi("NewPortal/Dictionary/cities", session).header(`Content-Type`, "application/json")
     getList[DictionaryCity](request).map(_.body)
@@ -80,7 +85,7 @@ class LuxmedApi[F[_]: ThrowableMonad] extends ApiBase {
     doctorId: Option[Long],
     fromDate: LocalDateTime = LocalDateTime.now(),
     toDate: LocalDateTime,
-    languageId: Long = 10
+    languageId: Long
   ): F[TermsIndexResponse] = {
     val request = httpNewApi("NewPortal/terms/index", session)
       .header(`Content-Type`, "application/json")

@@ -65,29 +65,29 @@ class DataRepositorySpec {
 
   @Test
   def whenGetServiceHistory_thenReturnLatestTwoRecords(): Unit = {
-    val history1 = ServiceHistory(1L, 1L, "hello", 1L, Some(1L), ZonedDateTime.now().plusSeconds(1))
-    val history2 = ServiceHistory(1L, 2L, "world1", 1L, Some(1L), ZonedDateTime.now().plusSeconds(2))
-    val history3 = ServiceHistory(1L, 3L, "world2", 1L, Some(1L), ZonedDateTime.now().plusSeconds(3))
+    val history1 = ServiceHistory(1L, 1L, "hello", 1L, Some(1L), 10L, ZonedDateTime.now().plusSeconds(1))
+    val history2 = ServiceHistory(1L, 2L, "world1", 1L, Some(1L), 10L, ZonedDateTime.now().plusSeconds(2))
+    val history3 = ServiceHistory(1L, 3L, "world2", 1L, Some(1L), 10L, ZonedDateTime.now().plusSeconds(3))
     em.persist(history1)
     em.persist(history2)
     em.persist(history3)
     em.flush()
 
-    val found = dataRepository.getServiceHistory(1L, 1L, Some(1L))
+    val found = dataRepository.getServiceHistory(1L, 1L, Some(1L), 10L)
     assertThat(found).isEqualTo(Seq(history3, history2, history1))
   }
 
   @Test
   def whenGetDoctorHistory_thenReturnLatestTwoRecords(): Unit = {
-    val history1 = DoctorHistory(1L, 1L, "hello", 1L, Some(1L), 1L, ZonedDateTime.now().plusSeconds(1))
-    val history2 = DoctorHistory(1L, 2L, "world1", 1L, Some(1L), 1L, ZonedDateTime.now().plusSeconds(2))
-    val history3 = DoctorHistory(1L, 3L, "world2", 1L, Some(1L), 1L, ZonedDateTime.now().plusSeconds(3))
+    val history1 = DoctorHistory(1L, 1L, "hello", 1L, Some(1L), 1L, 10L, ZonedDateTime.now().plusSeconds(1))
+    val history2 = DoctorHistory(1L, 2L, "world1", 1L, Some(1L), 1L, 10L, ZonedDateTime.now().plusSeconds(2))
+    val history3 = DoctorHistory(1L, 3L, "world2", 1L, Some(1L), 1L, 10L, ZonedDateTime.now().plusSeconds(3))
     em.persist(history1)
     em.persist(history2)
     em.persist(history3)
     em.flush()
 
-    val found = dataRepository.getDoctorHistory(1L, 1L, Some(1L), 1L)
+    val found = dataRepository.getDoctorHistory(1L, 1L, Some(1L), 1L, 10L)
     assertThat(found).isEqualTo(Seq(history3, history2, history1))
   }
 

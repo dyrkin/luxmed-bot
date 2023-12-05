@@ -80,6 +80,14 @@ class Monitoring extends RecordId {
   var timeTo: LocalTime = _
 
   @BeanProperty
+  @Column(name = "language_id", nullable = false)
+  var languageId: JLong = _
+
+  @BeanProperty
+  @Column(name = "language_name", nullable = false)
+  var languageName: String = _
+
+  @BeanProperty
   @Column(nullable = false)
   var autobook: Boolean = false
 
@@ -123,6 +131,8 @@ object Monitoring {
     created: ZonedDateTime = ZonedDateTime.now(),
     timeFrom: LocalTime,
     timeTo: LocalTime,
+    lanuageId: Long,
+    lanuageName: String,
     active: Boolean = true,
     offset: Int
   ): Monitoring = {
@@ -145,6 +155,8 @@ object Monitoring {
     monitoring.dateTo = dateTo
     monitoring.timeFrom = timeFrom
     monitoring.timeTo = timeTo
+    monitoring.languageId = lanuageId
+    monitoring.languageName = lanuageName
     monitoring.autobook = autobook
     monitoring.rebookIfExists = rebookIfExists
     monitoring.created = created

@@ -40,7 +40,18 @@ class Book(
   private[conversation] val staticData = staticDataFactory(userId, self)
   private val termsPager = termsPagerFactory(userId, self)
 
-  entryPoint(askCity, BookingData())
+  entryPoint(askLanguage, BookingData())
+
+  private def askLanguage: Step =
+    staticData(languageConfig) { bd: BookingData =>
+      val languages = apiService.getAllVisitLanguages(userId.accountId)
+
+      withFunctions[VisitLanguage](
+        latestOptions = languages.getOrElse(Seq.empty).map(_.toIdName),
+        staticOptions = languages,
+        applyId = id => bd.copy(languageId = id.toIdName)
+      )
+    }(requestNext = askCity)
 
   private def askCity: Step =
     staticData(cityConfig) { bd: BookingData =>
@@ -54,7 +65,7 @@ class Book(
   private def askService: Step =
     staticData(serviceConfig) { bd: BookingData =>
       withFunctions[DictionaryServiceVariants](
-        latestOptions = dataService.getLatestServicesByCityIdAndClinicId(userId.accountId, bd.cityId.id, None),
+        latestOptions = dataService.getLatestServices(userId.accountId, bd.cityId.id, None, bd.languageId.id),
         staticOptions = apiService.getAllServices(userId.accountId),
         applyId = id => bd.copy(serviceId = id.toIdName)
       )
@@ -63,7 +74,7 @@ class Book(
   private def askClinic: Step =
     staticData(clinicConfig) { bd: BookingData =>
       withFunctions[IdName](
-        latestOptions = dataService.getLatestClinicsByCityId(userId.accountId, bd.cityId.id),
+        latestOptions = dataService.getLatestClinics(userId.accountId, bd.cityId.id),
         staticOptions = apiService.getAllFacilities(userId.accountId, bd.cityId.id, bd.serviceId.id),
         applyId = id => bd.copy(clinicId = id)
       )
@@ -72,11 +83,12 @@ class Book(
   private def askDoctor: Step =
     staticData(doctorConfig) { bd: BookingData =>
       withFunctions[IdName](
-        latestOptions = dataService.getLatestDoctorsByCityIdAndClinicIdAndServiceId(
+        latestOptions = dataService.getLatestDoctors(
           userId.accountId,
           bd.cityId.id,
           bd.clinicId.optionalId,
-          bd.serviceId.id
+          bd.serviceId.id,
+          bd.languageId.id
         ),
         staticOptions = apiService
           .getAllDoctors(userId.accountId, bd.cityId.id, bd.serviceId.id)
@@ -170,7 +182,8 @@ class Book(
         bookingData.dateFrom,
         bookingData.dateTo,
         timeFrom = bookingData.timeFrom,
-        timeTo = bookingData.timeTo
+        timeTo = bookingData.timeTo,
+        languageId = bookingData.languageId.id
       )
       termsPager.restart()
       termsPager ! availableTerms.map(new SimpleItemsProvider(_))
@@ -361,6 +374,8 @@ class Book(
 
   private def cityConfig = StaticDataConfig(lang.city, "wro", "Wrocław", isAnyAllowed = false)
 
+  private def languageConfig = StaticDataConfig(lang.visitLanguage, "en", "English", isAnyAllowed = false)
+
   private def clinicConfig = StaticDataConfig(lang.clinic, "swob", "Swobodna 1", isAnyAllowed = true)
 
   private def serviceConfig = StaticDataConfig(lang.service, "stomat", "Stomatolog", isAnyAllowed = false)
@@ -386,6 +401,7 @@ object Book {
     dateTo: LocalDateTime = LocalDateTime.now().plusDays(1L),
     timeFrom: LocalTime = LocalTime.of(7, 0),
     timeTo: LocalTime = LocalTime.of(21, 0),
+    languageId: IdName = null,
     autobook: Boolean = false,
     rebookIfExists: Boolean = false,
     term: Option[TermExt] = None,

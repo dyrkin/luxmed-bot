@@ -76,7 +76,8 @@ class MonitoringService extends StrictLogging {
       dateFrom,
       monitoring.dateTo.toLocalDateTime,
       timeFrom = monitoring.timeFrom,
-      timeTo = monitoring.timeTo
+      timeTo = monitoring.timeTo,
+      languageId = monitoring.languageId,
     )
     termsEither match {
       case Right(terms) =>
@@ -266,7 +267,8 @@ class MonitoringService extends StrictLogging {
           monitoring.dateFrom.toLocalDateTime,
           monitoring.dateTo.toLocalDateTime,
           timeFrom = monitoring.timeFrom,
-          timeTo = monitoring.timeTo
+          timeTo = monitoring.timeTo,
+          languageId = monitoring.languageId
         )
         termsEither match {
           case Right(terms) =>

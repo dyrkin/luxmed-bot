@@ -28,6 +28,10 @@ class ServiceHistory extends History with RecordId {
   var clinicId: JLong = _
 
   @BeanProperty
+  @Column(name = "language_id", nullable = false)
+  var languageId: JLong = _
+
+  @BeanProperty
   @Column(nullable = false)
   var time: ZonedDateTime = _
 }
@@ -39,6 +43,7 @@ object ServiceHistory {
     name: String,
     cityId: Long,
     clinicId: Option[Long],
+    languageId: Long,
     time: ZonedDateTime
   ): ServiceHistory = {
     val service = new ServiceHistory
@@ -48,6 +53,7 @@ object ServiceHistory {
     service.time = time
     service.cityId = cityId
     service.clinicId = clinicId
+    service.languageId = languageId
     service
   }
 }

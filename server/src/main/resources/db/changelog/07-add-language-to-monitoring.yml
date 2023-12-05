@@ -1,0 +1,45 @@
+databaseChangeLog:
+  - changeSet:
+      id: 07_01
+      author: qnex
+      preConditions:
+        onFail: MARK_RAN
+        not:
+          columnExists:
+            tableName: monitoring
+            columnName: language_id
+      changes:
+        - addColumn:
+            tableName: monitoring
+            columns:
+              - column:
+                  name: language_id
+                  type: BIGINT
+
+        - addNotNullConstraint:
+            tableName: monitoring
+            columnName: language_id
+            columnDataType: BIGINT
+            defaultNullValue: 10 #Polish
+  - changeSet:
+      id: 07_02
+      author: qnex
+      preConditions:
+        onFail: MARK_RAN
+        not:
+          columnExists:
+            tableName: monitoring
+            columnName: language_name
+      changes:
+        - addColumn:
+            tableName: monitoring
+            columns:
+              - column:
+                  name: language_name
+                  type: VARCHAR(255)
+
+        - addNotNullConstraint:
+            tableName: monitoring
+            columnName: language_name
+            columnDataType: VARCHAR(255)
+            defaultNullValue: "Polish"

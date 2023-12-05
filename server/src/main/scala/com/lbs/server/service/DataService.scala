@@ -22,21 +22,22 @@ class DataService {
     dataRepository.getCityHistory(accountId).mapTo[Seq[IdName]]
   }
 
-  def getLatestClinicsByCityId(userId: Long, cityId: Long): Seq[IdName] = {
+  def getLatestClinics(userId: Long, cityId: Long): Seq[IdName] = {
     dataRepository.getClinicHistory(userId, cityId).mapTo[Seq[IdName]]
   }
 
-  def getLatestServicesByCityIdAndClinicId(userId: Long, cityId: Long, clinicId: Option[Long]): Seq[IdName] = {
-    dataRepository.getServiceHistory(userId, cityId, clinicId).mapTo[Seq[IdName]]
+  def getLatestServices(userId: Long, cityId: Long, clinicId: Option[Long], languageId: Long): Seq[IdName] = {
+    dataRepository.getServiceHistory(userId, cityId, clinicId, languageId).mapTo[Seq[IdName]]
   }
 
-  def getLatestDoctorsByCityIdAndClinicIdAndServiceId(
+  def getLatestDoctors(
     userId: Long,
     cityId: Long,
     clinicId: Option[Long],
-    serviceId: Long
+    serviceId: Long,
+    languageId: Long,
   ): Seq[IdName] = {
-    dataRepository.getDoctorHistory(userId, cityId, clinicId, serviceId).mapTo[Seq[IdName]]
+    dataRepository.getDoctorHistory(userId, cityId, clinicId, serviceId, languageId).mapTo[Seq[IdName]]
   }
 
   def getCredentials(accountId: Long): Option[Credentials] = {
@@ -82,7 +83,7 @@ class DataService {
 
   def findUserAndAccountIdBySource(source: MessageSource): Option[(Long, String, Long)] = {
     for {
-      userId <-  dataRepository.findUserId(source.chatId, source.sourceSystem.id).map(_.toLong)
+      userId <- dataRepository.findUserId(source.chatId, source.sourceSystem.id).map(_.toLong)
       accountId <- dataRepository.findAccountId(userId).map(_.toLong)
       username <- dataRepository.getUsernameByUserIdAndAccountId(userId, accountId)
     } yield (userId, username, accountId)
@@ -168,6 +169,7 @@ class DataService {
     val clinicId = bookingData.clinicId
     val serviceId = bookingData.serviceId
     val doctorId = bookingData.doctorId
+    val languageId = bookingData.languageId
 
     val city = CityHistory(accountId, cityId.id, cityId.name, time)
     dataRepository.saveEntity(city)
@@ -175,11 +177,13 @@ class DataService {
     val clinicMaybe = clinicId.optionalId.map(id => ClinicHistory(accountId, id, clinicId.name, cityId.id, time))
     clinicMaybe.foreach(dataRepository.saveEntity)
 
-    val service = ServiceHistory(accountId, serviceId.id, serviceId.name, cityId.id, clinicId.optionalId, time)
+    val service = ServiceHistory(
+      accountId, serviceId.id, serviceId.name, cityId.id, clinicId.optionalId, languageId.id, time
+    )
     dataRepository.saveEntity(service)
 
     val doctorMaybe = doctorId.optionalId.map(id =>
-      DoctorHistory(accountId, id, doctorId.name, cityId.id, clinicId.optionalId, serviceId.id, time)
+      DoctorHistory(accountId, id, doctorId.name, cityId.id, clinicId.optionalId, languageId.id, serviceId.id, time)
     )
     doctorMaybe.foreach(dataRepository.saveEntity)
   }

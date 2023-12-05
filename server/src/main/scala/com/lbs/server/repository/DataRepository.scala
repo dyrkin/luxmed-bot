@@ -40,37 +40,50 @@ class DataRepository(@Autowired em: EntityManager) {
       .toSeq
   }
 
-  def getServiceHistory(accountId: Long, cityId: Long, clinicId: Option[Long]): Seq[ServiceHistory] = {
+  def getServiceHistory(
+    accountId: Long,
+    cityId: Long,
+    clinicId: Option[Long],
+    languageId: Long
+  ): Seq[ServiceHistory] = {
     val query = em
       .createQuery(
         s"""select service from ServiceHistory service where service.recordId in
          | (select max(s.recordId) from ServiceHistory s where s.accountId = :accountId and s.cityId = :cityId
          | and s.clinicId ${clinicId
             .map(_ => "= :clinicId")
-            .getOrElse("IS NULL")} group by s.name order by MAX(s.time) desc)
+            .getOrElse("IS NULL")} and s.languageId = :languageId group by s.name order by MAX(s.time) desc)
          | order by service.time desc""".stripMargin,
         classOf[ServiceHistory]
       )
       .setParameter("accountId", accountId)
       .setParameter("cityId", cityId)
+      .setParameter("languageId", languageId)
       .setMaxResults(maxHistory)
 
     clinicId.map(id => query.setParameter("clinicId", id)).getOrElse(query).getResultList.asScala.toSeq
   }
 
-  def getDoctorHistory(accountId: Long, cityId: Long, clinicId: Option[Long], serviceId: Long): Seq[DoctorHistory] = {
+  def getDoctorHistory(
+    accountId: Long,
+    cityId: Long,
+    clinicId: Option[Long],
+    serviceId: Long,
+    languageId: Long
+  ): Seq[DoctorHistory] = {
     val query = em
       .createQuery(
         s"""select doctor from DoctorHistory doctor where doctor.recordId in
          | (select max(d.recordId) from DoctorHistory d where d.accountId = :accountId
          | and d.cityId = :cityId and d.clinicId ${clinicId.map(_ => "= :clinicId").getOrElse("IS NULL")}
-         | and d.serviceId = :serviceId group by d.name order by MAX(d.time) desc)
+         | and d.serviceId = :serviceId and d.languageId = :languageId group by d.name order by MAX(d.time) desc)
          | order by doctor.time desc""".stripMargin,
         classOf[DoctorHistory]
       )
       .setParameter("accountId", accountId)
       .setParameter("cityId", cityId)
       .setParameter("serviceId", serviceId)
+      .setParameter("languageId", languageId)
       .setMaxResults(maxHistory)
 
     clinicId.map(id => query.setParameter("clinicId", id)).getOrElse(query).getResultList.asScala.toSeq
