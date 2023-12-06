@@ -78,10 +78,13 @@ package object http extends StrictLogging {
             if lowercasedBody
               .contains("nieprawidłowy login lub hasło") || lowercasedBody.contains("invalid login or password") =>
           Some(new InvalidLoginOrPasswordException)
+        case _ if code >=  HttpURLConnection.HTTP_BAD_REQUEST =>
+          Try(body.as[LuxmedErrorsList])
+            .map(error => luxmedErrorToApiException(code, error))
+            .toOption
         case _ =>
           Try(body.as[LuxmedErrorsMap])
             .orElse(Try(body.as[LuxmedError]))
-            .orElse(Try(body.as[LuxmedErrorsList]))
             .map(error => luxmedErrorToApiException(code, error))
             .toOption
       }
