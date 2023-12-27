@@ -192,10 +192,10 @@ class MonitoringService extends StrictLogging {
             )
           )
         }
-    } yield response
+    } yield (response, reservationLocktermResponse.value.doctorDetails)
     bookingResult match {
-      case Right(_) =>
-        bot.sendMessage(monitoring.source, lang(monitoring.userId).appointmentIsBooked(term, monitoring))
+      case Right((_, doctorDetails)) =>
+        bot.sendMessage(monitoring.source, lang(monitoring.userId).appointmentIsBooked(term, monitoring, doctorDetails))
         deactivateMonitoring(monitoring.accountId, monitoring.recordId)
       case Left(ex) =>
         logger.error(s"Unable to book appointment by monitoring [${monitoring.recordId}]", ex)
