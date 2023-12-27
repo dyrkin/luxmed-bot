@@ -81,7 +81,10 @@ class Book(
         staticOptions = apiService
           .getAllDoctors(userId.accountId, bd.cityId.id, bd.serviceId.id)
           .map(
-            _.filter(doc => bd.clinicId == null || bd.clinicId.id == -1 || doc.facilityGroupIds.exists(_ == bd.clinicId.id))
+              _.filter(doc => {
+                val clinicId = bd.clinicId.optionalId
+                clinicId.isEmpty || doc.facilityGroupIds.exists(_.contains(clinicId.get))
+              })
               .map(_.toIdName)
           ),
         applyId = id => bd.copy(doctorId = id.toIdName)
