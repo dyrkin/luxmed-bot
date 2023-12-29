@@ -64,7 +64,7 @@ object Pl extends Lang {
       s" w klinice: <b>${bookingData.clinicId.name}</b>" +
       s" w mieście <b>${bookingData.cityId.name}</b>." +
       s"\nWybrane daty: <b>${formatDate(bookingData.dateFrom, locale)}</b> -> <b>${formatDate(bookingData.dateTo, locale)}</b>" +
-      s"w godzinach: <b>${formatTime(bookingData.timeFrom)} -> ${formatTime(bookingData.timeTo)}</b>" +
+      s" w godzinach: <b>${formatTime(bookingData.timeFrom)} -> ${formatTime(bookingData.timeTo)}</b>" +
       s"\n\n<b>➡</b> Wybierz co dalej"
 
   override def noTermsFound: String =
