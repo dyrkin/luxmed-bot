@@ -18,14 +18,14 @@ package com.lbs.api.json.model
 
 case class Valuation(
   alternativePrice: Option[String],
-  contractId: Long,
+  contractId: Option[Long],
   isExternalReferralAllowed: Boolean,
   isReferralRequired: Boolean,
-  payerId: Long,
-  price: Double,
+  payerId: Option[Long],
+  price: Option[Double],
   productElementId: Option[Long],
-  productId: Long,
-  productInContractId: Long,
+  productId: Option[Long],
+  productInContractId: Option[Long],
   requireReferralForPP: Boolean,
   valuationType: Long
 ) {}
