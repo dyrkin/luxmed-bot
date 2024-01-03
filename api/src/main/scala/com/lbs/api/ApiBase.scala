@@ -42,10 +42,4 @@ trait ApiBase {
       .header(Authorization, session.accessToken)
     cookiesMaybe.map(cookies => req.cookies(cookies)).getOrElse(req.cookies(session.cookies))
   }
-
-  protected def httpNewApi(url: String, cookies: IndexedSeq[HttpCookie]): HttpRequest = {
-    ApiHttp(s"https://portalpacjenta.luxmed.pl/PatientPortal/$url")
-      .headers(CommonHeaders)
-      .cookies(cookies)
-  }
 }

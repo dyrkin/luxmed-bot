@@ -17,5 +17,5 @@ package com.lbs.api.json.model
  */
 
 case class LuxmedErrorsList(errors: List[LuxmedError]) extends SerializableJsonObject with LuxmedBaseError {
-  override def message: String = errors.map(e => s"ErrorCode: ${e.errorCode}. Message: ${e.message}").mkString("; ")
+  override def message: String = errors.map(e => s"Message: ${e.message}").mkString("; ")
 }

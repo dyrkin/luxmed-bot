@@ -21,7 +21,6 @@ package object http extends StrictLogging {
     val Host = "Host"
     val Origin = "Origin"
     val Accept = "Accept"
-    val Connection = "Connection"
     val `Accept-Encoding` = "Accept-Encoding"
     val `User-Agent` = "User-Agent"
     val `Custom-User-Agent` = "Custom-User-Agent"
@@ -80,11 +79,12 @@ package object http extends StrictLogging {
           Some(new InvalidLoginOrPasswordException)
         case _ if code >=  HttpURLConnection.HTTP_BAD_REQUEST =>
           Try(body.as[LuxmedErrorsList])
+            .orElse(Try(body.as[LuxmedErrorsMap]))
+            .orElse(Try(body.as[LuxmedError]))
             .map(error => luxmedErrorToApiException(code, error))
             .toOption
         case _ =>
           Try(body.as[LuxmedErrorsMap])
-            .orElse(Try(body.as[LuxmedError]))
             .map(error => luxmedErrorToApiException(code, error))
             .toOption
       }
