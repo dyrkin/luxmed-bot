@@ -71,7 +71,7 @@ package object http extends StrictLogging {
       val lowercasedBody = body.toLowerCase
       val code = httpResponse.code
       code match {
-        case HttpURLConnection.HTTP_MOVED_TEMP if httpResponse.header("Location").exists(_.contains("/LogOn")) =>
+        case HttpURLConnection.HTTP_MOVED_TEMP if httpResponse.header("Location").exists(url => url.contains("/LogOn") || url.contains("/UniversalLink")) =>
           Some(new SessionExpiredException)
         case HttpURLConnection.HTTP_CONFLICT
             if lowercasedBody
