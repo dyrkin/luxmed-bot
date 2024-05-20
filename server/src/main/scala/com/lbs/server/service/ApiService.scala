@@ -149,19 +149,30 @@ class ApiService extends SessionSupport {
 
   override def fullLogin(username: String, encryptedPassword: String): ThrowableOr[Session] = {
     val password = textEncryptor.decrypt(encryptedPassword)
+    val clientId = java.util.UUID.randomUUID.toString
     for {
-      r1 <- luxmedApi.login(username, password)
-      tmpSession = Session(r1.body.accessToken, r1.body.accessToken, r1.cookies)
+      r1 <- luxmedApi.login(username, password, clientId)
+      tmpSession = Session(r1.body.accessToken, r1.body.accessToken, "", r1.cookies)
       r2 <- luxmedApi.loginToApp(tmpSession)
       cookies = joinCookies(r1.cookies, r2.cookies, Seq(new HttpCookie("GlobalLang", "pl")))
       accessToken = r1.body.accessToken
       tokenType = r1.body.tokenType
-    } yield Session(accessToken, tokenType, cookies)
+      r3 <- luxmedApi.getReservationPage(tmpSession, cookies)
+      jwtToken = extractAccessTokenFromReservationPage(r3.body)
+    } yield Session(accessToken, tokenType, jwtToken, joinCookies(cookies, r3.cookies))
   }
 
   def getXsrfToken(accountId: Long): ThrowableOr[XsrfToken] = {
     withSession(accountId) { session =>
       luxmedApi.getForgeryToken(session).map(ft => XsrfToken(ft.body.token, ft.cookies))
+    }
+  }
+
+  private def extractAccessTokenFromReservationPage(responsePage: String): String = {
+    val accessTokenRegex = """(?s).*'Authorization', '(.+?)'.*""".r
+    responsePage match {
+      case accessTokenRegex(token) => token
+      case _ => throw new java.lang.RuntimeException(s"Unable to extract authorization token from reservation page")
     }
   }
 }
