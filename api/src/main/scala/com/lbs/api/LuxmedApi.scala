@@ -7,6 +7,7 @@ import com.lbs.api.json.JsonSerializer.extensions._
 import com.lbs.api.json.model._
 import scalaj.http.{HttpRequest, HttpResponse}
 
+import java.net.HttpCookie
 import java.time.format.DateTimeFormatter
 import java.time.{LocalDateTime, ZonedDateTime}
 
@@ -15,10 +16,9 @@ class LuxmedApi[F[_]: ThrowableMonad] extends ApiBase {
   private val dateFormatNewPortal = DateTimeFormatter.ofPattern("yyyy-MM-dd")
   private val dateFormatEvents = DateTimeFormatter.ofPattern("yyyy-MM-dd'T'HH:mm:ssZ")
 
-  def login(username: String, password: String, clientId: String = "iPhone"): F[HttpResponse[LoginResponse]] = {
+  def login(username: String, password: String, clientId: String = "Android"): F[HttpResponse[LoginResponse]] = {
     val request = httpUnauthorized("token")
       .header(`Content-Type`, "application/x-www-form-urlencoded")
-      .header(`x-api-client-identifier`, clientId)
       .param("client_id", clientId)
       .param("grant_type", "password")
       .param("password", password)
@@ -27,14 +27,18 @@ class LuxmedApi[F[_]: ThrowableMonad] extends ApiBase {
   }
 
   def loginToApp(session: Session): F[HttpResponse[Unit]] = {
-    val request = httpNewApi("Account/LogInToApp?app=search&lang=pl&client=2&paymentSupported=true", session)
-      .header(Authorization, session.accessToken)
+    val request = httpNewApiWithOldToken("Account/LogInToApp?app=search&client=3&lang=pl", session)
     getVoid(request)
   }
 
   def getForgeryToken(session: Session): F[HttpResponse[ForgeryTokenResponse]] = {
     val request = httpNewApi("security/getforgerytoken", session)
     get[ForgeryTokenResponse](request)
+  }
+
+  def getReservationPage(session: Session, cookies: Seq[HttpCookie]): F[HttpResponse[String]] = {
+    val request = httpNewApiWithOldToken("NewPortal/Page/Reservation", session, Some(cookies))
+    getString(request)
   }
 
   def events(
@@ -83,7 +87,6 @@ class LuxmedApi[F[_]: ThrowableMonad] extends ApiBase {
     languageId: Long = 10
   ): F[TermsIndexResponse] = {
     val request = httpNewApi("NewPortal/terms/index", session)
-      .header(`Content-Type`, "application/json")
       .param("searchPlace.id", cityId.toString)
       .param("searchPlace.type", 0.toString)
       .param("serviceVariantId", serviceId.toString)
@@ -188,4 +191,7 @@ class LuxmedApi[F[_]: ThrowableMonad] extends ApiBase {
     request.postForm.method("DELETE").invoke
   }
 
+  private def getString(request: HttpRequest): F[HttpResponse[String]] = {
+    request.invoke
+  }
 }

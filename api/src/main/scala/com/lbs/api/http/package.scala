@@ -13,7 +13,7 @@ import scala.util.{Failure, Success, Try}
 
 package object http extends StrictLogging {
 
-  case class Session(accessToken: String, tokenType: String, cookies: Seq[HttpCookie])
+  case class Session(accessToken: String, tokenType: String, jwtToken: String, cookies: Seq[HttpCookie])
 
   object headers {
     val `Content-Type` = "Content-Type"
@@ -24,9 +24,10 @@ package object http extends StrictLogging {
     val `Accept-Encoding` = "Accept-Encoding"
     val `User-Agent` = "User-Agent"
     val `Custom-User-Agent` = "Custom-User-Agent"
-    val `x-api-client-identifier` = "x-api-client-identifier"
+    val `X-Api-Client-Identifier` = "X-Api-Client-Identifier"
     val `Accept-Language` = "accept-language"
     val Authorization = "Authorization"
+    val `X-Requested-With` = "X-Requested-With"
   }
 
   private val SensitiveHeaders = List("passw", "access_token", "refresh_token", "authorization")
