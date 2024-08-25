@@ -27,6 +27,7 @@ package object http extends StrictLogging {
     val `X-Api-Client-Identifier` = "X-Api-Client-Identifier"
     val `Accept-Language` = "accept-language"
     val Authorization = "Authorization"
+    val AuthorizationToken = "authorization-token"
     val `X-Requested-With` = "X-Requested-With"
   }
 

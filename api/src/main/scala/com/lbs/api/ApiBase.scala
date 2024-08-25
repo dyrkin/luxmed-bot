@@ -50,7 +50,7 @@ trait ApiBase {
   protected def httpNewApi(url: String, session: Session, cookiesMaybe: Option[Seq[HttpCookie]] = None): HttpRequest = {
     val req = ApiHttp(s"https://portalpacjenta.luxmed.pl/PatientPortal/$url")
       .headers(CommonHeaders ++ NewApiHeaders)
-      .header(Authorization, s"Bearer ${session.jwtToken}")
+      .header(AuthorizationToken, s"Bearer ${session.jwtToken}")
     cookiesMaybe.map(cookies => req.cookies(cookies)).getOrElse(req.cookies(session.cookies))
   }
 
