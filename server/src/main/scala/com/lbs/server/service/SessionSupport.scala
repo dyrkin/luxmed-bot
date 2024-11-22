@@ -11,7 +11,7 @@ import scala.collection.mutable
 
 trait SessionSupport extends StrictLogging {
 
-  def fullLogin(username: String, password: String): ThrowableOr[Session]
+  def fullLogin(username: String, password: String, secondAttempt: Boolean = false): ThrowableOr[Session]
 
   protected def dataService: DataService
 

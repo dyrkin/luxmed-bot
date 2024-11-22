@@ -147,19 +147,28 @@ class ApiService extends SessionSupport {
     cookies.map(_.map(v => v.getName -> v).toMap).reduce(_ ++ _).values.toSeq
   }
 
-  override def fullLogin(username: String, encryptedPassword: String): ThrowableOr[Session] = {
+  override def fullLogin(username: String, encryptedPassword: String, secondAttempt: Boolean = false): ThrowableOr[Session] = {
     val password = textEncryptor.decrypt(encryptedPassword)
     val clientId = java.util.UUID.randomUUID.toString
-    for {
-      r1 <- luxmedApi.login(username, password, clientId)
-      tmpSession = Session(r1.body.accessToken, r1.body.accessToken, "", r1.cookies)
-      r2 <- luxmedApi.loginToApp(tmpSession)
-      cookies = joinCookies(r1.cookies, r2.cookies, Seq(new HttpCookie("GlobalLang", "pl")))
-      accessToken = r1.body.accessToken
-      tokenType = r1.body.tokenType
-      r3 <- luxmedApi.getReservationPage(tmpSession, cookies)
-      jwtToken = extractAccessTokenFromReservationPage(r3.body)
-    } yield Session(accessToken, tokenType, jwtToken, joinCookies(cookies, r3.cookies))
+    try {
+      for {
+        r1 <- luxmedApi.login(username, password, clientId)
+        tmpSession = Session(r1.body.accessToken, r1.body.accessToken, "", r1.cookies)
+        r2 <- luxmedApi.loginToApp(tmpSession)
+        cookies = joinCookies(r1.cookies, r2.cookies, Seq(new HttpCookie("GlobalLang", "pl")))
+        accessToken = r1.body.accessToken
+        tokenType = r1.body.tokenType
+        r3 <- luxmedApi.getReservationPage(tmpSession, cookies)
+        jwtToken = extractAccessTokenFromReservationPage(r3.body)
+      } yield Session(accessToken, tokenType, jwtToken, joinCookies(cookies, r3.cookies))
+    } catch {
+      case e: Exception if !secondAttempt => {
+        logger.warn("couldn't login from the first attempt. trying one more time after a short pause", e)
+        Thread.sleep(3000)
+        fullLogin(username, encryptedPassword, secondAttempt = true)
+      }
+      case e: Exception => Left(e)
+    }
   }
 
   def getXsrfToken(accountId: Long): ThrowableOr[XsrfToken] = {
