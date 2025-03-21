@@ -25,13 +25,13 @@ trait ApiBase {
   private val OldApiHeaders =
     Map(
       `X-Api-Client-Identifier` -> "Android",
-      `Custom-User-Agent` -> "Patient Portal; 4.31.0; 12345678-54b1-4c07-ba09-a3db8daea24b; Android; 33; Samsung Galaxy S23",
+      `Custom-User-Agent` -> "Patient Portal; 4.40.0; 12345678-54b1-4c07-ba09-a3db8daea24b; Android; 33; Samsung Galaxy S23",
       `User-Agent` -> "okhttp/4.9.0"
     )
 
   private val NewApiHeaders =
     Map(
-      `Custom-User-Agent` -> "Patient Portal; 4.31.0; 12345678-54b1-4c07-ba09-a3db8daea24b; Android; 33; Samsung Galaxy S23",
+      `Custom-User-Agent` -> "Patient Portal; 4.40.0; 12345678-54b1-4c07-ba09-a3db8daea24b; Android; 33; Samsung Galaxy S23",
       `User-Agent` -> "Mozilla/5.0 (Linux; Android 13; Galaxy S23 Build/TQ2B.230505.005.A1; wv) AppleWebKit/537.36 (KHTML, like Gecko) Version/4.0 Chrome/101.0.4951.61 Safari/537.36"
     )
 
