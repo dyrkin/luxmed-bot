@@ -1,6 +1,6 @@
 package com.lbs.server.lang
 
-import com.lbs.api.json.model.{Event, TermExt}
+import com.lbs.api.json.model.{Doctor, Event, TermExt}
 import com.lbs.server.conversation.Book
 import com.lbs.server.conversation.StaticData.StaticDataConfig
 import com.lbs.server.repository.model.Monitoring
@@ -302,11 +302,11 @@ object Pl extends Lang {
        |
        |<b>➡</b> Stwórz nowy monitoring przez /book""".stripMargin
 
-  override def appointmentIsBooked(term: TermExt, monitoring: Monitoring): String =
+  override def appointmentIsBooked(term: TermExt, monitoring: Monitoring, doctorDetails: Doctor): String =
     s"""👍 Zarezerwowaliśmy termin dla ${monitoring.username}!
        |
        |⏱ <b>${formatDateTime(term.term.dateTimeFrom, locale)}</b>
-       |${capitalize(doctor)}: ${term.term.doctor.firstName} ${term.term.doctor.lastName}
+       |${capitalize(doctor)}: ${doctorDetails.firstName} ${doctorDetails.lastName}
        |${capitalize(service)}: ${monitoring.serviceName}
        |${capitalize(clinic)}: ${term.term.clinic}
        |${capitalize(city)}: ${monitoring.cityName}""".stripMargin

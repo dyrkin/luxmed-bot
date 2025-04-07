@@ -1,6 +1,6 @@
 package com.lbs.server.lang
 
-import com.lbs.api.json.model.{Event, TermExt}
+import com.lbs.api.json.model.{Doctor, Event, TermExt}
 import com.lbs.server.conversation.Book.BookingData
 import com.lbs.server.conversation.StaticData.StaticDataConfig
 import com.lbs.server.repository.model.Monitoring
@@ -186,7 +186,7 @@ trait Lang {
 
   def nothingWasFoundByMonitoring(monitoring: Monitoring): String
 
-  def appointmentIsBooked(term: TermExt, monitoring: Monitoring): String
+  def appointmentIsBooked(term: TermExt, monitoring: Monitoring, doctorDetails: Doctor): String
 
   def maximumMonitoringsLimitExceeded: String
 
