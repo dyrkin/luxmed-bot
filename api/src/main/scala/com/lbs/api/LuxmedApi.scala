@@ -26,9 +26,9 @@ class LuxmedApi[F[_]: ThrowableMonad] extends ApiBase {
     post[LoginResponse](request)
   }
 
-  def loginToApp(session: Session): F[HttpResponse[Unit]] = {
+  def loginToApp(session: Session): F[HttpResponse[String]] = {
     val request = httpNewApiWithOldToken("Account/LogInToApp?app=search&client=3&lang=pl", session)
-    getVoid(request)
+    getString(request)
   }
 
   def getForgeryToken(session: Session): F[HttpResponse[ForgeryTokenResponse]] = {
