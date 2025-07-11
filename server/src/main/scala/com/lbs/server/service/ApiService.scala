@@ -155,11 +155,11 @@ class ApiService extends SessionSupport {
         r1 <- luxmedApi.login(username, password, clientId)
         tmpSession = Session(r1.body.accessToken, r1.body.accessToken, "", r1.cookies)
         r2 <- luxmedApi.loginToApp(tmpSession)
+        jwtToken = extractAuthorizationTokenFromCookies(r2)
         cookies = joinCookies(r1.cookies, r2.cookies, Seq(new HttpCookie("GlobalLang", "pl")))
         accessToken = r1.body.accessToken
         tokenType = r1.body.tokenType
         r3 <- luxmedApi.getReservationPage(tmpSession, cookies)
-        jwtToken = extractAccessTokenFromReservationPage(r3.body)
       } yield Session(accessToken, tokenType, jwtToken, joinCookies(cookies, r3.cookies))
     } catch {
       case e: Exception if !secondAttempt => {
@@ -182,6 +182,25 @@ class ApiService extends SessionSupport {
     responsePage match {
       case accessTokenRegex(token) => token
       case _ => throw new java.lang.RuntimeException(s"Unable to extract authorization token from reservation page")
+    }
+  }
+
+  private def extractAuthorizationTokenFromCookies(response: HttpResponse[_]): String = {
+    response.headers.get("Set-Cookie") match {
+      case Some(cookieHeaders) =>
+        cookieHeaders
+          .find(_.startsWith("Authorization-Token="))
+          .flatMap { header =>
+            header.split(";").headOption.flatMap {
+              _.split("=", 2) match {
+                case Array(_, value) => Some(value)
+                case _ => None
+              }
+            }
+          }
+          .getOrElse(throw new RuntimeException("Authorization-Token cookie not found in response headers"))
+      case None =>
+        throw new RuntimeException("No Set-Cookie headers found in response")
     }
   }
 }
