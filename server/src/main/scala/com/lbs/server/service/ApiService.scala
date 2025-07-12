@@ -186,21 +186,10 @@ class ApiService extends SessionSupport {
   }
 
   private def extractAuthorizationTokenFromCookies(response: HttpResponse[_]): String = {
-    response.headers.get("Set-Cookie") match {
-      case Some(cookieHeaders) =>
-        cookieHeaders
-          .find(_.startsWith("Authorization-Token="))
-          .flatMap { header =>
-            header.split(";").headOption.flatMap {
-              _.split("=", 2) match {
-                case Array(_, value) => Some(value)
-                case _ => None
-              }
-            }
-          }
-          .getOrElse(throw new RuntimeException("Authorization-Token cookie not found in response headers"))
-      case None =>
-        throw new RuntimeException("No Set-Cookie headers found in response")
-    }
+    response.cookies
+      .find(_.getName == "Authorization-Token")
+      .map(_.getValue)
+      .getOrElse(throw new RuntimeException("Authorization-Token cookie not found in response"))
   }
+
 }
