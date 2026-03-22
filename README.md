@@ -3,37 +3,34 @@
 [![Build Status](https://drone.rdome.net/api/badges/dyrkin/luxmed-bot/status.svg?branch=master)](https://drone.rdome.net/dyrkin/luxmed-bot)
 [![Docker Hub](https://img.shields.io/badge/image-latest-blue.svg?logo=docker&style=flat)](https://hub.docker.com/r/eugenezadyra/luxmed-bot/tags/)
 
-Non official Telegram bot for **Portal Pacjenta LUX MED**.
+Unofficial Telegram bot for **Portal Pacjenta LUX MED**.
 
 ### Overview 
-Luxmed Bot can help you to book a visit to a doctor, create term monitoring, view upcoming appointments and visit history.
+Luxmed Bot can help you book doctor visits, monitor appointments, and view your upcoming appointments and visit history.
 
-It is available here [@luxmedbot](https://telegram.me/luxmedbot), but you can install your instance.
+It is available here [@luxmedbot](https://telegram.me/luxmedbot), or you can host your own instance.
 
 ![Screenshot](screenshot.png)
 
 ### Installation
 
-1. Create telegram bot using [@BotFather](https://telegram.me/botfather)
-2. Install **docker** and **docker-compose** (install **docker-machine** if you are on Mac)
-3. Depending on your platform download:
-    - [docker-compose.xml](https://raw.githubusercontent.com/dyrkin/luxmed-booking-service/master/docker/docker-compose.yml) 
-    - [docker-compose-arm64.xml](https://raw.githubusercontent.com/dyrkin/luxmed-booking-service/master/docker/docker-compose-arm64.yml)
-4. Download [secrets.env.template](https://raw.githubusercontent.com/dyrkin/luxmed-booking-service/master/docker/secrets.env.template) 
-to the same folder and rename it to **secrets.env**
+1. Create a Telegram bot using [@BotFather](https://telegram.me/botfather)
+2. Install **Docker** and **Docker Compose**
+3. Depending on your platform, download:
+    - [docker-compose.yml](https://raw.githubusercontent.com/dyrkin/luxmed-bot/master/docker/docker-compose.yml) 
+    - [docker-compose-arm64.yml](https://raw.githubusercontent.com/dyrkin/luxmed-bot/master/docker/docker-compose-arm64.yml)
+4. Download [secrets.env.template](https://raw.githubusercontent.com/dyrkin/luxmed-bot/master/docker/secrets.env.template) 
+   to the same directory and rename it to **secrets.env**
 5. Edit **secrets.env** by specifying your **TELEGRAM_TOKEN** and **SECURITY_SECRET**
-6. Start the application by running commands:
+6. Start the application by running the following commands:
     ```bash
-    $ docker-compose pull
-    $ docker-compose up
+    docker compose pull
+    docker compose up -d
     ```
-11. Send `/start` command to your bot
+7. Send the `/start` command to your bot
 
-### Develop run
+### Local Development
 
-1. Run `docker-compose up` to launch PostgreSQL database
-2. Set env `TELEGRAM_TOKEN=YOUR_TOKEN`
-3. Run `Boot.scala` app
-
-
-
+1. Run `docker compose up -d database` inside the `docker` directory to launch the PostgreSQL database
+2. Set the environment variable `TELEGRAM_TOKEN=YOUR_TOKEN`
+3. Run the `Boot.scala` application from your IDE (located in the `server` module)
