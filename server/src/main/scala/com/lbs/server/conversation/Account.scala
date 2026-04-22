@@ -1,14 +1,15 @@
 package com.lbs.server.conversation
 
-import akka.actor.ActorSystem
-import com.lbs.bot._
+import com.lbs.bot.{Bot, createInlineKeyboard}
 import com.lbs.bot.model.Button
-import com.lbs.server.conversation.Account._
-import com.lbs.server.conversation.Login._
+import com.lbs.server.conversation.Account.{SwitchAccount, Tags}
+import com.lbs.server.conversation.Login.UserId
 import com.lbs.server.conversation.base.Conversation
+import com.lbs.server.conversation.{Account, Login}
 import com.lbs.server.lang.{Localizable, Localization}
 import com.lbs.server.service.DataService
 import com.lbs.server.util.MessageExtractors.CallbackCommand
+import org.apache.pekko.actor.ActorSystem
 
 class Account(val userId: UserId, bot: Bot, dataService: DataService, val localization: Localization, router: Router)(
   val actorSystem: ActorSystem

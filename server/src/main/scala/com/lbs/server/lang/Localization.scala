@@ -6,12 +6,13 @@ import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.stereotype.Component
 
 import java.util.concurrent.ConcurrentHashMap
+import scala.compiletime.uninitialized
 
 @Component
 class Localization {
 
   @Autowired
-  private var dataService: DataService = _
+  private var dataService: DataService = uninitialized
 
   private val cachedLangs = new ConcurrentHashMap[Long, Lang]
 
@@ -34,7 +35,7 @@ class Localization {
     cachedLangs.put(userId, lang)
     val settings = dataService.findSettings(userId) match {
       case Some(existingSettings) =>
-        existingSettings.setLang(lang.id)
+        existingSettings.lang = lang.id
         existingSettings
       case None => model.Settings(userId, lang.id, 0, alwaysAskOffset = false)
     }

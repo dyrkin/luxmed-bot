@@ -1,8 +1,8 @@
 package com.lbs.server.conversation.base
 
-import akka.actor.{ActorRef, ActorSystem}
-import akka.testkit.TestProbe
 import com.lbs.server.conversation.AkkaTestKit
+import org.apache.pekko.actor.{ActorRef, ActorSystem}
+import org.apache.pekko.testkit.TestProbe
 
 class ConversationSpec extends AkkaTestKit {
 
@@ -15,7 +15,7 @@ class ConversationSpec extends AkkaTestKit {
 
       object World
 
-      object Dialogue
+      object DialogueSentinel
 
       class TestConversation(originator: ActorRef)(implicit val actorSystem: ActorSystem) extends Conversation[Data] {
 
@@ -43,8 +43,8 @@ class ConversationSpec extends AkkaTestKit {
 
         def askDialogue: Step =
           ask { data =>
-            self ! Dialogue
-          } onReply { case Msg(Dialogue, data) =>
+            self ! DialogueSentinel
+          } onReply { case Msg(DialogueSentinel, data) =>
             originator ! data.copy(people = "dialogue") -> conf
             end()
           }

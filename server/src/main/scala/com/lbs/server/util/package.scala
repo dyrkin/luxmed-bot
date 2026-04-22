@@ -1,19 +1,18 @@
-package com.lbs.server
+package com.lbs.server.util
 
-import com.lbs.api.json.model._
+import com.lbs.api.json.model.*
 import com.lbs.bot.model.Command
 import com.lbs.common.ModelConverters
 import com.lbs.server.conversation.Book.BookingData
 import com.lbs.server.conversation.Login.UserId
+import com.lbs.server.conversation.RehabBook.RehabBookingData
 import com.lbs.server.repository.model.{History, Monitoring}
 
-import java.time._
+import java.time.*
 import java.time.format.DateTimeFormatter
 import java.util.Locale
-import scala.language.{higherKinds, implicitConversions}
 import scala.util.Try
 
-package object util {
 
   object ServerModelConverters extends ModelConverters {
 
@@ -110,8 +109,67 @@ package object util {
         )
       }
 
+    implicit val TermExtWithRehabDataToReservationLocktermRequestConverter
+      : ObjectConverter[(TermExt, Long, Int), ReservationLocktermRequest] =
+      (data: (TermExt, Long, Int)) => {
+        val (termExt, referralId, referralTypeId) = data
+        val term = termExt.term
+        val additionalData = termExt.additionalData
+        ReservationLocktermRequest(
+          date = term.dateTimeFrom.get.minusHours(2).toString + ":00.000Z",
+          doctor = term.doctor,
+          doctorId = term.doctor.id,
+          facilityId = term.clinicId,
+          impedimentText = term.impedimentText,
+          isAdditional = term.isAdditional,
+          isImpediment = term.isImpediment,
+          isPreparationRequired = additionalData.isPreparationRequired,
+          isTelemedicine = term.isTelemedicine,
+          preparationItems = additionalData.preparationItems,
+          referralId = Some(referralId.toString),
+          referralTypeId = Some(referralTypeId.toString),
+          roomId = term.roomId,
+          scheduleId = term.scheduleId,
+          serviceVariantId = term.serviceId,
+          timeFrom = term.dateTimeFrom.get.toLocalTime.toString,
+          timeTo = term.dateTimeTo.get.toLocalTime.toString
+        )
+      }
+
     implicit val HistoryToIdNameConverter: ObjectConverter[History, IdName] =
       (history: History) => IdName(history.id, history.name)
+
+    implicit val RehabBookingDataToMonitoringConverter: ObjectConverter[(UserId, RehabBookingData), Monitoring] =
+      (data: (UserId, RehabBookingData)) => {
+        val (userId, d) = data
+        Monitoring(
+          userId = userId.userId,
+          username = userId.username,
+          accountId = userId.accountId,
+          chatId = userId.source.chatId,
+          sourceSystemId = userId.source.sourceSystem.id,
+          payerId = 0L,
+          cityId = d.cityId.id,
+          cityName = d.cityId.name,
+          clinicId = Option(d.facilityId).flatMap(_.optionalId),
+          clinicName = Option(d.facilityId).map(_.name).getOrElse("Any"),
+          serviceId = d.serviceVariantId,
+          serviceName = d.serviceVariantName,
+          doctorId = Option(d.physiotherapistId).flatMap(_.optionalId),
+          doctorName = Option(d.physiotherapistId).map(_.name).getOrElse(""),
+          dateFrom = d.dateFrom.atZone(DateTimeUtil.Zone),
+          dateTo = d.dateTo.atZone(DateTimeUtil.Zone),
+          timeFrom = d.timeFrom,
+          timeTo = d.timeTo,
+          autobook = d.autobook,
+          rebookIfExists = d.rebookIfExists,
+          offset = d.offset,
+          isRehab = true,
+          referralId = Some(d.referralId),
+          referralTypeId = Some(d.referralTypeId),
+          serviceVariantId = Some(d.serviceVariantId)
+        )
+      }
   }
 
   object MessageExtractors {
@@ -186,4 +244,3 @@ package object util {
     }
   }
 
-}

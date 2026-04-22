@@ -1,12 +1,15 @@
 package com.lbs.server.conversation
 
-import akka.actor.ActorSystem
 import com.lbs.bot.model.{Command, MessageSource}
 import com.lbs.server.conversation.Login.{LoggedIn, UserId}
 import com.lbs.server.conversation.base.Conversation
 import com.lbs.server.service.DataService
-import com.lbs.server.util.MessageExtractors._
+import com.lbs.server.util.MessageExtractors
+import com.lbs.server.util.MessageExtractors.*
 import com.typesafe.scalalogging.StrictLogging
+import org.apache.pekko.actor.ActorSystem
+
+import scala.compiletime.uninitialized
 
 class Auth(
   val source: MessageSource,
@@ -22,7 +25,7 @@ class Auth(
   private val unauthorizedHelp = unauthorizedHelpFactory(source)
 
   private var userId: Option[UserId] = getUserId
-  private var chat: Chat = _
+  private var chat: Chat = uninitialized
 
   entryPoint(processIncoming)
 

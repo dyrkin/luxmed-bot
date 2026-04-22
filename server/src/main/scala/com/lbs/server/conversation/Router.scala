@@ -1,6 +1,6 @@
 package com.lbs.server.conversation
 
-import akka.actor.{ActorSystem, Cancellable}
+import org.apache.pekko.actor.{ActorSystem, Cancellable}
 import com.lbs.bot.model.{Command, MessageSource}
 import com.lbs.server.conversation.Account.SwitchAccount
 import com.lbs.server.conversation.base.Conversation
@@ -39,7 +39,7 @@ class Router(authFactory: MessageSourceTo[Auth])(val actorSystem: ActorSystem)
       case Msg(SwitchAccount(userId), _) =>
         switchAccount(userId)
         stay()
-      case msg: Msg =>
+      case msg: Msg[?] =>
         logger.info(s"Unknown message received: $msg")
         stay()
     }

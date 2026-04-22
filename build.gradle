@@ -1,26 +1,83 @@
+import org.gradle.api.tasks.testing.logging.TestExceptionFormat
+import org.gradle.api.tasks.testing.logging.TestLogEvent
+
 plugins {
-    id "com.github.maiflai.scalatest" version "0.32"
-    id "org.springframework.boot" version "2.7.2"
-    id "cz.alenkacz.gradle.scalafmt" version "1.16.2"
+    id "org.springframework.boot" version "4.0.6"
+    id "cz.augi.gradle.scalafmt" version "1.21.5"
 }
 
 allprojects {
     apply plugin: "scala"
     apply plugin: "java-library"
-    apply plugin: "com.github.maiflai.scalatest"
+
+    java {
+        sourceCompatibility = JavaVersion.VERSION_25
+        targetCompatibility = JavaVersion.VERSION_25
+    }
 
     repositories {
         mavenCentral()
-        maven { url "https://repo.spring.io/libs-milestone" }
     }
 
     dependencies {
-        compileOnly "org.scala-lang:scala-library:$scala.$scala_minor"
-
-        testImplementation "org.scalatest:scalatest_$scala:3.2.11"
-        testRuntimeOnly "com.vladsch.flexmark:flexmark-all:0.62.2" // version depends on scalatest dependency
-
-        testImplementation "org.scalatestplus:mockito-4-2_$scala:3.2.11.0"
-        testImplementation "org.pegdown:pegdown:1.6.0"
+        implementation "org.scala-lang:scala3-library_3:3.8.3"
+        testImplementation "org.scalatest:scalatest_3:3.2.19"
+        testRuntimeOnly "org.scalatestplus:junit-5-13_3:3.2.19.0"
+        testImplementation "org.scalatestplus:mockito-5-12_3:3.2.19.0"
     }
+
+    tasks.withType(Test) {
+        useJUnitPlatform()
+        testLogging {
+            events = [TestLogEvent.FAILED,
+                    TestLogEvent.PASSED,
+                    TestLogEvent.SKIPPED,
+                    TestLogEvent.STANDARD_OUT]
+            exceptionFormat = TestExceptionFormat.FULL
+            showExceptions = true
+            showCauses = true
+            showStackTraces = true
+
+            debug {
+                events = [TestLogEvent.STARTED,
+                        TestLogEvent.FAILED,
+                        TestLogEvent.PASSED,
+                        TestLogEvent.SKIPPED,
+                        TestLogEvent.STANDARD_ERROR,
+                        TestLogEvent.STANDARD_OUT]
+                exceptionFormat = TestExceptionFormat.FULL
+            }
+            info.events = debug.events
+            info.exceptionFormat = debug.exceptionFormat
+        }
+        addTestListener(new TestListener() {
+            @Override void beforeSuite(TestDescriptor desc) {}
+            @Override void afterSuite(TestDescriptor desc, TestResult result) {
+                if (!desc.parent) {
+                    def output = "Results: ${result.resultType} (${result.testCount} tests, ${result.successfulTestCount} successes, ${result.failedTestCount} failures, ${result.skippedTestCount} skipped)"
+                    def startItem = '|  ', endItem = '  |'
+                    def repeatLength = startItem.length() + output.length() + endItem.length()
+                    println('\n' + ('-' * repeatLength) + '\n' + startItem + output + endItem + '\n' + ('-' * repeatLength))
+                }
+            }
+            @Override void beforeTest(TestDescriptor desc) {}
+            @Override void afterTest(TestDescriptor desc, TestResult result) {}
+        })
+    }
+    tasks.withType(ScalaCompile) {
+        scalaCompileOptions.additionalParameters = [
+            "-deprecation",
+            "-feature",
+            "-unchecked",
+            "-source:3.8",
+            "-Xunchecked-java-output-version:17"
+        ]
+    }
+    tasks.withType(Jar) {
+        duplicatesStrategy = DuplicatesStrategy.EXCLUDE
+    }
+}
+
+bootJar {
+    mainClass.set('com.lbs.server.Boot')
 }

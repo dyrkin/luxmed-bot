@@ -1,9 +1,10 @@
 package com.lbs.server.conversation.base
 
-import akka.actor.ActorSystem
-import akka.testkit.TestProbe
-import org.mockito.ArgumentMatchers._
-import org.mockito.Mockito._
+import org.apache.pekko.actor.ActorSystem
+import org.apache.pekko.testkit.TestProbe
+import org.mockito.ArgumentMatchers.*
+import org.mockito.Mockito.*
+import org.mockito.{ArgumentMatchers, Mockito}
 import org.scalatestplus.mockito.MockitoSugar
 
 import scala.reflect.ClassTag

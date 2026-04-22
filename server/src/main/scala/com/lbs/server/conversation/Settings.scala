@@ -1,10 +1,10 @@
 package com.lbs.server.conversation
 
-import akka.actor.ActorSystem
-import com.lbs.bot._
+import org.apache.pekko.actor.ActorSystem
+import com.lbs.bot.*
 import com.lbs.bot.model.{Button, Command}
 import com.lbs.server.conversation.Login.UserId
-import com.lbs.server.conversation.Settings._
+import com.lbs.server.conversation.Settings.*
 import com.lbs.server.conversation.base.Conversation
 import com.lbs.server.lang.{Lang, Localizable, Localization}
 import com.lbs.server.repository.model

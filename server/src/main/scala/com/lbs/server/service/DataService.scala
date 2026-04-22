@@ -3,20 +3,22 @@ package com.lbs.server.service
 import com.lbs.api.json.model.IdName
 import com.lbs.bot.model.MessageSource
 import com.lbs.server.conversation.Book.BookingData
-import com.lbs.server.repository.DataRepository
-import com.lbs.server.repository.model._
-import com.lbs.server.util.ServerModelConverters._
+import com.lbs.server.repository.model.*
+import com.lbs.server.repository.{DataRepository, model}
+import com.lbs.server.util.ServerModelConverters
+import com.lbs.server.util.ServerModelConverters.*
+import jakarta.transaction.Transactional
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.stereotype.Service
 
 import java.time.ZonedDateTime
-import javax.transaction.Transactional
+import scala.compiletime.uninitialized
 
 @Service
 class DataService {
 
   @Autowired
-  private[service] var dataRepository: DataRepository = _
+  private[service] var dataRepository: DataRepository = uninitialized
 
   def getLatestCities(accountId: Long): Seq[IdName] = {
     dataRepository.getCityHistory(accountId).mapTo[Seq[IdName]]

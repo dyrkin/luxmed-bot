@@ -1,12 +1,12 @@
 package com.lbs.server.repository
 
-import com.lbs.server.repository.model.{CityHistory, ClinicHistory, Credentials, DoctorHistory, JLong, Monitoring, ServiceHistory, Settings, Source, SystemUser}
+import com.lbs.server.repository.model.*
+import jakarta.persistence.EntityManager
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.stereotype.Repository
 
 import java.time.ZonedDateTime
-import javax.persistence.EntityManager
-import scala.jdk.CollectionConverters._
+import scala.jdk.CollectionConverters.*
 
 @Repository
 class DataRepository(@Autowired em: EntityManager) {

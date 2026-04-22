@@ -1,14 +1,16 @@
 package com.lbs.server.conversation
 
-import akka.actor.ActorSystem
 import com.lbs.bot.Bot
 import com.lbs.bot.model.{Command, MessageSource}
-import com.lbs.server.conversation.Login._
+import com.lbs.server.conversation.Login.*
 import com.lbs.server.conversation.base.{Conversation, Interactional}
 import com.lbs.server.lang.{Localizable, Localization}
 import com.lbs.server.service.{ApiService, DataService}
 import com.lbs.server.util.MessageExtractors
+import org.apache.pekko.actor.ActorSystem
 import org.jasypt.util.text.TextEncryptor
+
+import scala.compiletime.uninitialized
 
 class Login(
   source: MessageSource,
@@ -22,11 +24,11 @@ class Login(
     extends Conversation[String]
     with Localizable {
 
-  protected var userId: UserId = _
+  protected var userId: UserId = uninitialized
 
   entryPoint(logIn)
 
-  private var forwardCommand: ForwardCommand = _
+  private var forwardCommand: ForwardCommand = uninitialized
 
   def logIn: Step =
     monologue { case Msg(cmd: Command, _) =>
@@ -38,7 +40,7 @@ class Login(
     ask { _ =>
       bot.sendMessage(source, lang.provideUsername)
     } onReply { case Msg(MessageExtractors.TextCommand(username), _) =>
-      goto(requestPassword) using username
+      goto(requestPassword).using(username)
     }
 
   def requestPassword: Step =

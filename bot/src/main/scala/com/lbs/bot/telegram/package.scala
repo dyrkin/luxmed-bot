@@ -1,44 +1,37 @@
-package com.lbs.bot
+package com.lbs.bot.telegram
 
-import com.bot4s.telegram.models.{InlineKeyboardButton, InlineKeyboardMarkup, Message => BMessage}
-import com.lbs.bot.model._
+import com.bot4s.telegram.models.{InlineKeyboardButton, InlineKeyboardMarkup, Message as BMessage}
+import com.lbs.bot.model.*
 import com.lbs.common.ModelConverters
 
-package object telegram {
+protected[bot] val TagPrefix = "callback"
 
-  protected[bot] val TagPrefix = "callback"
+object TelegramModelConverters extends ModelConverters {
+  given TelegramCommandToCommandConverter: ObjectConverter[TelegramEvent, Command] =
+    (data: TelegramEvent) =>
+      Command(
+        source = MessageSource(TelegramMessageSourceSystem, data.msg.chat.id.toString),
+        message = Message(data.msg.messageId.toString, data.msg.text),
+        callbackData = data.callbackData
+      )
 
-  object TelegramModelConverters extends ModelConverters {
-    implicit val TelegramCommandToCommandConverter: ObjectConverter[TelegramEvent, Command] =
-      (data: TelegramEvent) => {
-        Command(
-          source = MessageSource(TelegramMessageSourceSystem, data.msg.chat.id.toString),
-          message = Message(data.msg.messageId.toString, data.msg.text),
-          callbackData = data.callbackData
-        )
+  given TelegramMessageToMessageConverter: ObjectConverter[BMessage, Message] =
+    (data: BMessage) => Message(data.messageId.toString, data.text)
+
+  given InlineKeyboardToInlineKeyboardMarkup: ObjectConverter[InlineKeyboard, InlineKeyboardMarkup] =
+    (inlineKeyboard: InlineKeyboard) => {
+      val buttons = inlineKeyboard.buttons.map { row =>
+        row.map(createInlineKeyboardButton)
       }
-
-    implicit val TelegramMessageToMessageConverter: ObjectConverter[BMessage, Message] =
-      (data: BMessage) => {
-        Message(data.messageId.toString, data.text)
-      }
-
-    implicit val InlineKeyboardToInlineKeyboardMarkup: ObjectConverter[InlineKeyboard, InlineKeyboardMarkup] =
-      (inlineKeyboard: InlineKeyboard) => {
-        val buttons = inlineKeyboard.buttons.map { row =>
-          row.map(createInlineKeyboardButton)
-        }
-        InlineKeyboardMarkup(buttons)
-      }
-
-    private def createInlineKeyboardButton(button: Button) = {
-      button match {
-        case b: TaggedButton  => InlineKeyboardButton.callbackData(b.label, tag(b.tag))
-        case b: LabeledButton => InlineKeyboardButton.callbackData(b.label, b.label)
-      }
+      InlineKeyboardMarkup(buttons)
     }
 
-    private def tag(name: String): String = TagPrefix + name
+  private def createInlineKeyboardButton(button: Button) = {
+    button match {
+      case b: TaggedButton  => InlineKeyboardButton.callbackData(b.label, tag(b.tag))
+      case b: LabeledButton => InlineKeyboardButton.callbackData(b.label, b.label)
+    }
   }
 
+  private def tag(name: String): String = TagPrefix + name
 }

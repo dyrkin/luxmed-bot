@@ -1,13 +1,13 @@
 package com.lbs.server.conversation
 
-import akka.actor.ActorSystem
 import com.lbs.bot.model.Command
-import com.lbs.server.conversation.Chat._
+import com.lbs.server.conversation.Chat.*
 import com.lbs.server.conversation.Login.UserId
 import com.lbs.server.conversation.base.{Conversation, Interactional}
 import com.lbs.server.service.{DataService, MonitoringService}
-import com.lbs.server.util.MessageExtractors._
+import com.lbs.server.util.MessageExtractors.*
 import com.typesafe.scalalogging.StrictLogging
+import org.apache.pekko.actor.ActorSystem
 
 import scala.util.matching.Regex
 
@@ -16,6 +16,7 @@ class Chat(
   dataService: DataService,
   monitoringService: MonitoringService,
   bookingFactory: UserIdTo[Book],
+  rehabBookFactory: UserIdTo[RehabBook],
   helpFactory: UserIdTo[Help],
   monitoringsFactory: UserIdTo[Monitorings],
   monitoringsHistoryFactory: UserIdTo[MonitoringsHistory],
@@ -28,6 +29,7 @@ class Chat(
     with StrictLogging {
 
   private val book = bookingFactory(userId)
+  private val rehabBook = rehabBookFactory(userId)
   private val help = helpFactory(userId)
   private val monitorings = monitoringsFactory(userId)
   private val monitoringsHistory = monitoringsHistoryFactory(userId)
@@ -51,6 +53,12 @@ class Chat(
   private def bookChat: Step =
     dialogue(book) { case Msg(TextCommand("/book"), _) =>
       book.restart()
+      stay()
+    }
+
+  private def rehabBookChat: Step =
+    dialogue(rehabBook) { case Msg(TextCommand("/rehab"), _) =>
+      rehabBook.restart()
       stay()
     }
 
@@ -91,7 +99,7 @@ class Chat(
     }
 
   private def dialogue(interactional: Interactional)(mainMessageProcessor: MessageProcessorFn): Step =
-    monologue { case event: Msg =>
+    monologue { case event: Msg[?] =>
       if (mainMessageProcessor.isDefinedAt(event)) mainMessageProcessor(event)
       else {
         val defaultMessageProcessor = secondaryState(interactional)
@@ -109,6 +117,9 @@ class Chat(
     case Msg(cmd @ TextCommand("/book"), _) =>
       self ! cmd
       goto(bookChat)
+    case Msg(cmd @ TextCommand("/rehab"), _) =>
+      self ! cmd
+      goto(rehabBookChat)
     case Msg(cmd @ TextCommand("/monitorings"), _) =>
       self ! cmd
       goto(monitoringsChat)
@@ -140,6 +151,7 @@ class Chat(
 
   beforeDestroy {
     book.destroy()
+    rehabBook.destroy()
     help.destroy()
     monitorings.destroy()
     monitoringsHistory.destroy()

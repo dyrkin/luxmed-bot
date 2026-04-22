@@ -1,10 +1,9 @@
 package com.lbs.server.conversation
 
-import akka.actor.ActorSystem
-import com.lbs.api.json.model._
-import com.lbs.bot._
+import com.lbs.api.json.model.*
+import com.lbs.bot.*
 import com.lbs.bot.model.{Button, Command}
-import com.lbs.server.conversation.Book._
+import com.lbs.server.conversation.Book.*
 import com.lbs.server.conversation.DatePicker.{DateFromMode, DateToMode}
 import com.lbs.server.conversation.Login.UserId
 import com.lbs.server.conversation.Pager.SimpleItemsProvider
@@ -14,8 +13,9 @@ import com.lbs.server.conversation.base.Conversation
 import com.lbs.server.lang.{Localizable, Localization}
 import com.lbs.server.repository.model.Monitoring
 import com.lbs.server.service.{ApiService, DataService, MonitoringService}
-import com.lbs.server.util.MessageExtractors._
-import com.lbs.server.util.ServerModelConverters._
+import com.lbs.server.util.MessageExtractors.*
+import com.lbs.server.util.ServerModelConverters.*
+import org.apache.pekko.actor.ActorSystem
 
 import java.time.{LocalDateTime, LocalTime}
 
@@ -30,7 +30,7 @@ class Book(
   timePickerFactory: UserIdWithOriginatorTo[TimePicker],
   staticDataFactory: UserIdWithOriginatorTo[StaticData],
   termsPagerFactory: UserIdWithOriginatorTo[Pager[TermExt]]
-)(implicit val actorSystem: ActorSystem)
+)(val actorSystem: ActorSystem)
     extends Conversation[BookingData]
     with StaticDataForBooking
     with Localizable {
@@ -43,7 +43,7 @@ class Book(
   entryPoint(askCity, BookingData())
 
   private def askCity: Step =
-    staticData(cityConfig) { bd: BookingData =>
+    staticData(cityConfig) { (bd: BookingData) =>
       withFunctions[DictionaryCity](
         latestOptions = dataService.getLatestCities(userId.accountId),
         staticOptions = apiService.getAllCities(userId.accountId),
@@ -52,7 +52,7 @@ class Book(
     }(requestNext = askService)
 
   private def askService: Step =
-    staticData(serviceConfig) { bd: BookingData =>
+    staticData(serviceConfig) { (bd: BookingData) =>
       withFunctions[DictionaryServiceVariants](
         latestOptions = dataService.getLatestServicesByCityIdAndClinicId(userId.accountId, bd.cityId.id, None),
         staticOptions = apiService.getAllServices(userId.accountId),
@@ -61,7 +61,7 @@ class Book(
     }(requestNext = askClinic)
 
   private def askClinic: Step =
-    staticData(clinicConfig) { bd: BookingData =>
+    staticData(clinicConfig) { (bd: BookingData) =>
       withFunctions[IdName](
         latestOptions = dataService.getLatestClinicsByCityId(userId.accountId, bd.cityId.id),
         staticOptions = apiService.getAllFacilities(userId.accountId, bd.cityId.id, bd.serviceId.id),
@@ -70,7 +70,7 @@ class Book(
     }(requestNext = askDoctor)
 
   private def askDoctor: Step =
-    staticData(doctorConfig) { bd: BookingData =>
+    staticData(doctorConfig) { (bd: BookingData) =>
       withFunctions[IdName](
         latestOptions = dataService.getLatestDoctorsByCityIdAndClinicIdAndServiceId(
           userId.accountId,
@@ -101,7 +101,7 @@ class Book(
         datePicker ! cmd
         stay()
       case Msg(date: LocalDateTime, bookingData: BookingData) =>
-        goto(requestDateTo) using bookingData.copy(dateFrom = date)
+        goto(requestDateTo).using(bookingData.copy(dateFrom = date))
     }
 
   private def requestDateTo: Step =
@@ -114,7 +114,7 @@ class Book(
         datePicker ! cmd
         stay()
       case Msg(date: LocalDateTime, bookingData: BookingData) =>
-        goto(requestTimeFrom) using bookingData.copy(dateTo = date)
+        goto(requestTimeFrom).using(bookingData.copy(dateTo = date))
     }
 
   private def requestTimeFrom: Step =
@@ -127,7 +127,7 @@ class Book(
         timePicker ! cmd
         stay()
       case Msg(time: LocalTime, bookingData: BookingData) =>
-        goto(requestTimeTo) using bookingData.copy(timeFrom = time)
+        goto(requestTimeTo).using(bookingData.copy(timeFrom = time))
     }
 
   private def requestTimeTo: Step =
@@ -140,7 +140,7 @@ class Book(
         timePicker ! cmd
         stay()
       case Msg(time: LocalTime, bookingData: BookingData) =>
-        goto(requestAction) using bookingData.copy(timeTo = time)
+        goto(requestAction).using(bookingData.copy(timeTo = time))
     }
 
   private def requestAction: Step =
@@ -156,10 +156,10 @@ class Book(
       case Msg(CallbackCommand(Tags.FindTerms), _) =>
         goto(requestTerm)
       case Msg(CallbackCommand(Tags.ModifyDate), bookingData) =>
-        goto(requestDateFrom) using bookingData.copy(
+        goto(requestDateFrom).using(bookingData.copy(
           dateFrom = LocalDateTime.now(),
           dateTo = LocalDateTime.now().plusDays(1L)
-        )
+        ))
     }
 
   private def requestTerm: Step =
@@ -203,11 +203,11 @@ class Book(
                 lang.visitAlreadyExists,
                 inlineKeyboard = createInlineKeyboard(Seq(Button(lang.no, Tags.No), Button(lang.yes, Tags.Yes)))
               )
-              goto(awaitRebookDecision) using bookingData.copy(
+              goto(awaitRebookDecision).using(bookingData.copy(
                 term = Some(term),
                 xsrfToken = Some(xsrfToken),
                 reservationLocktermResponse = Some(reservationLocktermResponse)
-              )
+              ))
             } else {
               bot.sendMessage(
                 userId.source,
@@ -215,11 +215,11 @@ class Book(
                 inlineKeyboard =
                   createInlineKeyboard(Seq(Button(lang.cancel, Tags.Cancel), Button(lang.book, Tags.Book)))
               )
-              goto(awaitReservation) using bookingData.copy(
+              goto(awaitReservation).using(bookingData.copy(
                 term = Some(term),
                 xsrfToken = Some(xsrfToken),
                 reservationLocktermResponse = Some(reservationLocktermResponse)
-              )
+              ))
             }
         }
       case Msg(Pager.NoItemsFound, _) =>
@@ -237,10 +237,10 @@ class Book(
       )
     } onReply {
       case Msg(CallbackCommand(Tags.ModifyDate), bookingData) =>
-        goto(requestDateFrom) using bookingData.copy(
+        goto(requestDateFrom).using(bookingData.copy(
           dateFrom = LocalDateTime.now(),
           dateTo = LocalDateTime.now().plusDays(1L)
-        )
+        ))
       case Msg(CallbackCommand(Tags.CreateMonitoring), bookingData) =>
         val settingsMaybe = dataService.findSettings(userId.userId)
         val (defaultOffset, askOffset) = settingsMaybe match {
@@ -248,8 +248,8 @@ class Book(
           case None           => (0, false)
         }
         val newData = bookingData.copy(offset = defaultOffset)
-        if (askOffset) goto(askMonitoringOffsetOption) using newData
-        else goto(askMonitoringAutobookOption) using newData
+        if (askOffset) goto(askMonitoringOffsetOption).using(newData)
+        else goto(askMonitoringAutobookOption).using(newData)
     }
 
   private def awaitRebookDecision: Step =
@@ -316,7 +316,7 @@ class Book(
       )
     } onReply {
       case Msg(TextCommand(IntString(offset)), bookingData: BookingData) =>
-        goto(askMonitoringAutobookOption) using bookingData.copy(offset = offset)
+        goto(askMonitoringAutobookOption).using(bookingData.copy(offset = offset))
       case Msg(CallbackCommand(BooleanString(false)), _) =>
         goto(askMonitoringAutobookOption)
     }
@@ -333,8 +333,8 @@ class Book(
       )
     } onReply { case Msg(CallbackCommand(BooleanString(autobook)), bookingData: BookingData) =>
       val data = bookingData.copy(autobook = autobook)
-      if (autobook) goto(askMonitoringRebookOption) using data
-      else goto(createMonitoring) using data
+      if (autobook) goto(askMonitoringRebookOption).using(data)
+      else goto(createMonitoring).using(data)
     }
 
   private def askMonitoringRebookOption: Step =
@@ -345,7 +345,7 @@ class Book(
         inlineKeyboard = createInlineKeyboard(Seq(Button(lang.no, Tags.No), Button(lang.yes, Tags.Yes)))
       )
     } onReply { case Msg(CallbackCommand(BooleanString(rebookIfExists)), bookingData: BookingData) =>
-      goto(createMonitoring) using bookingData.copy(rebookIfExists = rebookIfExists)
+      goto(createMonitoring).using(bookingData.copy(rebookIfExists = rebookIfExists))
     }
 
   private def createMonitoring: Step =

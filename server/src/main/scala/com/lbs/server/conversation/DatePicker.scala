@@ -1,14 +1,14 @@
 package com.lbs.server.conversation
 
-import akka.actor.ActorSystem
-import com.lbs.bot._
+import com.lbs.bot.*
 import com.lbs.bot.model.Button
-import com.lbs.server.conversation.DatePicker._
+import com.lbs.server.conversation.DatePicker.*
 import com.lbs.server.conversation.Login.UserId
 import com.lbs.server.conversation.base.{Conversation, Interactional}
 import com.lbs.server.lang.{Localizable, Localization}
-import com.lbs.server.util.DateTimeUtil._
+import com.lbs.server.util.DateTimeUtil.*
 import com.lbs.server.util.MessageExtractors.{CallbackCommand, TextCommand}
+import org.apache.pekko.actor.ActorSystem
 
 import java.time.format.TextStyle
 import java.time.{LocalDateTime, LocalTime}
@@ -36,7 +36,7 @@ class DatePicker(val userId: UserId, val bot: Bot, val localization: Localizatio
         mode = newMode
         stay()
       case Msg(initialDate: LocalDateTime, _) =>
-        goto(requestDate) using initialDate
+        goto(requestDate).using(initialDate)
     }
 
   def requestDate: Step =
@@ -81,17 +81,17 @@ class DatePicker(val userId: UserId, val bot: Bot, val localization: Localizatio
       case Msg(cmd @ CallbackCommand(tag), date) =>
         val modifiedDate = modifyDate(date, tag)
         bot.sendEditMessage(userId.source, cmd.message.messageId, inlineKeyboard = dateButtons(modifiedDate))
-        stay() using modifiedDate
+        stay().using(modifiedDate)
     }
 
   private def modifyDate(date: LocalDateTime, tag: String) = {
     val dateModifier = tag match {
-      case Tags.DayInc   => date.plusDays _
-      case Tags.MonthInc => date.plusMonths _
-      case Tags.YearInc  => date.plusYears _
-      case Tags.DayDec   => date.minusDays _
-      case Tags.MonthDec => date.minusMonths _
-      case Tags.YearDec  => date.minusYears _
+      case Tags.DayInc   => date.plusDays
+      case Tags.MonthInc => date.plusMonths
+      case Tags.YearInc  => date.plusYears
+      case Tags.DayDec   => date.minusDays
+      case Tags.MonthDec => date.minusMonths
+      case Tags.YearDec  => date.minusYears
     }
     dateModifier(1)
   }

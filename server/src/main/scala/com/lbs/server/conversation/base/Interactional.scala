@@ -1,7 +1,7 @@
 package com.lbs.server.conversation.base
 
-import akka.actor.{Actor, ActorRef, ActorSystem, PoisonPill, Props}
 import com.typesafe.scalalogging.StrictLogging
+import org.apache.pekko.actor.{Actor, ActorRef, ActorSystem, PoisonPill, Props}
 
 import scala.concurrent.ExecutionContextExecutor
 

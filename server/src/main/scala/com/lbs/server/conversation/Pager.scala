@@ -1,14 +1,14 @@
 package com.lbs.server.conversation
 
-import akka.actor.ActorSystem
-import com.lbs.bot._
+import com.lbs.bot.*
 import com.lbs.bot.model.{Button, Command}
 import com.lbs.server.conversation.Login.UserId
-import com.lbs.server.conversation.Pager._
+import com.lbs.server.conversation.Pager.*
 import com.lbs.server.conversation.base.{Conversation, Interactional}
 import com.lbs.server.lang.{Localizable, Localization}
 import com.lbs.server.util.MessageExtractors
 import com.typesafe.scalalogging.StrictLogging
+import org.apache.pekko.actor.ActorSystem
 
 class Pager[Data](
   val userId: UserId,
@@ -32,11 +32,11 @@ class Pager[Data](
       case Msg(Left(error: Throwable), _) =>
         bot.sendMessage(userId.source, error.getMessage)
         end()
-      case Msg(Right(itemsProvider: ItemsProvider[Data]), _) if itemsProvider.isEmpty =>
+      case Msg(Right(itemsProvider: ItemsProvider[Data] @unchecked), _) if itemsProvider.isEmpty =>
         originator ! NoItemsFound
         end()
-      case Msg(Right(itemsProvider: ItemsProvider[Data]), _) =>
-        goto(displayPage) using itemsProvider -> None
+      case Msg(Right(itemsProvider: ItemsProvider[Data] @unchecked), _) =>
+        goto(displayPage).using(itemsProvider -> None)
     }
 
   private def displayPage: Step =
@@ -45,10 +45,10 @@ class Pager[Data](
     } onReply {
       case Msg(Command(_, msg, Some(Tags.Next)), (itemsProvider, _)) =>
         itemsProvider.next()
-        goto(displayPage) using itemsProvider -> Some(msg.messageId)
+        goto(displayPage).using(itemsProvider -> Some(msg.messageId))
       case Msg(Command(_, msg, Some(Tags.Previous)), (itemsProvider, _)) =>
         itemsProvider.previous()
-        goto(displayPage) using itemsProvider -> Some(msg.messageId)
+        goto(displayPage).using(itemsProvider -> Some(msg.messageId))
       case Msg(MessageExtractors.TextCommand(Selection(indexStr)), (itemsProvider, _)) if selectionPrefix.nonEmpty =>
         val index = indexStr.toInt
         originator ! itemsProvider.items(index)

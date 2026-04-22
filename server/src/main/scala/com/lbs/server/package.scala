@@ -1,5 +1,3 @@
-package com.lbs
+package com.lbs.server
 
-package object server {
-  type ThrowableOr[T] = Either[Throwable, T]
-}
+type ThrowableOr[T] = Either[Throwable, T]

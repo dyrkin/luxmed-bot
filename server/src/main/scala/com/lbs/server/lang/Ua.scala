@@ -1,10 +1,11 @@
 package com.lbs.server.lang
 
-import com.lbs.api.json.model.{Event, TermExt}
+import com.lbs.api.json.model.*
 import com.lbs.server.conversation.Book
+import com.lbs.server.conversation.RehabBook.RehabBookingData
 import com.lbs.server.conversation.StaticData.StaticDataConfig
 import com.lbs.server.repository.model.Monitoring
-import com.lbs.server.util.DateTimeUtil._
+import com.lbs.server.util.DateTimeUtil.*
 
 import java.time.{LocalDateTime, LocalTime}
 import java.util.Locale
@@ -13,7 +14,7 @@ object Ua extends Lang {
 
   override def id: Int = 1
 
-  override def locale: Locale = new Locale("uk", "UA")
+  override def locale: Locale = Locale.forLanguageTag("uk-UA")
 
   override def label: String = "🇺🇦Українська"
 
@@ -83,7 +84,7 @@ object Ua extends Lang {
        |
        |⏱ <b>${formatDateTime(term.term.dateTimeFrom, locale)}</b>
        |${capitalize(doctor)}: ${term.term.doctor.firstName} ${term.term.doctor.lastName}
-       |${capitalize(clinic)}: ${term.term.clinic}""".stripMargin
+       |${capitalize(clinic)}: ${term.term.clinic.getOrElse("")}""".stripMargin
 
   override def appointmentIsConfirmed: String = "👍 Ваш візит було підтверджено!"
 
@@ -179,6 +180,7 @@ object Ua extends Lang {
        |
        |<b>➡</b> Підтримувані команди
        |/book - зарезервувати візит або створити моніторинг
+       |/rehab - резервація реабілітації
        |/monitorings - моніторінг доступних термінів
        |/monitorings_history - історія моніторингів
        |/reserved - зарезеровані візити
@@ -195,7 +197,7 @@ object Ua extends Lang {
   override def termEntry(term: TermExt, page: Int, index: Int): String =
     s"""⏱ <b>${formatDateTime(term.term.dateTimeFrom, locale)}</b>
        |${capitalize(doctor)}: ${term.term.doctor.firstName} ${term.term.doctor.lastName}
-       |${capitalize(clinic)}: ${term.term.clinic}
+       |${capitalize(clinic)}: ${term.term.clinic.getOrElse("")}
        |<b>➡</b> /book_$index
        |
        |""".stripMargin
@@ -277,7 +279,7 @@ object Ua extends Lang {
     s"""⏱ <b>${formatDateTime(term.term.dateTimeFrom, locale)}</b>
        |${capitalize(doctor)}: ${term.term.doctor.firstName} ${term.term.doctor.lastName}
        |${capitalize(service)}: ${monitoring.serviceName}
-       |${capitalize(clinic)}: ${term.term.clinic}
+       |${capitalize(clinic)}: ${term.term.clinic.getOrElse("")}
        |${capitalize(city)}: ${monitoring.cityName}
        |/reserve_${monitoring.recordId}_${term.term.scheduleId}_${minutesSinceBeginOf2018(term.term.dateTimeFrom.get)}
        |
@@ -306,7 +308,7 @@ object Ua extends Lang {
        |⏱ <b>${formatDateTime(term.term.dateTimeFrom, locale)}</b>
        |${capitalize(doctor)}: ${term.term.doctor.firstName} ${term.term.doctor.lastName}
        |${capitalize(service)}: ${monitoring.serviceName}
-       |${capitalize(clinic)}: ${term.term.clinic}
+       |${capitalize(clinic)}: ${term.term.clinic.getOrElse("")}
        |${capitalize(city)}: ${monitoring.cityName}""".stripMargin
 
   override def maximumMonitoringsLimitExceeded: String = "Максимальна кількість моніторінгів 10"
@@ -385,4 +387,56 @@ object Ua extends Lang {
 
   override def pleaseChoosePayer: String =
     "<b>➡</b> Не можу визначити платника за замовчуванням. Будь ласка, виберіть платника"
+
+  override def noRehabReferralsFound: String = "ℹ Немає активних направлень на реабілітацію"
+
+  override def referralEntry(referral: Referral, page: Int, index: Int): String =
+    s"""🏥 <b>${referral.procedures.map(_.name).mkString(", ")}</b>
+       |Процедури: ${referral.proceduresAmount}
+       |Діє до: ${referral.expiredDate.getOrElse("N/A")}
+       |Лікар: ${referral.doctor.getOrElse("N/A")}
+       |<b>➡</b> /select_$index
+       |""".stripMargin
+
+  override def referralsHeader(page: Int, pages: Int): String =
+    withPages("<b>➡</b> Активні направлення на реабілітацію", page, pages)
+
+  override def rehabLocationEntry(location: RehabLocation, page: Int, index: Int): String =
+    s"📍 ${location.name}\n<b>➡</b> /select_$index\n"
+
+  override def rehabLocationsHeader(page: Int, pages: Int): String =
+    withPages("<b>➡</b> Оберіть місто реабілітації", page, pages)
+
+  override def rehabFacilityEntry(facility: RehabFacility, page: Int, index: Int): String =
+    s"🏥 ${facility.name}\n<b>➡</b> /select_$index\n"
+
+  override def rehabFacilitiesHeader(page: Int, pages: Int): String =
+    withPages("<b>➡</b> Оберіть заклад реабілітації", page, pages)
+
+  override def rehabBookingSummary(data: RehabBookingData): String =
+    s"""🏥 <b>Резервація реабілітації</b>
+       |Послуга: ${data.serviceVariantName}
+       |Місто: ${data.cityId.name}
+       |Заклад: ${if (data.facilityId != null) data.facilityId.name else "Будь-який"}
+       |Фізіотерапевт: ${if (data.physiotherapistId != null) data.physiotherapistId.name else "Будь-який"}
+       |Дата: ${formatDate(data.dateFrom, locale)} — ${formatDate(data.dateTo, locale)}
+       |Час: ${formatTime(data.timeFrom)} — ${formatTime(data.timeTo)}
+       |
+       |<b>➡</b> Тепер оберіть наступну дію""".stripMargin
+
+  override def rehabAppointmentIsConfirmed(remaining: Int): String =
+    s"✅ Реабілітаційний візит підтверджено!${if (remaining > 0) s" (залишилось $remaining процедур)" else ""}"
+
+  override def bookNextProcedure(remaining: Int): String =
+    s"Зарезервувати наступну процедуру? (залишилось: $remaining)"
+
+  override def rehabPhysiotherapistEntry(doctor: IdName, page: Int, index: Int): String =
+    s"🧑‍⚕️ ${doctor.name}\n<b>➡</b> /select_$index\n"
+
+  override def rehabPhysiotherapistsHeader(page: Int, pages: Int): String =
+    withPages("<b>➡</b> Оберіть фізіотерапевта", page, pages)
+
+  override def choosePhysiotherapist: String = "🧑‍⚕️ Оберіть фізіотерапевта або пропустіть для пошуку будь-якого:"
+
+  override def anyPhysiotherapist: String = "Будь-який фізіотерапевт"
 }
