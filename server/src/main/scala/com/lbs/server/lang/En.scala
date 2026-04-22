@@ -1,7 +1,8 @@
 package com.lbs.server.lang
 
-import com.lbs.api.json.model.{Event, TermExt}
+import com.lbs.api.json.model._
 import com.lbs.server.conversation.Book
+import com.lbs.server.conversation.RehabBook.RehabBookingData
 import com.lbs.server.conversation.StaticData.StaticDataConfig
 import com.lbs.server.repository.model.Monitoring
 import com.lbs.server.util.DateTimeUtil._
@@ -179,6 +180,7 @@ object En extends Lang {
        |
        |<b>➡</b> Supported commands
        |/book - reserve a visit, or create a monitoring
+       |/rehab - book rehabilitation visit
        |/monitorings - available terms monitoring
        |/monitorings_history - previous monitoring
        |/reserved - upcoming visits
@@ -384,4 +386,56 @@ object En extends Lang {
   override def canNotDetectPayer(error: String): String = s"Can't determine payer. Reason: $error"
 
   override def pleaseChoosePayer: String = "<b>➡</b> Can't determine default payer. Please choose one"
+
+  override def noRehabReferralsFound: String = "ℹ No active rehabilitation referrals found"
+
+  override def referralEntry(referral: Referral, page: Int, index: Int): String =
+    s"""🏥 <b>${referral.procedures.map(_.name).mkString(", ")}</b>
+       |Procedures: ${referral.proceduresAmount}
+       |Expires: ${referral.expiredDate.getOrElse("N/A")}
+       |Doctor: ${referral.doctor.getOrElse("N/A")}
+       |<b>➡</b> /select_$index
+       |""".stripMargin
+
+  override def referralsHeader(page: Int, pages: Int): String =
+    withPages("<b>➡</b> Active rehabilitation referrals", page, pages)
+
+  override def rehabLocationEntry(location: RehabLocation, page: Int, index: Int): String =
+    s"📍 ${location.name}\n<b>➡</b> /select_$index\n"
+
+  override def rehabLocationsHeader(page: Int, pages: Int): String =
+    withPages("<b>➡</b> Choose rehabilitation city", page, pages)
+
+  override def rehabFacilityEntry(facility: RehabFacility, page: Int, index: Int): String =
+    s"🏥 ${facility.name}\n<b>➡</b> /select_$index\n"
+
+  override def rehabFacilitiesHeader(page: Int, pages: Int): String =
+    withPages("<b>➡</b> Choose rehabilitation facility", page, pages)
+
+  override def rehabBookingSummary(data: RehabBookingData): String =
+    s"""🏥 <b>Rehabilitation booking</b>
+       |Service: ${data.serviceVariantName}
+       |City: ${data.cityId.name}
+       |Facility: ${if (data.facilityId != null) data.facilityId.name else "Any"}
+       |Physiotherapist: ${if (data.physiotherapistId != null) data.physiotherapistId.name else "Any"}
+       |Date: ${formatDate(data.dateFrom, locale)} — ${formatDate(data.dateTo, locale)}
+       |Time: ${formatTime(data.timeFrom)} — ${formatTime(data.timeTo)}
+       |
+       |<b>➡</b> Now choose an action""".stripMargin
+
+  override def rehabAppointmentIsConfirmed(remaining: Int): String =
+    s"✅ Rehabilitation appointment confirmed!${if (remaining > 0) s" ($remaining procedures remaining)" else ""}"
+
+  override def bookNextProcedure(remaining: Int): String =
+    s"Book next procedure? ($remaining remaining)"
+
+  override def rehabPhysiotherapistEntry(doctor: IdName, page: Int, index: Int): String =
+    s"🧑‍⚕️ ${doctor.name}\n<b>➡</b> /select_$index\n"
+
+  override def rehabPhysiotherapistsHeader(page: Int, pages: Int): String =
+    withPages("<b>➡</b> Choose a physiotherapist", page, pages)
+
+  override def choosePhysiotherapist: String = "🧑‍⚕️ Choose a physiotherapist or skip to find any available:"
+
+  override def anyPhysiotherapist: String = "Any physiotherapist"
 }

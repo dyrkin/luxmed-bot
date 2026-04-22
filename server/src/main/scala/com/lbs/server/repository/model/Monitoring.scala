@@ -97,7 +97,23 @@ class Monitoring extends RecordId {
 
   @BeanProperty
   @Column(name = "time_offset", nullable = false)
-  var offset: Int = 0
+  var offset: Int = _
+
+  @BeanProperty
+  @Column(name = "is_rehab", nullable = false)
+  var isRehab: Boolean = false
+
+  @BeanProperty
+  @Column(name = "referral_id", nullable = true)
+  var referralId: JLong = _
+
+  @BeanProperty
+  @Column(name = "referral_type_id", nullable = true)
+  var referralTypeId: java.lang.Integer = _
+
+  @BeanProperty
+  @Column(name = "service_variant_id", nullable = true)
+  var serviceVariantId: JLong = _
 }
 
 object Monitoring {
@@ -124,7 +140,11 @@ object Monitoring {
     timeFrom: LocalTime,
     timeTo: LocalTime,
     active: Boolean = true,
-    offset: Int
+    offset: Int,
+    isRehab: Boolean = false,
+    referralId: Option[Long] = None,
+    referralTypeId: Option[Int] = None,
+    serviceVariantId: Option[Long] = None
   ): Monitoring = {
     val monitoring = new Monitoring
     monitoring.userId = userId
@@ -150,6 +170,10 @@ object Monitoring {
     monitoring.created = created
     monitoring.active = active
     monitoring.offset = offset
+    monitoring.isRehab = isRehab
+    monitoring.referralId = referralId.map(Long.box).orNull
+    monitoring.referralTypeId = referralTypeId.map(Int.box).orNull
+    monitoring.serviceVariantId = serviceVariantId.map(Long.box).orNull
     monitoring
   }
 }

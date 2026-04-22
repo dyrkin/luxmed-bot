@@ -67,17 +67,34 @@ class MonitoringService extends StrictLogging {
   private def monitor(monitoring: Monitoring): Unit = {
     logger.debug(s"Looking for available terms. Monitoring [#${monitoring.recordId}]")
     val dateFrom = optimizeDateFrom(monitoring.dateFrom.toLocalDateTime, monitoring.offset)
-    val termsEither = apiService.getAvailableTerms(
-      monitoring.accountId,
-      monitoring.cityId,
-      monitoring.clinicId,
-      monitoring.serviceId,
-      monitoring.doctorId,
-      dateFrom,
-      monitoring.dateTo.toLocalDateTime,
-      timeFrom = monitoring.timeFrom,
-      timeTo = monitoring.timeTo
-    )
+    val termsEither =
+      if (monitoring.isRehab) {
+        apiService.getAvailableRehabTerms(
+          monitoring.accountId,
+          monitoring.cityId,
+          monitoring.serviceVariantId,
+          monitoring.referralId,
+          monitoring.referralTypeId,
+          dateFrom,
+          monitoring.dateTo.toLocalDateTime,
+          timeFrom = monitoring.timeFrom,
+          timeTo = monitoring.timeTo,
+          facilityId = Option(monitoring.clinicId).map(_.toLong),
+          doctorId = monitoring.doctorId
+        )
+      } else {
+        apiService.getAvailableTerms(
+          monitoring.accountId,
+          monitoring.cityId,
+          monitoring.clinicId,
+          monitoring.serviceId,
+          monitoring.doctorId,
+          dateFrom,
+          monitoring.dateTo.toLocalDateTime,
+          timeFrom = monitoring.timeFrom,
+          timeTo = monitoring.timeTo
+        )
+      }
     termsEither match {
       case Right(terms) =>
         if (terms.nonEmpty) {
@@ -161,10 +178,15 @@ class MonitoringService extends StrictLogging {
   private def bookAppointment(term: TermExt, monitoring: Monitoring, rebookIfExists: Boolean): Unit = {
     val bookingResult = for {
       xsrfToken <- apiService.getXsrfToken(monitoring.accountId)
+      locktermRequest =
+        if (monitoring.isRehab)
+          (term, monitoring.referralId.toLong, monitoring.referralTypeId.toInt).mapTo[ReservationLocktermRequest]
+        else
+          term.mapTo[ReservationLocktermRequest]
       reservationLocktermResponse <- apiService.reservationLockterm(
         monitoring.accountId,
         xsrfToken,
-        term.mapTo[ReservationLocktermRequest]
+        locktermRequest
       )
       temporaryReservationId = reservationLocktermResponse.value.temporaryReservationId
       response <-

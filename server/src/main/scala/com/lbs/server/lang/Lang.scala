@@ -1,7 +1,8 @@
 package com.lbs.server.lang
 
-import com.lbs.api.json.model.{Event, TermExt}
+import com.lbs.api.json.model._
 import com.lbs.server.conversation.Book.BookingData
+import com.lbs.server.conversation.RehabBook.RehabBookingData
 import com.lbs.server.conversation.StaticData.StaticDataConfig
 import com.lbs.server.repository.model.Monitoring
 
@@ -235,4 +236,32 @@ trait Lang {
   def pleaseChooseAccount(currentAccountName: String): String
 
   def accountSwitched(username: String): String
+
+  def noRehabReferralsFound: String
+
+  def referralEntry(referral: Referral, page: Int, index: Int): String
+
+  def referralsHeader(page: Int, pages: Int): String
+
+  def rehabLocationEntry(location: RehabLocation, page: Int, index: Int): String
+
+  def rehabLocationsHeader(page: Int, pages: Int): String
+
+  def rehabFacilityEntry(facility: RehabFacility, page: Int, index: Int): String
+
+  def rehabFacilitiesHeader(page: Int, pages: Int): String
+
+  def rehabBookingSummary(data: RehabBookingData): String
+
+  def rehabAppointmentIsConfirmed(remaining: Int): String
+
+  def bookNextProcedure(remaining: Int): String
+
+  def rehabPhysiotherapistEntry(doctor: IdName, page: Int, index: Int): String
+
+  def rehabPhysiotherapistsHeader(page: Int, pages: Int): String
+
+  def choosePhysiotherapist: String
+
+  def anyPhysiotherapist: String
 }

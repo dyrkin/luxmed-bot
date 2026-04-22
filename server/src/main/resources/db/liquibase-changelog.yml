@@ -20,3 +20,6 @@ databaseChangeLog:
 - include:
       file: changelog/06-add-username-to-monitoring.yml
       relativeToChangelogFile: true
+- include:
+      file: changelog/07-add-rehab-columns-to-monitoring.yml
+      relativeToChangelogFile: true

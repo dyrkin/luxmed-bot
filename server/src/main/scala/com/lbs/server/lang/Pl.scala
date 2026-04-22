@@ -1,7 +1,8 @@
 package com.lbs.server.lang
 
-import com.lbs.api.json.model.{Event, TermExt}
+import com.lbs.api.json.model._
 import com.lbs.server.conversation.Book
+import com.lbs.server.conversation.RehabBook.RehabBookingData
 import com.lbs.server.conversation.StaticData.StaticDataConfig
 import com.lbs.server.repository.model.Monitoring
 import com.lbs.server.util.DateTimeUtil._
@@ -181,6 +182,7 @@ object Pl extends Lang {
        |
        |<b>➡</b> Wspierane komendy
        |/book - zarezerwuj wizytę albo stwórz monitoring
+       |/rehab - rezerwacja rehabilitacji
        |/monitorings - lista obecnych monitoringów
        |/monitorings_history - lista przeszłych monitoringów
        |/reserved - nadchodzące wizyty
@@ -386,4 +388,56 @@ object Pl extends Lang {
   override def canNotDetectPayer(error: String): String = s"Nie udało się ustalić płatnika. Powód: $error"
 
   override def pleaseChoosePayer: String = "<b>➡</b> Nie udało się ustalić domyślnego płatnika, wybierz jakiegoś."
+
+  override def noRehabReferralsFound: String = "ℹ Brak aktywnych skierowań na rehabilitację"
+
+  override def referralEntry(referral: Referral, page: Int, index: Int): String =
+    s"""🏥 <b>${referral.procedures.map(_.name).mkString(", ")}</b>
+       |Zabiegi: ${referral.proceduresAmount}
+       |Wygasa: ${referral.expiredDate.getOrElse("N/A")}
+       |Lekarz: ${referral.doctor.getOrElse("N/A")}
+       |<b>➡</b> /select_$index
+       |""".stripMargin
+
+  override def referralsHeader(page: Int, pages: Int): String =
+    withPages("<b>➡</b> Aktywne skierowania na rehabilitację", page, pages)
+
+  override def rehabLocationEntry(location: RehabLocation, page: Int, index: Int): String =
+    s"📍 ${location.name}\n<b>➡</b> /select_$index\n"
+
+  override def rehabLocationsHeader(page: Int, pages: Int): String =
+    withPages("<b>➡</b> Wybierz miasto rehabilitacji", page, pages)
+
+  override def rehabFacilityEntry(facility: RehabFacility, page: Int, index: Int): String =
+    s"🏥 ${facility.name}\n<b>➡</b> /select_$index\n"
+
+  override def rehabFacilitiesHeader(page: Int, pages: Int): String =
+    withPages("<b>➡</b> Wybierz placówkę rehabilitacyjną", page, pages)
+
+  override def rehabBookingSummary(data: RehabBookingData): String =
+    s"""🏥 <b>Rezerwacja rehabilitacji</b>
+       |Usługa: ${data.serviceVariantName}
+       |Miasto: ${data.cityId.name}
+       |Placówka: ${if (data.facilityId != null) data.facilityId.name else "Jakikolwiek"}
+       |Fizjoterapeuta: ${if (data.physiotherapistId != null) data.physiotherapistId.name else "Jakikolwiek"}
+       |Data: ${formatDate(data.dateFrom, locale)} — ${formatDate(data.dateTo, locale)}
+       |Godziny: ${formatTime(data.timeFrom)} — ${formatTime(data.timeTo)}
+       |
+       |<b>➡</b> Wybierz co dalej""".stripMargin
+
+  override def rehabAppointmentIsConfirmed(remaining: Int): String =
+    s"✅ Wizyta rehabilitacyjna potwierdzona!${if (remaining > 0) s" (pozostało $remaining zabiegów)" else ""}"
+
+  override def bookNextProcedure(remaining: Int): String =
+    s"Zarezerwować następny zabieg? (pozostało: $remaining)"
+
+  override def rehabPhysiotherapistEntry(doctor: IdName, page: Int, index: Int): String =
+    s"🧑‍⚕️ ${doctor.name}\n<b>➡</b> /select_$index\n"
+
+  override def rehabPhysiotherapistsHeader(page: Int, pages: Int): String =
+    withPages("<b>➡</b> Wybierz fizjoterapeutę", page, pages)
+
+  override def choosePhysiotherapist: String = "🧑‍⚕️ Wybierz fizjoterapeutę lub pomiń, aby wyszukać dowolnego:"
+
+  override def anyPhysiotherapist: String = "Dowolny fizjoterapeuta"
 }

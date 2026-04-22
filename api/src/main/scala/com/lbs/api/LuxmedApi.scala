@@ -104,6 +104,58 @@ class LuxmedApi[F[_]: ThrowableMonad] extends ApiBase {
     get[TermsIndexResponse](request).map(_.body)
   }
 
+  def getReferrals(session: Session): F[ReferralsResponse] = {
+    val request = http("events/referrals", session)
+      .header(`Content-Type`, "application/json")
+    get[ReferralsResponse](request).map(_.body)
+  }
+
+  def getServiceReferral(session: Session, serviceInstanceId: Long): F[ServiceReferralResponse] = {
+    val request = httpNewApi(
+      s"NewPortal/Rehabilitation/GetServiceReferral?serviceInstanceId=$serviceInstanceId", session)
+    get[ServiceReferralResponse](request).map(_.body)
+  }
+
+  def getRehabFacilities(session: Session, serviceVariantId: Long): F[RehabFacilitiesResponse] = {
+    val request = httpNewApi(
+      s"NewPortal/Rehabilitation/GetFacilitiesForService?serviceVariantId=$serviceVariantId", session)
+    get[RehabFacilitiesResponse](request).map(_.body)
+  }
+
+  def rehabTermsIndex(
+    session: Session,
+    cityId: Long,
+    serviceVariantId: Long,
+    referralId: Long,
+    referralTypeId: Int = 1,
+    fromDate: LocalDateTime,
+    toDate: LocalDateTime,
+    facilitiesIds: Option[Long] = None,
+    doctorId: Option[Long] = None,
+    languageId: Long = 10,
+    isNextSearch: Boolean = false
+  ): F[TermsIndexResponse] = {
+    val request = httpNewApi("NewPortal/terms/index", session)
+      .param("searchPlace.id", cityId.toString)
+      .param("searchPlace.type", "0")
+      .param("serviceVariantId", serviceVariantId.toString)
+      .param("languageId", languageId.toString)
+      .param("searchDateFrom", dateFormatNewPortal.format(fromDate))
+      .param("searchDateTo", dateFormatNewPortal.format(toDate))
+      .param("searchDatePreset", "6")
+      .param("referralId", referralId.toString)
+      .param("referralTypeId", referralTypeId.toString)
+      .param("processId", java.util.UUID.randomUUID.toString)
+      .param("serviceVariantSource", "3")
+      .param("facilitiesIds", facilitiesIds.map(_.toString))
+      .param("doctorsIds", doctorId.map(_.toString))
+      .param("nextSearch", isNextSearch.toString)
+      .param("searchByMedicalSpecialist", "false")
+      .param("delocalized", "false")
+      .param("locationReplaced", "false")
+    get[TermsIndexResponse](request).map(_.body)
+  }
+
   def reservationLockterm(
     session: Session,
     xsrfToken: XsrfToken,

@@ -1,7 +1,7 @@
 package com.lbs.server
 
 import akka.actor.ActorSystem
-import com.lbs.api.json.model.{Event, TermExt}
+import com.lbs.api.json.model._
 import com.lbs.bot.Bot
 import com.lbs.bot.telegram.TelegramBot
 import com.lbs.server.conversation._
@@ -66,8 +66,25 @@ class BootConfig {
     )(actorSystem)
 
   @Bean
-  def bookWithTemplateFactory: UserIdTo[BookWithTemplate] = userId =>
-    new BookWithTemplate(
+  def rehabBookFactory: UserIdTo[RehabBook] = userId =>
+    new RehabBook(
+      userId,
+      bot,
+      apiService,
+      dataService,
+      monitoringService,
+      localization,
+      datePickerFactory,
+      timePickerFactory,
+      referralPagerFactory,
+      locationPagerFactory,
+      facilityPagerFactory,
+      rehabPhysiotherapistPagerFactory,
+      termsPagerFactory
+    )(actorSystem)
+
+  @Bean
+  def bookWithTemplateFactory: UserIdTo[BookWithTemplate] = userId =>    new BookWithTemplate(
       userId,
       bot,
       apiService,
@@ -126,6 +143,7 @@ class BootConfig {
         dataService,
         monitoringService,
         bookFactory,
+        rehabBookFactory,
         helpFactory,
         monitoringsFactory,
         monitoringsHistoryFactory,
@@ -155,6 +173,54 @@ class BootConfig {
       (term: TermExt, page: Int, index: Int) => lang(userId).termEntry(term, page, index),
       (page: Int, pages: Int) => lang(userId).termsHeader(page, pages),
       Some("book"),
+      localization,
+      originator
+    )(actorSystem)
+
+  @Bean
+  def referralPagerFactory: UserIdWithOriginatorTo[Pager[Referral]] = (userId, originator) =>
+    new Pager[Referral](
+      userId,
+      bot,
+      (ref: Referral, page: Int, index: Int) => lang(userId).referralEntry(ref, page, index),
+      (page: Int, pages: Int) => lang(userId).referralsHeader(page, pages),
+      Some("select"),
+      localization,
+      originator
+    )(actorSystem)
+
+  @Bean
+  def locationPagerFactory: UserIdWithOriginatorTo[Pager[RehabLocation]] = (userId, originator) =>
+    new Pager[RehabLocation](
+      userId,
+      bot,
+      (loc: RehabLocation, page: Int, index: Int) => lang(userId).rehabLocationEntry(loc, page, index),
+      (page: Int, pages: Int) => lang(userId).rehabLocationsHeader(page, pages),
+      Some("select"),
+      localization,
+      originator
+    )(actorSystem)
+
+  @Bean
+  def facilityPagerFactory: UserIdWithOriginatorTo[Pager[RehabFacility]] = (userId, originator) =>
+    new Pager[RehabFacility](
+      userId,
+      bot,
+      (fac: RehabFacility, page: Int, index: Int) => lang(userId).rehabFacilityEntry(fac, page, index),
+      (page: Int, pages: Int) => lang(userId).rehabFacilitiesHeader(page, pages),
+      Some("select"),
+      localization,
+      originator
+    )(actorSystem)
+
+  @Bean
+  def rehabPhysiotherapistPagerFactory: UserIdWithOriginatorTo[Pager[IdName]] = (userId, originator) =>
+    new Pager[IdName](
+      userId,
+      bot,
+      (doctor: IdName, page: Int, index: Int) => lang(userId).rehabPhysiotherapistEntry(doctor, page, index),
+      (page: Int, pages: Int) => lang(userId).rehabPhysiotherapistsHeader(page, pages),
+      Some("select"),
       localization,
       originator
     )(actorSystem)

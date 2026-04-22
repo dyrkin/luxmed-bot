@@ -80,6 +80,51 @@ class ApiService extends SessionSupport {
       }
     }
 
+  def getRehabReferrals(accountId: Long): ThrowableOr[List[Referral]] =
+    withSession(accountId) { session =>
+      luxmedApi.getReferrals(session).map(r =>
+        (r.planned ++ r.unplanned).filter(ref =>
+          ref.serviceVariant.name == "Rehabilitacja" && ref.referralStatus == "ToBook"
+        )
+      )
+    }
+
+  def getServiceReferral(accountId: Long, serviceInstanceId: Long): ThrowableOr[ServiceReferralResponse] =
+    withSession(accountId) { session =>
+      luxmedApi.getServiceReferral(session, serviceInstanceId)
+    }
+
+  def getRehabFacilities(accountId: Long, serviceVariantId: Long): ThrowableOr[RehabFacilitiesResponse] =
+    withSession(accountId) { session =>
+      luxmedApi.getRehabFacilities(session, serviceVariantId)
+    }
+
+  def getAvailableRehabTerms(
+    accountId: Long,
+    cityId: Long,
+    serviceVariantId: Long,
+    referralId: Long,
+    referralTypeId: Int,
+    fromDate: LocalDateTime,
+    toDate: LocalDateTime,
+    timeFrom: LocalTime,
+    timeTo: LocalTime,
+    facilityId: Option[Long] = None,
+    doctorId: Option[Long] = None
+  ): ThrowableOr[List[TermExt]] =
+    withSession(accountId) { session =>
+      luxmedApi.rehabTermsIndex(session, cityId, serviceVariantId, referralId, referralTypeId,
+        fromDate, toDate, facilityId, doctorId).map { response =>
+        response.termsForService.termsForDays
+          .flatMap(_.terms.map(term => TermExt(response.termsForService.additionalData, term)))
+          .filter { term =>
+            val time = term.term.dateTimeFrom.get.toLocalTime
+            (doctorId.isEmpty || doctorId.contains(term.term.doctor.id)) &&
+            (time == timeFrom || time == timeTo || (time.isAfter(timeFrom) && time.isBefore(timeTo)))
+          }
+      }
+    }
+
   def reservationLockterm(
     accountId: Long,
     xsrfToken: XsrfToken,

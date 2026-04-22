@@ -1,0 +1,33 @@
+databaseChangeLog:
+- changeSet:
+    id: 07
+    author: dyrkin
+    changes:
+    - addColumn:
+        tableName: monitoring
+        columns:
+        - column:
+            name: is_rehab
+            type: BOOLEAN
+            defaultValueBoolean: false
+            constraints:
+              nullable: false
+    - addColumn:
+        tableName: monitoring
+        columns:
+        - column:
+            name: referral_id
+            type: BIGINT
+    - addColumn:
+        tableName: monitoring
+        columns:
+        - column:
+            name: referral_type_id
+            type: INTEGER
+    - addColumn:
+        tableName: monitoring
+        columns:
+        - column:
+            name: service_variant_id
+            type: BIGINT
+

@@ -24,3 +24,7 @@ allprojects {
         testImplementation "org.pegdown:pegdown:1.6.0"
     }
 }
+
+bootJar {
+    mainClass.set('com.lbs.server.Boot')
+}
