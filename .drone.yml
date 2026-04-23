@@ -39,6 +39,7 @@ steps:
         from_secret: docker_password
       dockerfile: docker/Dockerfile
       context: docker/
+      platform: linux/amd64
     when:
       branch: master
       event: push
@@ -88,6 +89,7 @@ steps:
         from_secret: docker_password
       dockerfile: docker/Dockerfile
       context: docker/
+      platform: linux/arm64
     when:
       branch: master
       event: push
