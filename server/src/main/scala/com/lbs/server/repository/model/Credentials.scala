@@ -1,6 +1,7 @@
 package com.lbs.server.repository.model
 
-import javax.persistence._
+import jakarta.persistence.*
+
 import scala.beans.BeanProperty
 
 @Entity

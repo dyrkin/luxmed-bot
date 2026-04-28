@@ -1,6 +1,6 @@
 package com.lbs.server.repository.model
 
-import javax.persistence._
+import jakarta.persistence.*
 
 @Entity
 @Access(AccessType.FIELD)

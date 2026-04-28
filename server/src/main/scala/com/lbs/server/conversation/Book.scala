@@ -1,10 +1,9 @@
 package com.lbs.server.conversation
 
-import akka.actor.ActorSystem
-import com.lbs.api.json.model._
-import com.lbs.bot._
+import com.lbs.api.json.model.*
+import com.lbs.bot.*
 import com.lbs.bot.model.{Button, Command}
-import com.lbs.server.conversation.Book._
+import com.lbs.server.conversation.Book.*
 import com.lbs.server.conversation.DatePicker.{DateFromMode, DateToMode}
 import com.lbs.server.conversation.Login.UserId
 import com.lbs.server.conversation.Pager.SimpleItemsProvider
@@ -14,8 +13,9 @@ import com.lbs.server.conversation.base.Conversation
 import com.lbs.server.lang.{Localizable, Localization}
 import com.lbs.server.repository.model.Monitoring
 import com.lbs.server.service.{ApiService, DataService, MonitoringService}
-import com.lbs.server.util.MessageExtractors._
-import com.lbs.server.util.ServerModelConverters._
+import com.lbs.server.util.MessageExtractors.*
+import com.lbs.server.util.ServerModelConverters.*
+import org.apache.pekko.actor.ActorSystem
 
 import java.time.{LocalDateTime, LocalTime}
 
@@ -43,7 +43,7 @@ class Book(
   entryPoint(askCity, BookingData())
 
   private def askCity: Step =
-    staticData(cityConfig) { bd: BookingData =>
+    staticData(cityConfig) { (bd: BookingData) =>
       withFunctions[DictionaryCity](
         latestOptions = dataService.getLatestCities(userId.accountId),
         staticOptions = apiService.getAllCities(userId.accountId),
@@ -52,7 +52,7 @@ class Book(
     }(requestNext = askService)
 
   private def askService: Step =
-    staticData(serviceConfig) { bd: BookingData =>
+    staticData(serviceConfig) { (bd: BookingData) =>
       withFunctions[DictionaryServiceVariants](
         latestOptions = dataService.getLatestServicesByCityIdAndClinicId(userId.accountId, bd.cityId.id, None),
         staticOptions = apiService.getAllServices(userId.accountId),
@@ -61,7 +61,7 @@ class Book(
     }(requestNext = askClinic)
 
   private def askClinic: Step =
-    staticData(clinicConfig) { bd: BookingData =>
+    staticData(clinicConfig) { (bd: BookingData) =>
       withFunctions[IdName](
         latestOptions = dataService.getLatestClinicsByCityId(userId.accountId, bd.cityId.id),
         staticOptions = apiService.getAllFacilities(userId.accountId, bd.cityId.id, bd.serviceId.id),
@@ -70,7 +70,7 @@ class Book(
     }(requestNext = askDoctor)
 
   private def askDoctor: Step =
-    staticData(doctorConfig) { bd: BookingData =>
+    staticData(doctorConfig) { (bd: BookingData) =>
       withFunctions[IdName](
         latestOptions = dataService.getLatestDoctorsByCityIdAndClinicIdAndServiceId(
           userId.accountId,

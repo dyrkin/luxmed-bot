@@ -1,8 +1,10 @@
 package com.lbs.server.repository.model
 
+import jakarta.persistence.{Access, AccessType, Column, Entity}
+
 import java.time.{LocalTime, ZonedDateTime}
-import javax.persistence.{Access, AccessType, Column, Entity}
 import scala.beans.BeanProperty
+import scala.language.implicitConversions
 
 @Entity
 @Access(AccessType.FIELD)

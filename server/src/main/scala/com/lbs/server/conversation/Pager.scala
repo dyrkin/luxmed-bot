@@ -1,10 +1,10 @@
 package com.lbs.server.conversation
 
-import akka.actor.ActorSystem
-import com.lbs.bot._
+import org.apache.pekko.actor.ActorSystem
+import com.lbs.bot.*
 import com.lbs.bot.model.{Button, Command}
 import com.lbs.server.conversation.Login.UserId
-import com.lbs.server.conversation.Pager._
+import com.lbs.server.conversation.Pager.*
 import com.lbs.server.conversation.base.{Conversation, Interactional}
 import com.lbs.server.lang.{Localizable, Localization}
 import com.lbs.server.util.MessageExtractors
@@ -32,10 +32,10 @@ class Pager[Data](
       case Msg(Left(error: Throwable), _) =>
         bot.sendMessage(userId.source, error.getMessage)
         end()
-      case Msg(Right(itemsProvider: ItemsProvider[Data]), _) if itemsProvider.isEmpty =>
+      case Msg(Right(itemsProvider: ItemsProvider[Data] @unchecked), _) if itemsProvider.isEmpty =>
         originator ! NoItemsFound
         end()
-      case Msg(Right(itemsProvider: ItemsProvider[Data]), _) =>
+      case Msg(Right(itemsProvider: ItemsProvider[Data] @unchecked), _) =>
         goto(displayPage) using itemsProvider -> None
     }
 

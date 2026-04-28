@@ -1,11 +1,11 @@
 package com.lbs.server.lang
 
-import com.lbs.api.json.model._
+import com.lbs.api.json.model.*
 import com.lbs.server.conversation.Book
 import com.lbs.server.conversation.RehabBook.RehabBookingData
 import com.lbs.server.conversation.StaticData.StaticDataConfig
 import com.lbs.server.repository.model.Monitoring
-import com.lbs.server.util.DateTimeUtil._
+import com.lbs.server.util.DateTimeUtil.*
 
 import java.time.{LocalDateTime, LocalTime}
 import java.util.Locale

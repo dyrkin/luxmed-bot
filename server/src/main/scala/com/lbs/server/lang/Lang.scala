@@ -1,6 +1,6 @@
 package com.lbs.server.lang
 
-import com.lbs.api.json.model._
+import com.lbs.api.json.model.*
 import com.lbs.server.conversation.Book.BookingData
 import com.lbs.server.conversation.RehabBook.RehabBookingData
 import com.lbs.server.conversation.StaticData.StaticDataConfig

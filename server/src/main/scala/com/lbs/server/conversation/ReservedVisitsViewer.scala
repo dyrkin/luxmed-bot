@@ -1,8 +1,8 @@
 package com.lbs.server.conversation
 
-import akka.actor.ActorSystem
+import org.apache.pekko.actor.ActorSystem
 import com.lbs.api.json.model.Event
-import com.lbs.bot._
+import com.lbs.bot.*
 import com.lbs.bot.model.{Button, Command}
 import com.lbs.server.conversation.Login.UserId
 import com.lbs.server.conversation.Pager.SimpleItemsProvider

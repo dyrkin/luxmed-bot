@@ -34,7 +34,7 @@ class Localization {
     cachedLangs.put(userId, lang)
     val settings = dataService.findSettings(userId) match {
       case Some(existingSettings) =>
-        existingSettings.setLang(lang.id)
+        existingSettings.lang = lang.id
         existingSettings
       case None => model.Settings(userId, lang.id, 0, alwaysAskOffset = false)
     }

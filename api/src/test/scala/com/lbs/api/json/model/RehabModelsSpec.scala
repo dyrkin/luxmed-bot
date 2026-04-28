@@ -1,6 +1,7 @@
 package com.lbs.api.json.model
 
-import com.lbs.api.json.JsonSerializer.extensions._
+import com.lbs.api.json.JsonSerializer.extensions.*
+import com.lbs.api.json.model.JsonCodecs.given
 import org.scalatest.funsuite.AnyFunSuite
 import org.scalatest.matchers.should.Matchers
 

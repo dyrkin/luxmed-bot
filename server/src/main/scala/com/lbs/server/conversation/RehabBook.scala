@@ -1,20 +1,20 @@
 package com.lbs.server.conversation
 
-import akka.actor.ActorSystem
-import com.lbs.api.json.model._
-import com.lbs.bot._
+import org.apache.pekko.actor.ActorSystem
+import com.lbs.api.json.model.*
+import com.lbs.bot.*
 import com.lbs.bot.model.{Button, Command}
 import com.lbs.server.conversation.DatePicker.{DateFromMode, DateToMode}
 import com.lbs.server.conversation.Login.UserId
 import com.lbs.server.conversation.Pager.SimpleItemsProvider
-import com.lbs.server.conversation.RehabBook._
+import com.lbs.server.conversation.RehabBook.*
 import com.lbs.server.conversation.TimePicker.{TimeFromMode, TimeToMode}
 import com.lbs.server.conversation.base.Conversation
 import com.lbs.server.lang.{Localizable, Localization}
 import com.lbs.server.repository.model.Monitoring
 import com.lbs.server.service.{ApiService, DataService, MonitoringService}
-import com.lbs.server.util.MessageExtractors._
-import com.lbs.server.util.ServerModelConverters._
+import com.lbs.server.util.MessageExtractors.*
+import com.lbs.server.util.ServerModelConverters.*
 
 import java.time.{LocalDateTime, LocalTime}
 
@@ -165,13 +165,13 @@ class RehabBook(
 
   private def selectPhysiotherapist: Step =
     ask { _ => () } onReply {
+      case Msg(CallbackCommand(Tags.AnyPhysiotherapist), data: RehabBookingData) =>
+        goto(requestDateFrom) using data
       case Msg(cmd: Command, _) =>
         physiotherapistPager ! cmd
         stay()
       case Msg(doctor: IdName, data: RehabBookingData) =>
         goto(requestDateFrom) using data.copy(physiotherapistId = doctor)
-      case Msg(CallbackCommand(Tags.AnyPhysiotherapist), data: RehabBookingData) =>
-        goto(requestDateFrom) using data
       case Msg(Pager.NoItemsFound, data: RehabBookingData) =>
         goto(requestDateFrom) using data
     }

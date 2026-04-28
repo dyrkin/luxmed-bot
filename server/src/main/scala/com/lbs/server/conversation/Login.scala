@@ -1,13 +1,13 @@
 package com.lbs.server.conversation
 
-import akka.actor.ActorSystem
 import com.lbs.bot.Bot
 import com.lbs.bot.model.{Command, MessageSource}
-import com.lbs.server.conversation.Login._
+import com.lbs.server.conversation.Login.*
 import com.lbs.server.conversation.base.{Conversation, Interactional}
 import com.lbs.server.lang.{Localizable, Localization}
 import com.lbs.server.service.{ApiService, DataService}
 import com.lbs.server.util.MessageExtractors
+import org.apache.pekko.actor.ActorSystem
 import org.jasypt.util.text.TextEncryptor
 
 class Login(

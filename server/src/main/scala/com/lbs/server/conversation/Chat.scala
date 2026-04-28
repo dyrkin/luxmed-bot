@@ -1,13 +1,13 @@
 package com.lbs.server.conversation
 
-import akka.actor.ActorSystem
 import com.lbs.bot.model.Command
-import com.lbs.server.conversation.Chat._
+import com.lbs.server.conversation.Chat.*
 import com.lbs.server.conversation.Login.UserId
 import com.lbs.server.conversation.base.{Conversation, Interactional}
 import com.lbs.server.service.{DataService, MonitoringService}
-import com.lbs.server.util.MessageExtractors._
+import com.lbs.server.util.MessageExtractors.*
 import com.typesafe.scalalogging.StrictLogging
+import org.apache.pekko.actor.ActorSystem
 
 import scala.util.matching.Regex
 
@@ -99,7 +99,7 @@ class Chat(
     }
 
   private def dialogue(interactional: Interactional)(mainMessageProcessor: MessageProcessorFn): Step =
-    monologue { case event: Msg =>
+    monologue { case event: Msg[?] =>
       if (mainMessageProcessor.isDefinedAt(event)) mainMessageProcessor(event)
       else {
         val defaultMessageProcessor = secondaryState(interactional)

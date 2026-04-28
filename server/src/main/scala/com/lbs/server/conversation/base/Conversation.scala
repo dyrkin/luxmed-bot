@@ -7,11 +7,8 @@ import scala.util.control.NonFatal
 trait Conversation[D] extends Domain[D] with Interactional with StrictLogging {
 
   private var currentData: D = _
-
   private var currentStep: Step = _
-
   private var initialData: D = _
-
   private var initialStep: Step = _
 
   private val defaultMsgHandler: MessageProcessorFn = { case Msg(any, data) =>
@@ -24,9 +21,9 @@ trait Conversation[D] extends Domain[D] with Interactional with StrictLogging {
   private[base] def executeCurrentStep(): Unit = {
     try {
       currentStep match {
-        case qa: Dialogue => qa.askFn(currentData)
-        case Process(_, fn) =>
-          val nextStep = fn(currentData)
+        case qa: Dialogue[D @unchecked] => qa.askFn(currentData)
+        case p: Process[D @unchecked] =>
+          val nextStep = p.processFn(currentData)
           moveToNextStep(nextStep)
         case _ => // do nothing
       }
@@ -36,7 +33,7 @@ trait Conversation[D] extends Domain[D] with Interactional with StrictLogging {
   }
 
   private[base] def makeStepTransition(any: Any): Unit = {
-    def handle[X](unit: X, fn: PartialFunction[X, NextStep], defaultFn: PartialFunction[X, NextStep]): Unit = {
+    def handle[X](unit: X, fn: PartialFunction[X, NextStep[D]], defaultFn: PartialFunction[X, NextStep[D]]): Unit = {
       try {
         val nextStep = if (fn.isDefinedAt(unit)) fn(unit) else defaultFn(unit)
         moveToNextStep(nextStep)
@@ -46,17 +43,17 @@ trait Conversation[D] extends Domain[D] with Interactional with StrictLogging {
     }
 
     currentStep match {
-      case Dialogue(_, _, fn) =>
-        val fact = Msg(any, currentData)
-        handle(fact, fn, msgHandler)
-      case Monologue(_, fn) =>
-        val fact = Msg(any, currentData)
-        handle(fact, fn, msgHandler)
+      case d: Dialogue[D @unchecked] =>
+        val fact = Msg[D](any, currentData)
+        handle(fact, d.replyProcessorFn, msgHandler)
+      case m: Monologue[D @unchecked] =>
+        val fact = Msg[D](any, currentData)
+        handle(fact, m.replyProcessorFn, msgHandler)
       case _ => // do nothing
     }
   }
 
-  private def moveToNextStep(nextStep: NextStep): Unit = {
+  private def moveToNextStep(nextStep: NextStep[D]): Unit = {
     logger.trace(s"Moving from step '${currentStep.name}' to step '${nextStep.step.name}'")
     currentStep = nextStep.step
     nextStep.data.foreach { data =>
@@ -70,28 +67,26 @@ trait Conversation[D] extends Domain[D] with Interactional with StrictLogging {
     currentData = initialData
   }
 
-  protected def monologue(answerFn: MessageProcessorFn)(implicit functionName: sourcecode.Name): Monologue =
+  protected def monologue(answerFn: MessageProcessorFn)(using functionName: sourcecode.Name): Monologue[D] =
     Monologue(functionName.value, answerFn)
 
-  protected def ask(askFn: D => Unit): Ask = Ask(askFn)
+  protected def ask(askFn: D => Unit): Ask[D] = Ask(askFn)
 
-  protected def process(processFn: ProcessFn)(implicit functionName: sourcecode.Name): Process =
+  protected def process(processFn: ProcessFn)(using functionName: sourcecode.Name): Process[D] =
     Process(functionName.value, processFn)
 
-  protected def end(): NextStep = NextStep(End)
+  protected def end(): NextStep[D] = NextStep(End)
 
-  protected implicit class AskOps(ask: Ask) {
-    def onReply(replyProcessorFn: MessageProcessorFn)(implicit functionName: sourcecode.Name): Dialogue = {
+  extension (ask: Ask[D])
+    protected def onReply(replyProcessorFn: MessageProcessorFn)(using functionName: sourcecode.Name): Dialogue[D] =
       Dialogue(functionName.value, ask.askFn, replyProcessorFn)
-    }
-  }
 
-  protected def goto(step: Step): NextStep = {
+  protected def goto(step: Step): NextStep[D] = {
     continue()
     NextStep(step)
   }
 
-  protected def stay(): NextStep = NextStep(currentStep)
+  protected def stay(): NextStep[D] = NextStep(currentStep)
 
   protected def whenUnhandledMsg(receiveMsgFn: MessageProcessorFn): Unit = {
     msgHandler = receiveMsgFn orElse defaultMsgHandler

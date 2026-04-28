@@ -1,6 +1,5 @@
 package com.lbs.server.conversation
 
-import akka.actor.ActorSystem
 import com.lbs.api.json.model.Event
 import com.lbs.bot.Bot
 import com.lbs.bot.model.Command
@@ -9,6 +8,7 @@ import com.lbs.server.conversation.Pager.SimpleItemsProvider
 import com.lbs.server.conversation.base.Conversation
 import com.lbs.server.lang.{Localizable, Localization}
 import com.lbs.server.service.ApiService
+import org.apache.pekko.actor.ActorSystem
 
 class HistoryViewer(
   val userId: UserId,

@@ -1,6 +1,6 @@
 package com.lbs.server.repository.model
 
-import javax.persistence.{Access, AccessType, Column, Entity}
+import jakarta.persistence.{Access, AccessType, Column, Entity}
 import scala.beans.BeanProperty
 
 @Entity

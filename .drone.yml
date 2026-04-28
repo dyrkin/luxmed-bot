@@ -5,7 +5,7 @@ name: amd64
 
 steps:
   - name: build
-    image: eclipse-temurin:11-jre-focal
+    image: eclipse-temurin:25-jre-noble
     environment:
       GRADLE_USER_HOME: ~/.gradle
     commands:
@@ -56,7 +56,7 @@ platform:
 
 steps:
   - name: build
-    image: eclipse-temurin:11-jre-focal
+    image: eclipse-temurin:25-jre-noble
     environment:
       GRADLE_USER_HOME: ~/.gradle
     commands:

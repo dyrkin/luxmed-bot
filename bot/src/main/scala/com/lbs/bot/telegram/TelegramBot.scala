@@ -2,8 +2,8 @@ package com.lbs.bot.telegram
 
 import com.bot4s.telegram.models.InlineKeyboardMarkup
 import com.lbs.bot.PollBot
-import com.lbs.bot.model._
-import com.lbs.bot.telegram.TelegramModelConverters._
+import com.lbs.bot.model.*
+import com.lbs.bot.telegram.TelegramModelConverters.*
 
 class TelegramBot(onCommand: Command => Unit, botToken: String) extends PollBot[TelegramEvent] {
 

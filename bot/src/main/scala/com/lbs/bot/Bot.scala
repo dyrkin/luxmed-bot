@@ -1,6 +1,6 @@
 package com.lbs.bot
 
-import com.lbs.bot.model._
+import com.lbs.bot.model.*
 import com.lbs.bot.telegram.TelegramBot
 import com.typesafe.scalalogging.LazyLogging
 

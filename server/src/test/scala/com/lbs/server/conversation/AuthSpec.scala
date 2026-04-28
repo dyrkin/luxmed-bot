@@ -4,7 +4,8 @@ import com.lbs.bot.model.{Command, Message, MessageSource, TelegramMessageSource
 import com.lbs.server.conversation.Login.{ForwardCommand, LoggedIn, UserId}
 import com.lbs.server.conversation.base.ConversationTestProbe
 import com.lbs.server.service.DataService
-import org.mockito.Mockito._
+import org.mockito.Mockito
+import org.mockito.Mockito.*
 
 class AuthSpec extends AkkaTestKit {
 

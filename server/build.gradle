@@ -1,26 +1,35 @@
 apply plugin: "org.springframework.boot"
 apply plugin: "io.spring.dependency-management"
 
+repositories {
+    mavenCentral()
+}
+
+test {
+    jvmArgs(
+        "-Djdk.attach.allowAttachSelf=true",
+        "-XX:+EnableDynamicAgentLoading"
+    )
+}
+
 dependencies {
     implementation project(":api")
     implementation project(":bot")
     implementation project(":common")
 
-    implementation "com.lihaoyi:sourcecode_$scala:0.3.0"
+    implementation "com.lihaoyi:sourcecode_3:0.3.1"
 
     implementation "org.springframework.boot:spring-boot-starter"
     implementation "org.springframework.boot:spring-boot-starter-data-jpa"
     implementation "org.liquibase:liquibase-core"
 
     implementation 'org.jasypt:jasypt:1.9.3'
-    implementation 'org.postgresql:postgresql:42.3.6'
+    implementation 'org.postgresql:postgresql:42.7.3'
 
-    testImplementation "com.typesafe.akka:akka-testkit_$scala:2.6.19"
+    testImplementation "org.apache.pekko:pekko-testkit_3:1.1.2"
     testImplementation "org.springframework.boot:spring-boot-starter-test"
+    testImplementation "org.springframework.boot:spring-boot-starter-data-jpa-test"
     testImplementation "com.h2database:h2"
-
-    // fixme: remove junit
-    testImplementation 'junit:junit:4.13.2'
 }
 
 task prepare(type: Copy) {

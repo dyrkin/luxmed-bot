@@ -14,5 +14,5 @@ object Boot extends App with StrictLogging {
   }
 
   printInfo()
-  SpringApplication.run(classOf[Boot], args: _*)
+  SpringApplication.run(classOf[Boot], Array[String](): _*)
 }

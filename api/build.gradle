@@ -1,6 +1,10 @@
 dependencies {
     implementation project(':common')
+    api "com.softwaremill.sttp.client3:core_3:3.9.7"
+    api "io.circe:circe-core_3:0.14.9"
+    api "io.circe:circe-generic_3:0.14.9"
+    api "io.circe:circe-parser_3:0.14.9"
 
-    api "org.scalaj:scalaj-http_$scala:2.4.2"
-    api "org.json4s:json4s-jackson_$scala:3.6.12"
+    testImplementation "com.github.tomakehurst:wiremock-jre8:2.35.0"
 }
+

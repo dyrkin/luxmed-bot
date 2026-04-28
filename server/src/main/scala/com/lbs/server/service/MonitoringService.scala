@@ -1,23 +1,24 @@
 package com.lbs.server.service
 
 import com.lbs.api.exception.InvalidLoginOrPasswordException
-import com.lbs.api.json.model._
+import com.lbs.api.json.model.*
 import com.lbs.bot.Bot
 import com.lbs.bot.model.{MessageSource, MessageSourceSystem}
 import com.lbs.common.Scheduler
 import com.lbs.server.lang.Localization
-import com.lbs.server.repository.model._
-import com.lbs.server.util.DateTimeUtil._
-import com.lbs.server.util.ServerModelConverters._
+import com.lbs.server.repository.model.{*, given}
+import com.lbs.server.util.DateTimeUtil.*
+import com.lbs.server.util.ServerModelConverters.*
 import com.typesafe.scalalogging.StrictLogging
+import jakarta.annotation.PostConstruct
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.stereotype.Service
 
 import java.time.{LocalDateTime, ZonedDateTime}
 import java.util.concurrent.ScheduledFuture
-import javax.annotation.PostConstruct
 import scala.collection.mutable
-import scala.concurrent.duration._
+import scala.concurrent.duration.*
+import scala.language.implicitConversions
 import scala.util.Random
 
 @Service
@@ -312,9 +313,8 @@ class MonitoringService extends StrictLogging {
     }
   }
 
-  implicit class MonitoringAsSource(monitoring: Monitoring) {
+  extension (monitoring: Monitoring)
     def source: MessageSource = MessageSource(MessageSourceSystem(monitoring.sourceSystemId), monitoring.chatId)
-  }
 
   private def lang(userId: Long) = localization.lang(userId)
 

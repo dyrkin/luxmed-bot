@@ -1,27 +1,40 @@
 plugins {
-    id "com.github.maiflai.scalatest" version "0.32"
-    id "org.springframework.boot" version "2.7.2"
-    id "cz.alenkacz.gradle.scalafmt" version "1.16.2"
+    id "org.springframework.boot" version "4.0.6"
+    id "cz.augi.gradle.scalafmt" version "1.21.5"
 }
 
 allprojects {
     apply plugin: "scala"
     apply plugin: "java-library"
-    apply plugin: "com.github.maiflai.scalatest"
+
+    java {
+        sourceCompatibility = JavaVersion.VERSION_25
+        targetCompatibility = JavaVersion.VERSION_25
+    }
 
     repositories {
         mavenCentral()
-        maven { url "https://repo.spring.io/libs-milestone" }
     }
 
     dependencies {
-        compileOnly "org.scala-lang:scala-library:$scala.$scala_minor"
+        testImplementation "org.scalatest:scalatest_3:3.2.19"
+        testRuntimeOnly "org.scalatestplus:junit-5-13_3:3.2.19.0"
+        testImplementation "org.scalatestplus:mockito-5-12_3:3.2.19.0"
+    }
 
-        testImplementation "org.scalatest:scalatest_$scala:3.2.11"
-        testRuntimeOnly "com.vladsch.flexmark:flexmark-all:0.62.2" // version depends on scalatest dependency
-
-        testImplementation "org.scalatestplus:mockito-4-2_$scala:3.2.11.0"
-        testImplementation "org.pegdown:pegdown:1.6.0"
+    tasks.withType(Test) {
+        useJUnitPlatform()
+    }
+    tasks.withType(ScalaCompile) {
+        scalaCompileOptions.additionalParameters = [
+            "-deprecation",
+            "-feature",
+            "-unchecked",
+            "-source:3.3"
+        ]
+    }
+    tasks.withType(Jar) {
+        duplicatesStrategy = DuplicatesStrategy.EXCLUDE
     }
 }
 

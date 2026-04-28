@@ -2,24 +2,33 @@ package com.lbs.bot.telegram
 
 import cats.implicits.toFunctorOps
 import com.bot4s.telegram.api.declarative.{Callbacks, Commands}
-import com.bot4s.telegram.api.{AkkaTelegramBot, RequestHandler}
-import com.bot4s.telegram.clients.AkkaHttpClient
-import com.bot4s.telegram.future.{Polling, TelegramBot => TelegramBoT}
-import com.bot4s.telegram.methods._
+import com.bot4s.telegram.api.RequestHandler
+import com.bot4s.telegram.clients.FutureSttpClient
+import com.bot4s.telegram.future.{Polling, TelegramBot as TelegramBoT}
+import com.bot4s.telegram.methods.*
+import com.bot4s.telegram.methods.{Request as BotRequest}
 import com.bot4s.telegram.models.{InlineKeyboardMarkup, InputFile, Message}
 import com.typesafe.scalalogging.StrictLogging
+import com.bot4s.telegram.marshalling.*
+import io.circe.{Decoder, Encoder}
+import sttp.client3.SttpBackend
+import sttp.client3.asynchttpclient.future.AsyncHttpClientFutureBackend
 
-import scala.concurrent.Future
+import scala.concurrent.{ExecutionContext, Future}
 
 class TelegramClient(onReceive: TelegramEvent => Unit, botToken: String)
-    extends AkkaTelegramBot
-    with TelegramBoT
+    extends TelegramBoT
     with Polling
     with Commands[Future]
     with Callbacks[Future]
     with StrictLogging {
 
-  override val client: RequestHandler[Future] = new AkkaHttpClient(botToken)
+  protected given ExecutionContext = ExecutionContext.global
+
+  private given SttpBackend[Future, Any] = AsyncHttpClientFutureBackend()
+
+  override val client: RequestHandler[Future] =
+    FutureSttpClient(botToken)
 
   def sendMessage(chatId: Long, text: String): Future[Message] =
     loggingRequest(SendMessage(chatId, text, parseMode = Some(ParseMode.HTML)))
@@ -53,9 +62,9 @@ class TelegramClient(onReceive: TelegramEvent => Unit, botToken: String)
   def sendFile(chatId: Long, filename: String, contents: Array[Byte], caption: Option[String] = None): Future[Message] =
     loggingRequest(SendDocument(chatId, InputFile(filename, contents), caption = caption))
 
-  private def loggingRequest[R: Manifest](req: Request[R]): Future[R] = {
+  private def loggingRequest[T <: BotRequest](req: T)(using e: Encoder[T], d: Decoder[req.Response]): Future[req.Response] = {
     logger.debug(s"Sending telegram request: $req")
-    request(req)
+    client(req)
   }
 
   override def receiveMessage(msg: Message): Future[Unit] = {
@@ -68,7 +77,7 @@ class TelegramClient(onReceive: TelegramEvent => Unit, botToken: String)
     val ack = ackCallback()
     val maybeOnReceive = for {
       data <- cbq.data.map(_.stripPrefix(TagPrefix))
-      msg <- cbq.message
+      msg  <- cbq.message
     } yield onReceive(TelegramEvent(msg, Some(data)))
     ack.zip(Future.successful(maybeOnReceive)).void
   }

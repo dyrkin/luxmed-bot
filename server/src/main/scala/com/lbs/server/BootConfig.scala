@@ -1,13 +1,13 @@
 package com.lbs.server
 
-import akka.actor.ActorSystem
-import com.lbs.api.json.model._
+import com.lbs.api.json.model.*
 import com.lbs.bot.Bot
 import com.lbs.bot.telegram.TelegramBot
-import com.lbs.server.conversation._
+import com.lbs.server.conversation.*
 import com.lbs.server.lang.Localization
 import com.lbs.server.repository.model.Monitoring
 import com.lbs.server.service.{ApiService, DataService, MonitoringService}
+import org.apache.pekko.actor.ActorSystem
 import org.jasypt.util.text.{StrongTextEncryptor, TextEncryptor}
 import org.springframework.beans.factory.annotation.{Autowired, Value}
 import org.springframework.context.annotation.{Bean, Configuration}

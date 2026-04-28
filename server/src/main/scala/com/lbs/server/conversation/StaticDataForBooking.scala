@@ -15,7 +15,7 @@ trait StaticDataForBooking extends Conversation[BookingData] {
     latestOptions: => Seq[IdName],
     staticOptions: => ThrowableOr[List[T]],
     applyId: IdName => BookingData
-  ): Step => MessageProcessorFn = { nextStep: Step =>
+  ): Step => MessageProcessorFn = { (nextStep: Step) =>
     {
       case Msg(cmd: Command, _) =>
         staticData ! cmd

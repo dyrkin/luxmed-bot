@@ -1,6 +1,6 @@
 package com.lbs.server.conversation
 
-import akka.actor.ActorSystem
+import org.apache.pekko.actor.ActorSystem
 import com.lbs.bot.Bot
 import com.lbs.bot.model.{Command, MessageSource}
 import com.lbs.server.conversation.base.Conversation

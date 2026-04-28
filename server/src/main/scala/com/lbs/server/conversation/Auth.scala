@@ -1,12 +1,13 @@
 package com.lbs.server.conversation
 
-import akka.actor.ActorSystem
 import com.lbs.bot.model.{Command, MessageSource}
 import com.lbs.server.conversation.Login.{LoggedIn, UserId}
 import com.lbs.server.conversation.base.Conversation
 import com.lbs.server.service.DataService
-import com.lbs.server.util.MessageExtractors._
+import com.lbs.server.util.MessageExtractors
+import com.lbs.server.util.MessageExtractors.*
 import com.typesafe.scalalogging.StrictLogging
+import org.apache.pekko.actor.ActorSystem
 
 class Auth(
   val source: MessageSource,

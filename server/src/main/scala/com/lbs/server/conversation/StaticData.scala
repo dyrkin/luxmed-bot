@@ -1,12 +1,12 @@
 package com.lbs.server.conversation
 
-import akka.actor.ActorSystem
+import org.apache.pekko.actor.ActorSystem
 import com.lbs.api.json.model.{IdName, Identified}
-import com.lbs.bot._
+import com.lbs.bot.*
 import com.lbs.bot.model.{Button, Command, TaggedButton}
 import com.lbs.server.ThrowableOr
 import com.lbs.server.conversation.Login.UserId
-import com.lbs.server.conversation.StaticData._
+import com.lbs.server.conversation.StaticData.*
 import com.lbs.server.conversation.base.{Conversation, Interactional}
 import com.lbs.server.lang.{Localizable, Localization}
 

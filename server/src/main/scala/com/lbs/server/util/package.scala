@@ -1,6 +1,6 @@
-package com.lbs.server
+package com.lbs.server.util
 
-import com.lbs.api.json.model._
+import com.lbs.api.json.model.*
 import com.lbs.bot.model.Command
 import com.lbs.common.ModelConverters
 import com.lbs.server.conversation.Book.BookingData
@@ -8,13 +8,11 @@ import com.lbs.server.conversation.Login.UserId
 import com.lbs.server.conversation.RehabBook.RehabBookingData
 import com.lbs.server.repository.model.{History, Monitoring}
 
-import java.time._
+import java.time.*
 import java.time.format.DateTimeFormatter
 import java.util.Locale
-import scala.language.{higherKinds, implicitConversions}
 import scala.util.Try
 
-package object util {
 
   object ServerModelConverters extends ModelConverters {
 
@@ -128,8 +126,8 @@ package object util {
           isPreparationRequired = additionalData.isPreparationRequired,
           isTelemedicine = term.isTelemedicine,
           preparationItems = additionalData.preparationItems,
-          referralId = referralId.toString,
-          referralTypeId = referralTypeId.toString,
+          referralId = Some(referralId.toString),
+          referralTypeId = Some(referralTypeId.toString),
           roomId = term.roomId,
           scheduleId = term.scheduleId,
           serviceVariantId = term.serviceId,
@@ -246,4 +244,3 @@ package object util {
     }
   }
 
-}

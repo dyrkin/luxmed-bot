@@ -1,5 +1,8 @@
 dependencies {
     implementation project(':common')
 
-    api "com.bot4s:telegram-akka_$scala:5.6.0"
+    api "com.bot4s:telegram-core_3:6.0.1"
+    api "org.apache.pekko:pekko-actor_3:1.1.2"
+    api "com.softwaremill.sttp.client3:core_3:3.9.7"
+    api "com.softwaremill.sttp.client3:async-http-client-backend-future_3:3.9.7"
 }

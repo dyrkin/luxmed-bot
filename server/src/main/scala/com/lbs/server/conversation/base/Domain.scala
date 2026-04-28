@@ -1,36 +1,24 @@
 package com.lbs.server.conversation.base
 
+private[conversation] object DomainTypes {
+  sealed trait Step { def name: String }
+  object End extends Step { override val name: String = "end" }
+
+  case class Msg[D](message: Any, data: D)
+  case class NextStep[D](step: Step, data: Option[D] = None)
+  case class Ask[D](askFn: D => Unit)
+  case class Process[D](name: String, processFn: D => NextStep[D]) extends Step
+  case class Dialogue[D](name: String, askFn: D => Unit, replyProcessorFn: PartialFunction[Msg[D], NextStep[D]]) extends Step
+  case class Monologue[D](name: String, replyProcessorFn: PartialFunction[Msg[D], NextStep[D]]) extends Step
+}
+
 trait Domain[D] {
-  protected type AskFn = D => Unit
+  export DomainTypes.*
 
-  protected type MessageProcessorFn = PartialFunction[Msg, NextStep]
+  protected type AskFn              = D => Unit
+  protected type MessageProcessorFn = PartialFunction[Msg[D], NextStep[D]]
+  protected type ProcessFn          = D => NextStep[D]
 
-  protected type ProcessFn = D => NextStep
-
-  protected case class Msg(message: Any, data: D)
-
-  sealed trait Step {
-    def name: String
-  }
-
-  private[base] object End extends Step {
-    override val name: String = "end"
-  }
-
-  protected case class Process(name: String, processFn: ProcessFn) extends Step
-
-  protected case class Dialogue(name: String, askFn: AskFn, replyProcessorFn: MessageProcessorFn) extends Step
-
-  protected case class Monologue(name: String, replyProcessorFn: MessageProcessorFn) extends Step
-
-  private[base] case class NextStep(step: Step, data: Option[D] = None)
-
-  private[base] case class Ask(askFn: AskFn)
-
-  protected implicit class NextStepOps(nextStep: NextStep) {
-    def using(data: D): NextStep = {
-      nextStep.copy(data = Some(data))
-    }
-  }
-
+  extension (nextStep: NextStep[D])
+    protected def using(data: D): NextStep[D] = nextStep.copy(data = Some(data))
 }

@@ -1,15 +1,14 @@
 package com.lbs.server.service
 
-import cats.instances.either._
+import cats.instances.either.*
 import com.lbs.api.LuxmedApi
-import com.lbs.api.http.Session
-import com.lbs.api.json.model._
+import com.lbs.api.http.{LuxmedResponse, Session}
+import com.lbs.api.json.model.*
 import com.lbs.server.ThrowableOr
 import com.lbs.server.util.DateTimeUtil
 import org.jasypt.util.text.TextEncryptor
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.stereotype.Service
-import scalaj.http.HttpResponse
 
 import java.net.HttpCookie
 import java.time.{LocalDateTime, LocalTime}
@@ -183,7 +182,7 @@ class ApiService extends SessionSupport {
         .map(_.events.filter(_.status == "Reserved").sortBy(_.date))
     }
 
-  def deleteReservation(accountId: Long, reservationId: Long): ThrowableOr[HttpResponse[String]] =
+  def deleteReservation(accountId: Long, reservationId: Long): ThrowableOr[LuxmedResponse[String]] =
     withSession(accountId) { session =>
       luxmedApi.reservationDelete(session, reservationId)
     }
@@ -198,20 +197,34 @@ class ApiService extends SessionSupport {
     try {
       for {
         r1 <- luxmedApi.login(username, password, clientId)
-        tmpSession = Session(r1.body.accessToken, r1.body.accessToken, "", r1.cookies)
+        tmpSession = Session(r1.body.accessToken, r1.body.tokenType, "", r1.cookies)
         r2 <- luxmedApi.loginToApp(tmpSession)
-        jwtToken = extractAuthorizationTokenFromCookies(r2)
         cookies = joinCookies(r1.cookies, r2.cookies, Seq(new HttpCookie("GlobalLang", "pl")))
         accessToken = r1.body.accessToken
         tokenType = r1.body.tokenType
         r3 <- luxmedApi.getReservationPage(tmpSession, cookies)
-      } yield Session(accessToken, tokenType, jwtToken, joinCookies(cookies, r3.cookies))
+        allCookies = joinCookies(cookies, r3.cookies)
+        jwtToken = allCookies
+          .find(_.getName == "Authorization-Token")
+          .map(_.getValue)
+          .orElse(r2.header("authorization-token"))
+          .orElse(r3.header("authorization-token"))
+          .orElse(scala.util.Try(extractAccessTokenFromLoginToApp(r2.body)).toOption)
+          .orElse(scala.util.Try(extractAccessTokenFromReservationPage(r3.body)).toOption)
+          .orElse {
+            logger.warn(s"Authorization-Token not found in cookies, headers, or page body; falling back to OAuth accessToken")
+            logger.warn(s"loginToApp body (first 500): ${r2.body.take(500)}")
+            logger.warn(s"reservation page body (first 500): ${r3.body.take(500)}")
+            Some(accessToken)
+          }
+          .get
+        _ = logger.info(s"Login successful, JWT token obtained (length=${jwtToken.length})")
+      } yield Session(accessToken, tokenType, jwtToken, allCookies)
     } catch {
-      case e: Exception if !secondAttempt => {
+      case e: Exception if !secondAttempt =>
         logger.warn("couldn't login from the first attempt. trying one more time after a short pause", e)
         Thread.sleep(3000)
         fullLogin(username, encryptedPassword, secondAttempt = true)
-      }
       case e: Exception => Left(e)
     }
   }
@@ -222,15 +235,31 @@ class ApiService extends SessionSupport {
     }
   }
 
-  private def extractAccessTokenFromReservationPage(responsePage: String): String = {
-    val accessTokenRegex = """(?s).*'Authorization', '(.+?)'.*""".r
-    responsePage match {
-      case accessTokenRegex(token) => token
-      case _ => throw new java.lang.RuntimeException(s"Unable to extract authorization token from reservation page")
-    }
+  private def extractAccessTokenFromLoginToApp(body: String): String = {
+    // Try to extract token from loginToApp response body (JSON or other formats)
+    val patterns = Seq(
+      """"[Aa]uthorization[_-]?[Tt]oken"\s*:\s*"([^"]+)"""".r,
+      """"access_token"\s*:\s*"([^"]+)"""".r,
+      """"token"\s*:\s*"([^"]+)"""".r,
+      """'Authorization',\s*'([^']+)'""".r,
+      """[Aa]uthorization[_-]?[Tt]oken=([A-Za-z0-9._\-]+)""".r
+    )
+    patterns.flatMap(_.findFirstMatchIn(body).map(_.group(1))).headOption
+      .getOrElse(throw new java.lang.RuntimeException(s"Unable to extract authorization token from loginToApp response"))
   }
 
-  private def extractAuthorizationTokenFromCookies(response: HttpResponse[_]): String = {
+  private def extractAccessTokenFromReservationPage(responsePage: String): String = {
+    val patterns = Seq(
+      """'Authorization',\s*'([^']+)'""".r,
+      """"Authorization",\s*"([^"]+)"""".r,
+      """"[Aa]uthorization[_-]?[Tt]oken"\s*:\s*"([^"]+)"""".r,
+      """[Aa]uthorization[_-]?[Tt]oken=([A-Za-z0-9._\-]+)""".r
+    )
+    patterns.flatMap(_.findFirstMatchIn(responsePage).map(_.group(1))).headOption
+      .getOrElse(throw new java.lang.RuntimeException(s"Unable to extract authorization token from reservation page"))
+  }
+
+  private def extractAuthorizationTokenFromCookies(response: LuxmedResponse[?]): String = {
     response.cookies
       .find(_.getName == "Authorization-Token")
       .map(_.getValue)
