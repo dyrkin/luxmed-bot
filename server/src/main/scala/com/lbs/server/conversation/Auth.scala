@@ -9,6 +9,8 @@ import com.lbs.server.util.MessageExtractors.*
 import com.typesafe.scalalogging.StrictLogging
 import org.apache.pekko.actor.ActorSystem
 
+import scala.compiletime.uninitialized
+
 class Auth(
   val source: MessageSource,
   dataService: DataService,
@@ -23,7 +25,7 @@ class Auth(
   private val unauthorizedHelp = unauthorizedHelpFactory(source)
 
   private var userId: Option[UserId] = getUserId
-  private var chat: Chat = _
+  private var chat: Chat = uninitialized
 
   entryPoint(processIncoming)
 

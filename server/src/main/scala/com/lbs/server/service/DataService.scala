@@ -12,12 +12,13 @@ import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.stereotype.Service
 
 import java.time.ZonedDateTime
+import scala.compiletime.uninitialized
 
 @Service
 class DataService {
 
   @Autowired
-  private[service] var dataRepository: DataRepository = _
+  private[service] var dataRepository: DataRepository = uninitialized
 
   def getLatestCities(accountId: Long): Seq[IdName] = {
     dataRepository.getCityHistory(accountId).mapTo[Seq[IdName]]

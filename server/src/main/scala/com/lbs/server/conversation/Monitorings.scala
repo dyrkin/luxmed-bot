@@ -42,7 +42,7 @@ class Monitorings(
         bot.sendMessage(userId.source, lang.noActiveMonitorings)
         end()
       case Msg(monitoring: Monitoring, _) =>
-        goto(askToDeactivateMonitoring) using monitoring
+        goto(askToDeactivateMonitoring).using(monitoring)
     }
 
   def askToDeactivateMonitoring: Step =

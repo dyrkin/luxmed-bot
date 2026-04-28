@@ -1,6 +1,5 @@
 package com.lbs.server.conversation
 
-import org.apache.pekko.actor.ActorSystem
 import com.lbs.api.json.model.*
 import com.lbs.bot.*
 import com.lbs.bot.model.{Button, Command}
@@ -15,6 +14,7 @@ import com.lbs.server.repository.model.Monitoring
 import com.lbs.server.service.{ApiService, DataService, MonitoringService}
 import com.lbs.server.util.MessageExtractors.*
 import com.lbs.server.util.ServerModelConverters.*
+import org.apache.pekko.actor.ActorSystem
 
 import java.time.{LocalDateTime, LocalTime}
 
@@ -32,7 +32,7 @@ class RehabBook(
   facilityPagerFactory: UserIdWithOriginatorTo[Pager[RehabFacility]],
   physiotherapistPagerFactory: UserIdWithOriginatorTo[Pager[IdName]],
   termsPagerFactory: UserIdWithOriginatorTo[Pager[TermExt]]
-)(implicit val actorSystem: ActorSystem)
+)(val actorSystem: ActorSystem)
     extends Conversation[RehabBookingData]
     with Localizable {
 
@@ -63,7 +63,7 @@ class RehabBook(
         case Right(referrals) =>
           referralPager.restart()
           referralPager ! Right(new SimpleItemsProvider(referrals))
-          goto(selectReferral) using data
+          goto(selectReferral).using(data)
       }
     }
 
@@ -98,7 +98,7 @@ class RehabBook(
           case Right(facilities) =>
             locationPager.restart()
             locationPager ! Right(new SimpleItemsProvider(facilities.locations))
-            goto(selectCity) using newData.copy(rehabFacilities = Some(facilities))
+            goto(selectCity).using(newData.copy(rehabFacilities = Some(facilities)))
         }
     }
   }
@@ -125,7 +125,7 @@ class RehabBook(
         val facilitiesForCity = data.rehabFacilities.map(_.facilities.filter(_.locationId == location.id)).getOrElse(Nil)
         facilityPager.restart()
         facilityPager ! Right(new SimpleItemsProvider(facilitiesForCity))
-        goto(selectFacility) using newData
+        goto(selectFacility).using(newData)
       case Msg(Pager.NoItemsFound, _) =>
         bot.sendMessage(userId.source, lang.noRehabReferralsFound)
         end()
@@ -137,19 +137,19 @@ class RehabBook(
         facilityPager ! cmd
         stay()
       case Msg(facility: RehabFacility, data: RehabBookingData) =>
-        goto(askPhysiotherapist) using data.copy(facilityId = facility.toIdName)
+        goto(askPhysiotherapist).using(data.copy(facilityId = facility.toIdName))
       case Msg(Pager.NoItemsFound, data: RehabBookingData) =>
         // No facilities, treat as "Any"
-        goto(askPhysiotherapist) using data
+        goto(askPhysiotherapist).using(data)
     }
 
   private def askPhysiotherapist: Step =
     process { data =>
       apiService.getAllDoctors(userId.accountId, data.cityId.id, data.serviceVariantId) match {
         case Left(_) =>
-          goto(requestDateFrom) using data
+          goto(requestDateFrom).using(data)
         case Right(Nil) =>
-          goto(requestDateFrom) using data
+          goto(requestDateFrom).using(data)
         case Right(doctors) =>
           val doctorItems = doctors.map(_.toIdName)
           physiotherapistPager.restart()
@@ -159,21 +159,21 @@ class RehabBook(
             lang.choosePhysiotherapist,
             inlineKeyboard = createInlineKeyboard(Seq(Button(lang.anyPhysiotherapist, Tags.AnyPhysiotherapist)))
           )
-          goto(selectPhysiotherapist) using data
+          goto(selectPhysiotherapist).using(data)
       }
     }
 
   private def selectPhysiotherapist: Step =
     ask { _ => () } onReply {
       case Msg(CallbackCommand(Tags.AnyPhysiotherapist), data: RehabBookingData) =>
-        goto(requestDateFrom) using data
+        goto(requestDateFrom).using(data)
       case Msg(cmd: Command, _) =>
         physiotherapistPager ! cmd
         stay()
       case Msg(doctor: IdName, data: RehabBookingData) =>
-        goto(requestDateFrom) using data.copy(physiotherapistId = doctor)
+        goto(requestDateFrom).using(data.copy(physiotherapistId = doctor))
       case Msg(Pager.NoItemsFound, data: RehabBookingData) =>
-        goto(requestDateFrom) using data
+        goto(requestDateFrom).using(data)
     }
 
   private def requestDateFrom: Step =
@@ -186,7 +186,7 @@ class RehabBook(
         datePicker ! cmd
         stay()
       case Msg(date: LocalDateTime, data: RehabBookingData) =>
-        goto(requestDateTo) using data.copy(dateFrom = date)
+        goto(requestDateTo).using(data.copy(dateFrom = date))
     }
 
   private def requestDateTo: Step =
@@ -202,7 +202,7 @@ class RehabBook(
         // Enforce MaxIntervalInDays = 13
         val maxDate = data.dateFrom.plusDays(13)
         val effectiveDate = if (date.isAfter(maxDate)) maxDate else date
-        goto(requestTimeFrom) using data.copy(dateTo = effectiveDate)
+        goto(requestTimeFrom).using(data.copy(dateTo = effectiveDate))
     }
 
   private def requestTimeFrom: Step =
@@ -215,7 +215,7 @@ class RehabBook(
         timePicker ! cmd
         stay()
       case Msg(time: LocalTime, data: RehabBookingData) =>
-        goto(requestTimeTo) using data.copy(timeFrom = time)
+        goto(requestTimeTo).using(data.copy(timeFrom = time))
     }
 
   private def requestTimeTo: Step =
@@ -228,7 +228,7 @@ class RehabBook(
         timePicker ! cmd
         stay()
       case Msg(time: LocalTime, data: RehabBookingData) =>
-        goto(requestAction) using data.copy(timeTo = time)
+        goto(requestAction).using(data.copy(timeTo = time))
     }
 
   private def requestAction: Step =
@@ -243,10 +243,10 @@ class RehabBook(
       case Msg(CallbackCommand(Tags.FindTerms), _) =>
         goto(requestTerm)
       case Msg(CallbackCommand(Tags.ModifyDate), data: RehabBookingData) =>
-        goto(requestDateFrom) using data.copy(
+        goto(requestDateFrom).using(data.copy(
           dateFrom = LocalDateTime.now(),
           dateTo = LocalDateTime.now().plusDays(1L)
-        )
+        ))
     }
 
   private def requestTerm: Step =
@@ -288,11 +288,11 @@ class RehabBook(
               inlineKeyboard =
                 createInlineKeyboard(Seq(Button(lang.cancel, Tags.Cancel), Button(lang.book, Tags.Book)))
             )
-            goto(awaitReservation) using data.copy(
+            goto(awaitReservation).using(data.copy(
               term = Some(term),
               xsrfToken = Some(xsrfToken),
               reservationLocktermResponse = Some(reservationLocktermResponse)
-            )
+            ))
         }
       case Msg(Pager.NoItemsFound, data: RehabBookingData) =>
         bot.sendMessage(
@@ -302,16 +302,16 @@ class RehabBook(
             Seq(Button(lang.modifyDate, Tags.ModifyDate), Button(lang.createMonitoring, Tags.CreateMonitoring))
           )
         )
-        goto(askNoTermsAction) using data
+        goto(askNoTermsAction).using(data)
     }
 
   private def askNoTermsAction: Step =
     monologue {
       case Msg(CallbackCommand(Tags.ModifyDate), data: RehabBookingData) =>
-        goto(requestDateFrom) using data.copy(
+        goto(requestDateFrom).using(data.copy(
           dateFrom = LocalDateTime.now(),
           dateTo = LocalDateTime.now().plusDays(1L)
-        )
+        ))
       case Msg(CallbackCommand(Tags.CreateMonitoring), data: RehabBookingData) =>
         val settingsMaybe = dataService.findSettings(userId.userId)
         val (defaultOffset, askOffset) = settingsMaybe match {
@@ -319,8 +319,8 @@ class RehabBook(
           case None           => (0, false)
         }
         val newData = data.copy(offset = defaultOffset)
-        if (askOffset) goto(askMonitoringOffsetOption) using newData
-        else goto(askMonitoringAutobookOption) using newData
+        if (askOffset) goto(askMonitoringOffsetOption).using(newData)
+        else goto(askMonitoringAutobookOption).using(newData)
     }
 
   private def askMonitoringOffsetOption: Step =
@@ -332,7 +332,7 @@ class RehabBook(
       )
     } onReply {
       case Msg(TextCommand(IntString(offset)), data: RehabBookingData) =>
-        goto(askMonitoringAutobookOption) using data.copy(offset = offset)
+        goto(askMonitoringAutobookOption).using(data.copy(offset = offset))
       case Msg(CallbackCommand(BooleanString(false)), _) =>
         goto(askMonitoringAutobookOption)
     }
@@ -349,8 +349,8 @@ class RehabBook(
       )
     } onReply { case Msg(CallbackCommand(BooleanString(autobook)), data: RehabBookingData) =>
       val newData = data.copy(autobook = autobook)
-      if (autobook) goto(askMonitoringRebookOption) using newData
-      else goto(createRehabMonitoring) using newData
+      if (autobook) goto(askMonitoringRebookOption).using(newData)
+      else goto(createRehabMonitoring).using(newData)
     }
 
   private def askMonitoringRebookOption: Step =
@@ -361,7 +361,7 @@ class RehabBook(
         inlineKeyboard = createInlineKeyboard(Seq(Button(lang.no, Tags.No), Button(lang.yes, Tags.Yes)))
       )
     } onReply { case Msg(CallbackCommand(BooleanString(rebookIfExists)), data: RehabBookingData) =>
-      goto(createRehabMonitoring) using data.copy(rebookIfExists = rebookIfExists)
+      goto(createRehabMonitoring).using(data.copy(rebookIfExists = rebookIfExists))
     }
 
   private def createRehabMonitoring: Step =
@@ -386,7 +386,7 @@ class RehabBook(
           data.xsrfToken.get,
           data.reservationLocktermResponse.get.value.temporaryReservationId
         )
-        goto(requestTerm) using data
+        goto(requestTerm).using(data)
       case Msg(CallbackCommand(Tags.Book), data: RehabBookingData) =>
         val reservationRequestMaybe = for {
           reservationLocktermResponse <- data.reservationLocktermResponse
@@ -408,7 +408,7 @@ class RehabBook(
                     lang.bookNextProcedure(remaining),
                     inlineKeyboard = createInlineKeyboard(Seq(Button(lang.no, Tags.No), Button(lang.yes, Tags.Yes)))
                   )
-                  goto(awaitChainDecision) using data
+                  goto(awaitChainDecision).using(data)
                 } else {
                   end()
                 }
@@ -424,13 +424,13 @@ class RehabBook(
       case Msg(CallbackCommand(Tags.Yes), data: RehabBookingData) =>
         // Restart with updated remaining count
         val newData = data.copy(remainingProcedures = data.remainingProcedures - 1)
-        goto(requestDateFrom) using newData.copy(
+        goto(requestDateFrom).using(newData.copy(
           dateFrom = LocalDateTime.now(),
           dateTo = LocalDateTime.now().plusDays(1L),
           term = None,
           xsrfToken = None,
           reservationLocktermResponse = None
-        )
+        ))
       case Msg(CallbackCommand(Tags.No), _) =>
         end()
     }

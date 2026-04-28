@@ -10,6 +10,8 @@ import com.lbs.server.util.MessageExtractors
 import org.apache.pekko.actor.ActorSystem
 import org.jasypt.util.text.TextEncryptor
 
+import scala.compiletime.uninitialized
+
 class Login(
   source: MessageSource,
   bot: Bot,
@@ -22,11 +24,11 @@ class Login(
     extends Conversation[String]
     with Localizable {
 
-  protected var userId: UserId = _
+  protected var userId: UserId = uninitialized
 
   entryPoint(logIn)
 
-  private var forwardCommand: ForwardCommand = _
+  private var forwardCommand: ForwardCommand = uninitialized
 
   def logIn: Step =
     monologue { case Msg(cmd: Command, _) =>
@@ -38,7 +40,7 @@ class Login(
     ask { _ =>
       bot.sendMessage(source, lang.provideUsername)
     } onReply { case Msg(MessageExtractors.TextCommand(username), _) =>
-      goto(requestPassword) using username
+      goto(requestPassword).using(username)
     }
 
   def requestPassword: Step =

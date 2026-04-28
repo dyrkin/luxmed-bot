@@ -1,14 +1,16 @@
 package com.lbs.server.repository.model
 
 import jakarta.persistence.{Access, AccessType, Column, Entity}
+
 import scala.beans.BeanProperty
+import scala.compiletime.uninitialized
 
 @Entity
 @Access(AccessType.FIELD)
 class Settings extends RecordId {
   @BeanProperty
   @Column(name = "user_id", unique = true, nullable = false)
-  var userId: JLong = _
+  var userId: JLong = uninitialized
 
   @BeanProperty
   @Column(nullable = false)

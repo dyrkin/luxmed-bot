@@ -12,14 +12,15 @@ import org.springframework.stereotype.Service
 
 import java.net.HttpCookie
 import java.time.{LocalDateTime, LocalTime}
+import scala.compiletime.uninitialized
 
 @Service
 class ApiService extends SessionSupport {
 
   @Autowired
-  protected var dataService: DataService = _
+  protected var dataService: DataService = uninitialized
   @Autowired
-  private var textEncryptor: TextEncryptor = _
+  private var textEncryptor: TextEncryptor = uninitialized
 
   private val luxmedApi = new LuxmedApi[ThrowableOr]
 

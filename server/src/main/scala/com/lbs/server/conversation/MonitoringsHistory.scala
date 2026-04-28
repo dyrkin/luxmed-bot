@@ -43,7 +43,7 @@ class MonitoringsHistory(
         bot.sendMessage(userId.source, lang.noActiveMonitorings)
         end()
       case Msg(monitoring: Monitoring, _) =>
-        goto(askRepeatMonitoring) using monitoring
+        goto(askRepeatMonitoring).using(monitoring)
     }
 
   def askRepeatMonitoring: Step =

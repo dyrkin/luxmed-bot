@@ -25,7 +25,7 @@ class Bot(telegram: TelegramBot /* other bots */ ) extends LazyLogging {
   def sendFile(source: MessageSource, filename: String, contents: Array[Byte], caption: Option[String] = None): Unit =
     resolveAdapter(source).sendFile(source.chatId, filename, contents, caption)
 
-  private def resolveAdapter(source: MessageSource): PollBot[_] =
+  private def resolveAdapter(source: MessageSource): PollBot[?] =
     source.sourceSystem match {
       case TelegramMessageSourceSystem => telegram
       case sourceSystem =>

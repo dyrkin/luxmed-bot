@@ -1,6 +1,5 @@
 package com.lbs.server.conversation
 
-import org.apache.pekko.actor.ActorSystem
 import com.lbs.api.json.model.Event
 import com.lbs.bot.*
 import com.lbs.bot.model.{Button, Command}
@@ -10,6 +9,7 @@ import com.lbs.server.conversation.ReservedVisitsViewer.Tags
 import com.lbs.server.conversation.base.Conversation
 import com.lbs.server.lang.{Localizable, Localization}
 import com.lbs.server.service.ApiService
+import org.apache.pekko.actor.ActorSystem
 
 class ReservedVisitsViewer(
   val userId: UserId,
@@ -42,7 +42,7 @@ class ReservedVisitsViewer(
         bot.sendMessage(userId.source, lang.noUpcomingVisits)
         end()
       case Msg(visit: Event, _) =>
-        goto(askToCancelVisit) using visit
+        goto(askToCancelVisit).using(visit)
     }
 
   def askToCancelVisit: Step =

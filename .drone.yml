@@ -5,7 +5,7 @@ name: amd64
 
 steps:
   - name: build
-    image: eclipse-temurin:25-jre-noble
+    image: eclipse-temurin:25-jdk-noble
     environment:
       GRADLE_USER_HOME: ~/.gradle
     commands:
@@ -56,10 +56,11 @@ platform:
 
 steps:
   - name: build
-    image: eclipse-temurin:25-jre-noble
+    image: eclipse-temurin:25-jdk-noble
     environment:
       GRADLE_USER_HOME: ~/.gradle
     commands:
+      - ./gradlew checkScalafmtAll test
       - ./gradlew prepare
       - echo -n "1.1.$DRONE_BUILD_NUMBER-arm64,latest-arm64" > .tags
       - echo -n "1.1.$DRONE_BUILD_NUMBER" > ./docker/version

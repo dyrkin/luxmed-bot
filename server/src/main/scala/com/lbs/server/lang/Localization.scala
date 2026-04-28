@@ -6,12 +6,13 @@ import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.stereotype.Component
 
 import java.util.concurrent.ConcurrentHashMap
+import scala.compiletime.uninitialized
 
 @Component
 class Localization {
 
   @Autowired
-  private var dataService: DataService = _
+  private var dataService: DataService = uninitialized
 
   private val cachedLangs = new ConcurrentHashMap[Long, Lang]
 

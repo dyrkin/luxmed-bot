@@ -4,25 +4,26 @@ import jakarta.persistence.{Access, AccessType, Column, Entity}
 
 import java.time.ZonedDateTime
 import scala.beans.BeanProperty
+import scala.compiletime.uninitialized
 
 @Entity
 @Access(AccessType.FIELD)
 class CityHistory extends History with RecordId {
   @BeanProperty
   @Column(nullable = false)
-  var id: JLong = _
+  var id: JLong = uninitialized
 
   @BeanProperty
   @Column(nullable = false)
-  var name: String = _
+  var name: String = uninitialized
 
   @BeanProperty
   @Column(name = "account_id", nullable = false)
-  var accountId: JLong = _
+  var accountId: JLong = uninitialized
 
   @BeanProperty
   @Column(nullable = false)
-  var time: ZonedDateTime = _
+  var time: ZonedDateTime = uninitialized
 }
 
 object CityHistory {

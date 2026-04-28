@@ -2,14 +2,15 @@ package com.lbs.server.conversation.base
 
 import com.typesafe.scalalogging.StrictLogging
 
+import scala.compiletime.uninitialized
 import scala.util.control.NonFatal
 
 trait Conversation[D] extends Domain[D] with Interactional with StrictLogging {
 
-  private var currentData: D = _
-  private var currentStep: Step = _
-  private var initialData: D = _
-  private var initialStep: Step = _
+  private var currentData: D = uninitialized
+  private var currentStep: Step = uninitialized
+  private var initialData: D = uninitialized
+  private var initialStep: Step = uninitialized
 
   private val defaultMsgHandler: MessageProcessorFn = { case Msg(any, data) =>
     logger.warn(s"Unhandled message received in step '${currentStep.name}'. Message: [$any]. Data: [$data]")

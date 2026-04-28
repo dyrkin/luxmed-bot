@@ -11,7 +11,7 @@ import org.scalatest.funsuite.AnyFunSuite
 import org.scalatest.matchers.should.Matchers
 
 import java.net.HttpCookie
-import java.time.{LocalDateTime, LocalTime}
+import java.time.{LocalDateTime, LocalTime, ZonedDateTime}
 
 /** LuxmedApi integration-style test.
   *
@@ -92,7 +92,7 @@ class LuxmedApiSpec extends AnyFunSuite with Matchers with BeforeAndAfterAll {
     )
 
     val result = api.login("user@example.com", "secret_pass")
-    result shouldBe a[Right[_, _]]
+    result shouldBe a[Right[?, ?]]
 
     val body = result.toOption.get.body
     body.accessToken  shouldBe "tok123"
@@ -145,7 +145,7 @@ class LuxmedApiSpec extends AnyFunSuite with Matchers with BeforeAndAfterAll {
     )
 
     val result = api.loginToApp(session)
-    result shouldBe a[Right[_, _]]
+    result shouldBe a[Right[?, ?]]
 
     wireMock.verify(
       getRequestedFor(urlPathEqualTo("/PatientPortal/Account/LogInToApp"))
@@ -172,7 +172,7 @@ class LuxmedApiSpec extends AnyFunSuite with Matchers with BeforeAndAfterAll {
     )
 
     val result = api.getForgeryToken(session)
-    result shouldBe a[Right[_, _]]
+    result shouldBe a[Right[?, ?]]
     result.toOption.get.body.token shouldBe "FORGERY_TOK"
 
     wireMock.verify(
@@ -196,7 +196,7 @@ class LuxmedApiSpec extends AnyFunSuite with Matchers with BeforeAndAfterAll {
     )
 
     val result = api.getReservationPage(session, Seq(extraCookie))
-    result shouldBe a[Right[_, _]]
+    result shouldBe a[Right[?, ?]]
 
     wireMock.verify(
       getRequestedFor(urlPathEqualTo("/PatientPortal/NewPortal/Page/Reservation"))
@@ -219,12 +219,10 @@ class LuxmedApiSpec extends AnyFunSuite with Matchers with BeforeAndAfterAll {
             .withBody("""{"Events":[],"IsEndOfList":true,"ServerDateTime":"2021-07-01T14:32:00+02:00"}""")
         )
     )
-
-    import java.time.ZonedDateTime
     val from = ZonedDateTime.parse("2021-01-01T00:00:00+01:00")
     val to   = ZonedDateTime.parse("2021-06-30T00:00:00+01:00")
     val result = api.events(session, fromDate = from, toDate = to)
-    result shouldBe a[Right[_, _]]
+    result shouldBe a[Right[?, ?]]
     result.toOption.get.events shouldBe empty
 
     wireMock.verify(
@@ -253,7 +251,7 @@ class LuxmedApiSpec extends AnyFunSuite with Matchers with BeforeAndAfterAll {
     )
 
     val result = api.dictionaryCities(session)
-    result shouldBe a[Right[_, _]]
+    result shouldBe a[Right[?, ?]]
     val cities = result.toOption.get
     cities should have size 2
     cities.head.id   shouldBe 70L
@@ -282,7 +280,7 @@ class LuxmedApiSpec extends AnyFunSuite with Matchers with BeforeAndAfterAll {
     )
 
     val result = api.dictionaryServiceVariants(session)
-    result shouldBe a[Right[_, _]]
+    result shouldBe a[Right[?, ?]]
     result.toOption.get should have size 1
 
     wireMock.verify(
@@ -307,7 +305,7 @@ class LuxmedApiSpec extends AnyFunSuite with Matchers with BeforeAndAfterAll {
     )
 
     val result = api.dictionaryFacilitiesAndDoctors(session, cityId = Some(70L), serviceVariantId = Some(999L))
-    result shouldBe a[Right[_, _]]
+    result shouldBe a[Right[?, ?]]
 
     wireMock.verify(
       getRequestedFor(urlPathEqualTo("/PatientPortal/NewPortal/Dictionary/facilitiesAndDoctors"))
@@ -368,7 +366,7 @@ class LuxmedApiSpec extends AnyFunSuite with Matchers with BeforeAndAfterAll {
       fromDate  = from,
       toDate    = to
     )
-    result shouldBe a[Right[_, _]]
+    result shouldBe a[Right[?, ?]]
     result.toOption.get.correlationId shouldBe "corr-1"
 
     wireMock.verify(
@@ -471,7 +469,7 @@ class LuxmedApiSpec extends AnyFunSuite with Matchers with BeforeAndAfterAll {
     )
 
     val result = api.reservationLockterm(session, xsrfToken, locktermReq)
-    result shouldBe a[Right[_, _]]
+    result shouldBe a[Right[?, ?]]
     result.toOption.get.value.temporaryReservationId shouldBe 555L
 
     wireMock.verify(
@@ -501,7 +499,7 @@ class LuxmedApiSpec extends AnyFunSuite with Matchers with BeforeAndAfterAll {
     )
 
     val result = api.deleteTemporaryReservation(session, xsrfToken, 888L)
-    result shouldBe a[Right[_, _]]
+    result shouldBe a[Right[?, ?]]
 
     wireMock.verify(
       postRequestedFor(urlPathEqualTo("/PatientPortal/NewPortal/reservation/releaseterm"))
@@ -563,7 +561,7 @@ class LuxmedApiSpec extends AnyFunSuite with Matchers with BeforeAndAfterAll {
     )
 
     val result = api.reservationConfirm(session, xsrfToken, confirmReq)
-    result shouldBe a[Right[_, _]]
+    result shouldBe a[Right[?, ?]]
     result.toOption.get.value.reservationId shouldBe 777L
 
     wireMock.verify(
@@ -631,7 +629,7 @@ class LuxmedApiSpec extends AnyFunSuite with Matchers with BeforeAndAfterAll {
     val changeTermReq = ReservationChangetermRequest(existingReservationId = 987654321L, term = newTerm)
 
     val result = api.reservationChangeTerm(session, xsrfToken, changeTermReq)
-    result shouldBe a[Right[_, _]]
+    result shouldBe a[Right[?, ?]]
     result.toOption.get.value.reservationId shouldBe 111L
 
     wireMock.verify(
@@ -659,7 +657,7 @@ class LuxmedApiSpec extends AnyFunSuite with Matchers with BeforeAndAfterAll {
     )
 
     val result = api.reservationDelete(session, 12345L)
-    result shouldBe a[Right[_, _]]
+    result shouldBe a[Right[?, ?]]
 
     wireMock.verify(
       deleteRequestedFor(urlPathEqualTo("/PatientPortalMobileAPI/api/events/Visit/12345"))
@@ -685,7 +683,7 @@ class LuxmedApiSpec extends AnyFunSuite with Matchers with BeforeAndAfterAll {
     )
 
     val result = api.dictionaryCities(session)
-    result shouldBe a[Left[_, _]]
+    result shouldBe a[Left[?, ?]]
     result.left.toOption.get shouldBe a[com.lbs.api.exception.SessionExpiredException]
   }
 
@@ -701,7 +699,7 @@ class LuxmedApiSpec extends AnyFunSuite with Matchers with BeforeAndAfterAll {
     )
 
     val result = api.login("bad@user.com", "wrong_pw")
-    result shouldBe a[Left[_, _]]
+    result shouldBe a[Left[?, ?]]
     result.left.toOption.get shouldBe a[com.lbs.api.exception.InvalidLoginOrPasswordException]
   }
 
@@ -717,7 +715,7 @@ class LuxmedApiSpec extends AnyFunSuite with Matchers with BeforeAndAfterAll {
     )
 
     val result = api.dictionaryCities(session)
-    result shouldBe a[Left[_, _]]
+    result shouldBe a[Left[?, ?]]
     result.left.toOption.get shouldBe a[com.lbs.api.exception.GenericException]
     result.left.toOption.get.getMessage should include("Bad request happened")
   }
@@ -735,8 +733,6 @@ class LuxmedApiSpec extends AnyFunSuite with Matchers with BeforeAndAfterAll {
             .withBody("""{"Events":[],"IsEndOfList":true,"ServerDateTime":"2021-07-01T14:32:00+02:00"}""")
         )
     )
-
-    import java.time.ZonedDateTime
     api.events(session, fromDate = ZonedDateTime.now().minusMonths(1), toDate = ZonedDateTime.now())
 
     wireMock.verify(

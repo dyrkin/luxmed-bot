@@ -1,6 +1,5 @@
 package com.lbs.server.conversation
 
-import org.apache.pekko.actor.ActorSystem
 import com.lbs.bot.*
 import com.lbs.bot.model.Button
 import com.lbs.server.conversation.Login.UserId
@@ -9,6 +8,7 @@ import com.lbs.server.conversation.base.{Conversation, Interactional}
 import com.lbs.server.lang.{Localizable, Localization}
 import com.lbs.server.util.DateTimeUtil.applyHourMinute
 import com.lbs.server.util.MessageExtractors.{CallbackCommand, TextCommand}
+import org.apache.pekko.actor.ActorSystem
 
 import java.time.LocalTime
 import scala.util.control.NonFatal
@@ -35,7 +35,7 @@ class TimePicker(val userId: UserId, val bot: Bot, val localization: Localizatio
         mode = newMode
         stay()
       case Msg(initialTime: LocalTime, _) =>
-        goto(requestTime) using initialTime
+        goto(requestTime).using(initialTime)
     }
 
   def requestTime: Step =
@@ -77,7 +77,7 @@ class TimePicker(val userId: UserId, val bot: Bot, val localization: Localizatio
       case Msg(cmd @ CallbackCommand(tag), time) =>
         val modifiedTime = modifyTime(time, tag)
         bot.sendEditMessage(userId.source, cmd.message.messageId, inlineKeyboard = timeButtons(modifiedTime))
-        stay() using modifiedTime
+        stay().using(modifiedTime)
     }
 
   private def modifyTime(time: LocalTime, tag: String) = {

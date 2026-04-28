@@ -3,25 +3,26 @@ package com.lbs.server.repository.model
 import jakarta.persistence.*
 
 import scala.beans.BeanProperty
+import scala.compiletime.uninitialized
 
 @Entity
 @Access(AccessType.FIELD)
 class Credentials extends RecordId {
   @BeanProperty
   @Column(name = "user_id", nullable = false)
-  var userId: JLong = _
+  var userId: JLong = uninitialized
 
   @BeanProperty
   @Column(name = "account_id", nullable = false)
-  var accountId: JLong = _
+  var accountId: JLong = uninitialized
 
   @BeanProperty
   @Column(nullable = false)
-  var username: String = _
+  var username: String = uninitialized
 
   @BeanProperty
   @Column(nullable = false)
-  var password: String = _
+  var password: String = uninitialized
 }
 
 object Credentials {

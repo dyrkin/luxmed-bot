@@ -27,7 +27,7 @@ trait StaticDataForBooking extends Conversation[BookingData] {
         staticData ! FoundOptions(filterOptions(staticOptions, searchText))
         stay()
       case Msg(id: IdName, _) =>
-        goto(nextStep) using applyId(id)
+        goto(nextStep).using(applyId(id))
     }
   }
 

@@ -12,25 +12,27 @@ import org.jasypt.util.text.{StrongTextEncryptor, TextEncryptor}
 import org.springframework.beans.factory.annotation.{Autowired, Value}
 import org.springframework.context.annotation.{Bean, Configuration}
 
+import scala.compiletime.uninitialized
+
 @Configuration
 class BootConfig {
   @Value("${security.secret}")
-  private var secret: String = _
+  private var secret: String = uninitialized
 
   @Value("${telegram.token}")
-  private var telegramBotToken: String = _
+  private var telegramBotToken: String = uninitialized
 
   @Autowired
-  private var apiService: ApiService = _
+  private var apiService: ApiService = uninitialized
 
   @Autowired
-  private var dataService: DataService = _
+  private var dataService: DataService = uninitialized
 
   @Autowired
-  private var monitoringService: MonitoringService = _
+  private var monitoringService: MonitoringService = uninitialized
 
   @Autowired
-  private var localization: Localization = _
+  private var localization: Localization = uninitialized
 
   @Bean
   def actorSystem: ActorSystem = ActorSystem()

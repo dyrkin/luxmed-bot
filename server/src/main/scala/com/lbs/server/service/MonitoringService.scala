@@ -17,6 +17,7 @@ import org.springframework.stereotype.Service
 import java.time.{LocalDateTime, ZonedDateTime}
 import java.util.concurrent.ScheduledFuture
 import scala.collection.mutable
+import scala.compiletime.uninitialized
 import scala.concurrent.duration.*
 import scala.language.implicitConversions
 import scala.util.Random
@@ -25,15 +26,15 @@ import scala.util.Random
 class MonitoringService extends StrictLogging {
 
   @Autowired
-  private var bot: Bot = _
+  private var bot: Bot = uninitialized
   @Autowired
-  private var dataService: DataService = _
+  private var dataService: DataService = uninitialized
   @Autowired
-  private var apiService: ApiService = _
+  private var apiService: ApiService = uninitialized
   @Autowired
-  private var localization: Localization = _
+  private var localization: Localization = uninitialized
 
-  private var activeMonitorings = mutable.Map.empty[JLong, (Monitoring, ScheduledFuture[_])]
+  private var activeMonitorings = mutable.Map.empty[JLong, (Monitoring, ScheduledFuture[?])]
 
   private val dbChecker = new Scheduler(1)
 
@@ -49,7 +50,7 @@ class MonitoringService extends StrictLogging {
 
   private def period = (PeriodBase.toSeconds + Random.nextInt(PeriodMaxDelta.toSeconds.toInt)).seconds
 
-  private var checkedOn: ZonedDateTime = _
+  private var checkedOn: ZonedDateTime = uninitialized
 
   def notifyUserAboutTerms(terms: Seq[TermExt], monitoring: Monitoring): Unit = {
     deactivateMonitoring(monitoring.accountId, monitoring.recordId)

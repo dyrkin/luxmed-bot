@@ -1,3 +1,6 @@
+import org.gradle.api.tasks.testing.logging.TestExceptionFormat
+import org.gradle.api.tasks.testing.logging.TestLogEvent
+
 plugins {
     id "org.springframework.boot" version "4.0.6"
     id "cz.augi.gradle.scalafmt" version "1.21.5"
@@ -17,6 +20,7 @@ allprojects {
     }
 
     dependencies {
+        implementation "org.scala-lang:scala3-library_3:3.8.3"
         testImplementation "org.scalatest:scalatest_3:3.2.19"
         testRuntimeOnly "org.scalatestplus:junit-5-13_3:3.2.19.0"
         testImplementation "org.scalatestplus:mockito-5-12_3:3.2.19.0"
@@ -24,13 +28,49 @@ allprojects {
 
     tasks.withType(Test) {
         useJUnitPlatform()
+        testLogging {
+            events = [TestLogEvent.FAILED,
+                    TestLogEvent.PASSED,
+                    TestLogEvent.SKIPPED,
+                    TestLogEvent.STANDARD_OUT]
+            exceptionFormat = TestExceptionFormat.FULL
+            showExceptions = true
+            showCauses = true
+            showStackTraces = true
+
+            debug {
+                events = [TestLogEvent.STARTED,
+                        TestLogEvent.FAILED,
+                        TestLogEvent.PASSED,
+                        TestLogEvent.SKIPPED,
+                        TestLogEvent.STANDARD_ERROR,
+                        TestLogEvent.STANDARD_OUT]
+                exceptionFormat = TestExceptionFormat.FULL
+            }
+            info.events = debug.events
+            info.exceptionFormat = debug.exceptionFormat
+        }
+        addTestListener(new TestListener() {
+            @Override void beforeSuite(TestDescriptor desc) {}
+            @Override void afterSuite(TestDescriptor desc, TestResult result) {
+                if (!desc.parent) {
+                    def output = "Results: ${result.resultType} (${result.testCount} tests, ${result.successfulTestCount} successes, ${result.failedTestCount} failures, ${result.skippedTestCount} skipped)"
+                    def startItem = '|  ', endItem = '  |'
+                    def repeatLength = startItem.length() + output.length() + endItem.length()
+                    println('\n' + ('-' * repeatLength) + '\n' + startItem + output + endItem + '\n' + ('-' * repeatLength))
+                }
+            }
+            @Override void beforeTest(TestDescriptor desc) {}
+            @Override void afterTest(TestDescriptor desc, TestResult result) {}
+        })
     }
     tasks.withType(ScalaCompile) {
         scalaCompileOptions.additionalParameters = [
             "-deprecation",
             "-feature",
             "-unchecked",
-            "-source:3.3"
+            "-source:3.8",
+            "-Xunchecked-java-output-version:17"
         ]
     }
     tasks.withType(Jar) {
