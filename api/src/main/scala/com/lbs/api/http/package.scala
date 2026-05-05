@@ -1,21 +1,25 @@
 package com.lbs.api.http
 
 import cats.MonadError
-import cats.implicits.*
 import com.lbs.api.ThrowableMonad
 import com.lbs.api.exception.*
 import com.lbs.api.json.JsonSerializer.extensions.*
 import com.lbs.api.json.model.*
 import com.lbs.api.json.model.JsonCodecs.given
+import com.typesafe.scalalogging.Logger
 import sttp.client3.*
+import sttp.model.{Header, QueryParams}
 
 import java.net.{HttpCookie, HttpURLConnection}
 import scala.util.{Failure, Success, Try}
+
+private val logger = Logger("com.lbs.api.http")
 
 case class Session(accessToken: String, tokenType: String, jwtToken: String, cookies: Seq[HttpCookie])
 
 case class LuxmedResponse[T](body: T, code: Int, cookies: Seq[HttpCookie], headers: Map[String, String] = Map.empty) {
   def copy[U](body: U): LuxmedResponse[U] = LuxmedResponse(body, code, cookies, headers)
+  def copy(headers: Map[String, String]): LuxmedResponse[T] = LuxmedResponse(body, code, cookies, headers)
   def header(name: String): Option[String] = headers.get(name.toLowerCase)
 }
 
@@ -35,17 +39,17 @@ object headers {
   val `X-Requested-With`       = "X-Requested-With"
 }
 
-private val SensitiveParams = List("passw", "access_token", "refresh_token", "authorization")
-
 extension [F[_]: ThrowableMonad](request: Request[String, Any])
   def invoke(using backend: SttpBackend[Identity, Any]): F[LuxmedResponse[String]] =
     val me = MonadError[F, Throwable]
+    logger.debug(s"Sending request:\n${hideSensitive(request)}")
     Try(backend.send(request)) match
       case Failure(ex) => me.raiseError(ex)
       case Success(resp) =>
         val cookies    = Try(resp.history.flatMap(_.unsafeCookies) ++ resp.unsafeCookies).getOrElse(Nil).map(c => new HttpCookie(c.name, c.value))
         val allHeaders = (resp.history.flatMap(_.headers) ++ resp.headers).map(h => h.name.toLowerCase -> h.value).toMap
         val luxmedResp = LuxmedResponse(resp.body, resp.code.code, cookies, allHeaders)
+        logger.debug(s"Received response:\n${hideSensitive(luxmedResp)}")
         extractLuxmedError(luxmedResp) match
           case Some(error) => me.raiseError(error)
           case None =>
@@ -91,3 +95,22 @@ private def extractLuxmedError(response: LuxmedResponse[String]): Option[ApiExce
       Try(body.as[LuxmedErrorsMap])
         .map(error => luxmedErrorToApiException(code, error))
         .toOption
+
+private val SensitiveParams = List("passw", "access_token", "refresh_token", "authorization")
+
+private def hide(key: String): Boolean =
+  val lowerKey = key.toLowerCase
+  SensitiveParams.exists(p => lowerKey.contains(p))
+
+private def hideSensitive(request: Request[String, Any]): String =
+  val safeUri = request.uri.withParams(
+    QueryParams.fromSeq(request.uri.params.toSeq.map { case (k, v) =>
+      if hide(k) then k -> "******" else k -> v
+    })
+  )
+  val safeHeaders = request.headers.map(h => if hide(h.name) then Header(h.name, "******") else h)
+  request.copy(uri = safeUri, headers = safeHeaders).toCurl
+
+private def hideSensitive(response: LuxmedResponse[String]): String =
+  val safeHeaders = response.headers.map { case (k, v) => if hide(k) then k -> "******" else k -> v }
+  s"[${response.code}] ${response.copy(safeHeaders)}"

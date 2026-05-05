@@ -14,7 +14,7 @@ package com.lbs.api.json.model
   */
 
 case class Doctor(
-  academicTitle: String,
+  academicTitle: Option[String],
   facilityGroupIds: Option[List[Long]],
   firstName: String,
   isEnglishSpeaker: Option[Boolean],

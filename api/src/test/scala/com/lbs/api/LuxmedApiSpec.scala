@@ -442,7 +442,7 @@ class LuxmedApiSpec extends AnyFunSuite with Matchers with BeforeAndAfterAll {
     )
 
     val doctor = Doctor(
-      academicTitle    = "lek.",
+      academicTitle    = Some("lek."),
       facilityGroupIds = None,
       firstName        = "TARAS",
       isEnglishSpeaker = None,
@@ -455,7 +455,7 @@ class LuxmedApiSpec extends AnyFunSuite with Matchers with BeforeAndAfterAll {
       doctor                = doctor,
       doctorId              = 111L,
       facilityId            = 78L,
-      impedimentText        = "",
+      impedimentText        = Some(""),
       isAdditional          = false,
       isImpediment          = false,
       isPreparationRequired = false,

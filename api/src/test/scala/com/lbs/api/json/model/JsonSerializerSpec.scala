@@ -51,7 +51,7 @@ class JsonSerializerSpec extends AnyFunSuite with Matchers {
     result.firstName              shouldBe "TARAS"
     result.lastName               shouldBe "SHEVCHENKO"
     result.id                     shouldBe 11111L
-    result.academicTitle          shouldBe "dr n. med."
+    result.academicTitle          shouldBe Some("dr n. med.")
     result.isEnglishSpeaker       shouldBe Some(true)
     result.facilityGroupIds       shouldBe Some(List(78L))
     result.name                   shouldBe "TARAS SHEVCHENKO"
@@ -233,7 +233,7 @@ class JsonSerializerSpec extends AnyFunSuite with Matchers {
     terms                          should have size 1
     terms.head.terms               should have size 1
     val term = terms.head.terms.head
-    term.clinic                    shouldBe "LX Wrocław - Fabryczna 6"
+    term.clinic                    shouldBe Some("LX Wrocław - Fabryczna 6")
     term.clinicId                  shouldBe 2222L
     term.isTelemedicine            shouldBe true
     term.scheduleId                shouldBe 555555L

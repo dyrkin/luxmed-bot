@@ -125,13 +125,13 @@ case class AdditionalData(isPreparationRequired: Boolean, preparationItems: List
 case class TermsForDay(day: LuxmedFunnyDateTime, terms: List[Term]) extends SerializableJsonObject
 
 case class Term(
-  clinic: String,
+  clinic: Option[String],
   clinicId: Long,
   clinicGroupId: Long,
   dateTimeFrom: LuxmedFunnyDateTime,
   dateTimeTo: LuxmedFunnyDateTime,
   doctor: Doctor,
-  impedimentText: String,
+  impedimentText: Option[String],
   isAdditional: Boolean,
   isImpediment: Boolean,
   isTelemedicine: Boolean,

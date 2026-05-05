@@ -84,7 +84,7 @@ object Pl extends Lang {
        |
        |⏱ <b>${formatDateTime(term.term.dateTimeFrom, locale)}</b>
        |${capitalize(doctor)}: ${term.term.doctor.firstName} ${term.term.doctor.lastName}
-       |${capitalize(clinic)}: ${term.term.clinic}""".stripMargin
+       |${capitalize(clinic)}: ${term.term.clinic.getOrElse("")}""".stripMargin
 
   override def appointmentIsConfirmed: String = "👍 Twoja wizyta została potwierdzona!"
 
@@ -199,7 +199,7 @@ object Pl extends Lang {
   override def termEntry(term: TermExt, page: Int, index: Int): String =
     s"""⏱ <b>${formatDateTime(term.term.dateTimeFrom, locale)}</b>
        |${capitalize(doctor)}: ${term.term.doctor.firstName} ${term.term.doctor.lastName}
-       |${capitalize(clinic)}: ${term.term.clinic}
+       |${capitalize(clinic)}: ${term.term.clinic.getOrElse("")}
        |<b>➡</b> /book_$index
        |
        |""".stripMargin
@@ -281,7 +281,7 @@ object Pl extends Lang {
     s"""⏱ <b>${formatDateTime(term.term.dateTimeFrom, locale)}</b>
        |${capitalize(doctor)}: ${term.term.doctor.firstName} ${term.term.doctor.lastName}
        |${capitalize(service)}: ${monitoring.serviceName}
-       |${capitalize(clinic)}: ${term.term.clinic}
+       |${capitalize(clinic)}: ${term.term.clinic.getOrElse("")}
        |${capitalize(city)}: ${monitoring.cityName}
        |/reserve_${monitoring.recordId}_${term.term.scheduleId}_${minutesSinceBeginOf2018(term.term.dateTimeFrom.get)}
        |
@@ -310,7 +310,7 @@ object Pl extends Lang {
        |⏱ <b>${formatDateTime(term.term.dateTimeFrom, locale)}</b>
        |${capitalize(doctor)}: ${term.term.doctor.firstName} ${term.term.doctor.lastName}
        |${capitalize(service)}: ${monitoring.serviceName}
-       |${capitalize(clinic)}: ${term.term.clinic}
+       |${capitalize(clinic)}: ${term.term.clinic.getOrElse("")}
        |${capitalize(city)}: ${monitoring.cityName}""".stripMargin
 
   override def maximumMonitoringsLimitExceeded: String = "Maksymalna liczba monitoringów uzytkownika to 10"

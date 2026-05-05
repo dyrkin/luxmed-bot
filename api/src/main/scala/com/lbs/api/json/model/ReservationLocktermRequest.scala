@@ -37,7 +37,7 @@ case class ReservationLocktermRequest(
   doctorId: Long,
   eReferralId: Option[String] = None,
   facilityId: Long,
-  impedimentText: String,
+  impedimentText: Option[String],
   isAdditional: Boolean,
   isImpediment: Boolean,
   isPreparationRequired: Boolean,
