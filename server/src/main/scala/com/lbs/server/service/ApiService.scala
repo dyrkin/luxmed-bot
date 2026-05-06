@@ -113,12 +113,13 @@ class ApiService extends SessionSupport {
     doctorId: Option[Long] = None
   ): ThrowableOr[List[TermExt]] =
     withSession(accountId) { session =>
-      luxmedApi.rehabTermsIndex(session, cityId, serviceVariantId, referralId, referralTypeId,
-        fromDate, toDate, facilityId, doctorId).map { response =>
+       luxmedApi.rehabTermsIndex(session, cityId, serviceVariantId, referralId, referralTypeId,
+        fromDate, toDate, facilitiesIds = None, doctorId).map { response =>
         response.termsForService.termsForDays
           .flatMap(_.terms.map(term => TermExt(response.termsForService.additionalData, term)))
           .filter { term =>
             val time = term.term.dateTimeFrom.get.toLocalTime
+            (facilityId.isEmpty || facilityId.contains(term.term.clinicGroupId)) &&
             (doctorId.isEmpty || doctorId.contains(term.term.doctor.id)) &&
             (time == timeFrom || time == timeTo || (time.isAfter(timeFrom) && time.isBefore(timeTo)))
           }

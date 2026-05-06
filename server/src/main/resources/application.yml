@@ -12,8 +12,9 @@ spring:
     database-platform: "org.hibernate.dialect.PostgreSQLDialect"
     generate-ddl: "false"
   liquibase:
+    enabled: true
     change-log: classpath:db/liquibase-changelog.yml
-    duplicate-file-mode: warn
+    show-summary: VERBOSE
   main:
     allow-circular-references: true
 

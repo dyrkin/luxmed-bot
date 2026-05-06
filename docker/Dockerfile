@@ -6,8 +6,8 @@ RUN ln -fs /usr/share/zoneinfo/Europe/Warsaw /etc/localtime
 RUN dpkg-reconfigure -f noninteractive tzdata
 
 RUN mkdir -p /app
-ADD server.jar /app
 ADD run.sh run.sh
-ADD version /app/version
 RUN chmod +x run.sh
+ADD server.jar /app
+ADD version /app/version
 CMD ./run.sh
