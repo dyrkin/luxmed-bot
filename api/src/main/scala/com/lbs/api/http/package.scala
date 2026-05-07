@@ -102,6 +102,17 @@ private def hide(key: String): Boolean =
   val lowerKey = key.toLowerCase
   SensitiveParams.exists(p => lowerKey.contains(p))
 
+private def hideSensitiveBody(body: BasicRequestBody): BasicRequestBody =
+  body match
+    case StringBody(s, encoding, defaultContentType) =>
+      val sanitized = s.split("&").map { part =>
+        part.split("=", 2) match
+          case Array(k, v) if hide(k) => s"$k=******"
+          case _                      => part
+      }.mkString("&")
+      StringBody(sanitized, encoding, defaultContentType)
+    case other => other
+
 private def hideSensitive(request: Request[String, Any]): String =
   val safeUri = request.uri.withParams(
     QueryParams.fromSeq(request.uri.params.toSeq.map { case (k, v) =>
@@ -109,7 +120,10 @@ private def hideSensitive(request: Request[String, Any]): String =
     })
   )
   val safeHeaders = request.headers.map(h => if hide(h.name) then Header(h.name, "******") else h)
-  request.copy(uri = safeUri, headers = safeHeaders).toCurl
+  val safeBody = request.body match
+    case body: BasicRequestBody => hideSensitiveBody(body)
+    case other                  => other
+  request.copy(uri = safeUri, headers = safeHeaders, body = safeBody).toCurl
 
 private def hideSensitive(response: LuxmedResponse[String]): String =
   val safeHeaders = response.headers.map { case (k, v) => if hide(k) then k -> "******" else k -> v }
