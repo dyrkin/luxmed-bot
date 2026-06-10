@@ -48,8 +48,8 @@ class JsonSerializerSpec extends AnyFunSuite with Matchers {
 
     val result = JsonSerializer.extract[Doctor](json)
 
-    result.firstName              shouldBe "TARAS"
-    result.lastName               shouldBe "SHEVCHENKO"
+    result.firstName              shouldBe Some("TARAS")
+    result.lastName               shouldBe Some("SHEVCHENKO")
     result.id                     shouldBe 11111L
     result.academicTitle          shouldBe Some("dr n. med.")
     result.isEnglishSpeaker       shouldBe Some(true)
@@ -106,7 +106,7 @@ class JsonSerializerSpec extends AnyFunSuite with Matchers {
 
     result.doctors    should have size 2
     result.facilities should have size 2
-    result.doctors.head.lastName   shouldBe "SHEVCHENKO"
+    result.doctors.head.lastName   shouldBe Some("SHEVCHENKO")
     result.facilities.last.name    shouldBe "ul. Kwidzyńska 6"
   }
 
@@ -155,7 +155,7 @@ class JsonSerializerSpec extends AnyFunSuite with Matchers {
     result.value.temporaryReservationId            shouldBe 222222L
     result.value.changeTermAvailable               shouldBe false
     result.value.conflictedVisit                   shouldBe None
-    result.value.doctorDetails.firstName           shouldBe "TARAS"
+    result.value.doctorDetails.firstName           shouldBe Some("TARAS")
     result.value.valuations                        should have size 1
     result.value.valuations.head.contractId        shouldBe Some(333333L)
   }
@@ -237,7 +237,7 @@ class JsonSerializerSpec extends AnyFunSuite with Matchers {
     term.clinicId                  shouldBe 2222L
     term.isTelemedicine            shouldBe true
     term.scheduleId                shouldBe 555555L
-    term.doctor.lastName           shouldBe "GRYGORYCH"
+    term.doctor.lastName           shouldBe Some("GRYGORYCH")
     term.dateTimeFrom.get.toLocalTime shouldBe LocalTime.of(18, 45)
   }
 
