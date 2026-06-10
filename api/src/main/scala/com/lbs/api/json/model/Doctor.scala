@@ -16,11 +16,16 @@ package com.lbs.api.json.model
 case class Doctor(
   academicTitle: Option[String],
   facilityGroupIds: Option[List[Long]],
-  firstName: String,
+  firstName: Option[String],
   isEnglishSpeaker: Option[Boolean],
   genderId: Option[Long],
   id: Long,
-  lastName: String
+  lastName: Option[String]
 ) extends Identified {
-  override def name: String = firstName + " " + lastName
+  override def name: String = (firstName, lastName) match {
+    case (Some(first), Some(last)) => s"$first $last"
+    case (None, Some(last)) => last
+    case (Some(first), None) => first
+    case (None, None) => "N/A"
+  }
 }

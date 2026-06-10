@@ -83,7 +83,7 @@ object Pl extends Lang {
     s"""<b>➡</b> Czy potwierdzasz wizytę?
        |
        |⏱ <b>${formatDateTime(term.term.dateTimeFrom, locale)}</b>
-       |${capitalize(doctor)}: ${term.term.doctor.firstName} ${term.term.doctor.lastName}
+       |${capitalize(doctor)}: ${term.term.doctor.name}
        |${capitalize(clinic)}: ${term.term.clinic.getOrElse("")}""".stripMargin
 
   override def appointmentIsConfirmed: String = "👍 Twoja wizyta została potwierdzona!"
@@ -198,7 +198,7 @@ object Pl extends Lang {
 
   override def termEntry(term: TermExt, page: Int, index: Int): String =
     s"""⏱ <b>${formatDateTime(term.term.dateTimeFrom, locale)}</b>
-       |${capitalize(doctor)}: ${term.term.doctor.firstName} ${term.term.doctor.lastName}
+       |${capitalize(doctor)}: ${term.term.doctor.name}
        |${capitalize(clinic)}: ${term.term.clinic.getOrElse("")}
        |<b>➡</b> /book_$index
        |
@@ -279,7 +279,7 @@ object Pl extends Lang {
 
   override def availableTermEntry(term: TermExt, monitoring: Monitoring, index: Int): String =
     s"""⏱ <b>${formatDateTime(term.term.dateTimeFrom, locale)}</b>
-       |${capitalize(doctor)}: ${term.term.doctor.firstName} ${term.term.doctor.lastName}
+       |${capitalize(doctor)}: ${term.term.doctor.name}
        |${capitalize(service)}: ${monitoring.serviceName}
        |${capitalize(clinic)}: ${term.term.clinic.getOrElse("")}
        |${capitalize(city)}: ${monitoring.cityName}
@@ -308,7 +308,7 @@ object Pl extends Lang {
     s"""👍 Zarezerwowaliśmy termin dla ${monitoring.username}!
        |
        |⏱ <b>${formatDateTime(term.term.dateTimeFrom, locale)}</b>
-       |${capitalize(doctor)}: ${term.term.doctor.firstName} ${term.term.doctor.lastName}
+       |${capitalize(doctor)}: ${term.term.doctor.name}
        |${capitalize(service)}: ${monitoring.serviceName}
        |${capitalize(clinic)}: ${term.term.clinic.getOrElse("")}
        |${capitalize(city)}: ${monitoring.cityName}""".stripMargin

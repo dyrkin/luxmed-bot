@@ -444,11 +444,11 @@ class LuxmedApiSpec extends AnyFunSuite with Matchers with BeforeAndAfterAll {
     val doctor = Doctor(
       academicTitle    = Some("lek."),
       facilityGroupIds = None,
-      firstName        = "TARAS",
+      firstName        = Some("TARAS"),
       isEnglishSpeaker = None,
       genderId         = None,
       id               = 111L,
-      lastName         = "SHEV"
+      lastName         = Some("SHEV")
     )
     val locktermReq = ReservationLocktermRequest(
       date                  = "2021-05-21T08:00:00.000Z",

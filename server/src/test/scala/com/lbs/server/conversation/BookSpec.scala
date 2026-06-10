@@ -70,7 +70,7 @@ class BookSpec extends AkkaTestKit {
 
   private def sampleTerm: TermExt = {
     val dt     = LuxmedFunnyDateTime(dateTimeLocal = Some(LocalDateTime.of(2026, 6, 1, 10, 0)))
-    val doctor = Doctor(Some("dr"), Some(List(10L)), "John", Some(false), Some(1L), 50L, "Smith")
+    val doctor = Doctor(Some("dr"), Some(List(10L)), Some("John"), Some(false), Some(1L), 50L, Some("Smith"))
     val term   = Term(Some("Clinic A"), 10L, 5L, dt, dt, doctor, Some(""),
                       isAdditional = false, isImpediment = false, isTelemedicine = false,
                       1L, 1000L, 100L)
@@ -78,7 +78,7 @@ class BookSpec extends AkkaTestKit {
   }
 
   private def sampleLockResponse(changeTermAvailable: Boolean): ReservationLocktermResponse = {
-    val doctor    = Doctor(Some("dr"), None, "John", None, None, 50L, "Smith")
+    val doctor    = Doctor(Some("dr"), None, Some("John"), None, None, 50L, Some("Smith"))
     val valuation = Valuation(None, Some(1L), isExternalReferralAllowed = false,
                               isReferralRequired = false, Some(1L), Some(0.0),
                               Some(1L), Some(1L), Some(1L), requireReferralForPP = false, 1L)
