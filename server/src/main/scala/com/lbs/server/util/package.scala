@@ -167,7 +167,8 @@ import scala.util.Try
           isRehab = true,
           referralId = Some(d.referralId),
           referralTypeId = Some(d.referralTypeId),
-          serviceVariantId = Some(d.serviceVariantId)
+          serviceVariantId = Some(d.serviceVariantId),
+          serviceInstanceId = Some(d.sourceVisitId)
         )
       }
   }

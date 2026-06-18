@@ -117,6 +117,10 @@ class Monitoring extends RecordId {
   @BeanProperty
   @Column(name = "service_variant_id", nullable = true)
   var serviceVariantId: JLong = uninitialized
+
+  @BeanProperty
+  @Column(name = "service_instance_id", nullable = true)
+  var serviceInstanceId: JLong = uninitialized
 }
 
 object Monitoring {
@@ -147,7 +151,8 @@ object Monitoring {
     isRehab: Boolean = false,
     referralId: Option[Long] = None,
     referralTypeId: Option[Int] = None,
-    serviceVariantId: Option[Long] = None
+    serviceVariantId: Option[Long] = None,
+    serviceInstanceId: Option[Long] = None
   ): Monitoring = {
     val monitoring = new Monitoring
     monitoring.userId = userId
@@ -177,6 +182,7 @@ object Monitoring {
     monitoring.referralId = referralId.map(Long.box).orNull
     monitoring.referralTypeId = referralTypeId.map(Int.box).orNull
     monitoring.serviceVariantId = serviceVariantId.map(Long.box).orNull
+    monitoring.serviceInstanceId = serviceInstanceId.map(Long.box).orNull
     monitoring
   }
 }

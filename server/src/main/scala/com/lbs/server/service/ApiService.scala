@@ -102,7 +102,9 @@ class ApiService extends SessionSupport {
   def getAvailableRehabTerms(
     accountId: Long,
     cityId: Long,
+    cityName: String,
     serviceVariantId: Long,
+    serviceInstanceId: Long,
     referralId: Long,
     referralTypeId: Int,
     fromDate: LocalDateTime,
@@ -113,16 +115,43 @@ class ApiService extends SessionSupport {
     doctorId: Option[Long] = None
   ): ThrowableOr[List[TermExt]] =
     withSession(accountId) { session =>
-       luxmedApi.rehabTermsIndex(session, cityId, serviceVariantId, referralId, referralTypeId,
-        fromDate, toDate, facilitiesIds = None, doctorId).map { response =>
-        response.termsForService.termsForDays
-          .flatMap(_.terms.map(term => TermExt(response.termsForService.additionalData, term)))
-          .filter { term =>
+      val processId = java.util.UUID.randomUUID.toString
+      val cartIdEither = luxmedApi.rehabStartSession(session, serviceInstanceId, serviceVariantId)
+      cartIdEither.flatMap { cartId =>
+        luxmedApi.rehabTermsIndex(
+          session, cityId, cityName, serviceVariantId, referralId, referralTypeId,
+          fromDate, toDate, facilitiesIds = facilityId, doctorId = doctorId,
+          cartId = Some(cartId), processId = processId
+        ).flatMap { indexResponse =>
+          val additionalData = indexResponse.termsForService.additionalData
+          val termsFromIndex = indexResponse.termsForService.termsForDays
+            .flatMap(day => day.terms.map(t => TermExt(additionalData, t)))
+          val datesInIndex = indexResponse.termsForService.termsForDays
+            .map(_.day.get.toLocalDate).toSet
+          val daysToFetch = indexResponse.termsForService.termsInfoForDays
+            .filter(d => d.termsStatus == 0 && d.termsCounter.termsNumber > 0
+              && !datesInIndex.contains(d.day.get.toLocalDate))
+          val termsFromOneDayRequests = daysToFetch.flatMap { dayInfo =>
+            val date = dayInfo.day.get
+            val expected = dayInfo.termsCounter.termsNumber
+            luxmedApi.rehabOneDayTerms(
+              session, cityId, cityName, serviceVariantId, referralId, referralTypeId,
+              date, processId, cartId, expected
+            ) match {
+              case Right(resp) => resp.termsForDay.terms.map(t => TermExt(additionalData, t))
+              case Left(ex)    =>
+                logger.warn(s"Failed to fetch oneDayTerms for $date: ${ex.getMessage}")
+                Nil
+            }
+          }
+          val allTerms = termsFromIndex ++ termsFromOneDayRequests
+          Right(allTerms.filter { term =>
             val time = term.term.dateTimeFrom.get.toLocalTime
             (facilityId.isEmpty || facilityId.contains(term.term.clinicGroupId)) &&
             (doctorId.isEmpty || doctorId.contains(term.term.doctor.id)) &&
             (time == timeFrom || time == timeTo || (time.isAfter(timeFrom) && time.isBefore(timeTo)))
-          }
+          })
+        }
       }
     }
 

@@ -17,7 +17,7 @@ package com.lbs.api.json.model
   */
 
 case class Valuation(
-  alternativePrice: Option[String],
+  alternativePrice: Option[Double],
   contractId: Option[Long],
   isExternalReferralAllowed: Boolean,
   isReferralRequired: Boolean,

@@ -80,7 +80,17 @@ object JsonCodecs {
   given Codec[Term]                         = deriveCodec
   given Codec[TermExt]                      = deriveCodec
   given Codec[TermsForDay]                  = deriveCodec
-  given Codec[TermsForService]              = deriveCodec
+  given Codec[PartialTermsCounter]          = deriveCodec
+  given Codec[TermsCounter]                 = deriveCodec
+  given Codec[TermsInfoForDay]              = deriveCodec
+  given Codec[OneDayTermsResponse]          = deriveCodec
+  given Decoder[TermsForService] = c =>
+    for {
+      additionalData   <- c.downField("additionalData").as[AdditionalData]
+      termsForDays     <- c.downField("termsForDays").as[List[TermsForDay]]
+      termsInfoForDays <- c.downField("termsInfoForDays").as[Option[List[TermsInfoForDay]]]
+    } yield TermsForService(additionalData, termsForDays, termsInfoForDays.getOrElse(Nil))
+  given Encoder[TermsForService]            = deriveEncoder
   given Codec[TermsIndexResponse]           = deriveCodec
   given Codec[RehabProcedure]               = deriveCodec
   given Codec[Referral]                     = deriveCodec
