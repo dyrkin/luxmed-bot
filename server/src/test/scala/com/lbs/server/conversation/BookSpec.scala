@@ -77,6 +77,8 @@ class BookSpec extends AkkaTestKit {
     val now = LocalDateTime.now()
     book ! now
     book ! now.plusDays(7)
+    book ! callbackCmd(Tags.Done)
+    book ! callbackCmd(Tags.No)
     book ! LocalTime.of(8, 0)
     book ! LocalTime.of(20, 0)
   }
@@ -173,6 +175,8 @@ class BookSpec extends AkkaTestKit {
         val base = LocalDateTime.now().plusDays(3)
         book ! base
         book ! base.plusDays(7)
+        book ! callbackCmd(Tags.Done)
+        book ! callbackCmd(Tags.No)
         book ! LocalTime.of(9, 0)
         book ! LocalTime.of(18, 0)
         succeed
@@ -204,6 +208,8 @@ class BookSpec extends AkkaTestKit {
         dp.expectMsg(DatePicker.DateFromMode)
         dp.expectMsgType[LocalDateTime]
         book ! DateRange(from, to)
+        book ! callbackCmd(Tags.Done)
+        book ! callbackCmd(Tags.No)
         tp.fishForMessage() {
           case TimePicker.TimeFromMode => true
           case _                       => false
@@ -273,7 +279,6 @@ class BookSpec extends AkkaTestKit {
         book ! callbackCmd(Tags.FindTerms)
         book ! NoItemsFound
         book ! callbackCmd(Tags.CreateMonitoring)
-        book ! callbackCmd(Tags.No) // no exclusions
         book ! callbackCmd(Tags.BookManually)
         awaitAssert(verify(monitoringService).createMonitoring(any()))
       }
@@ -299,6 +304,8 @@ class BookSpec extends AkkaTestKit {
         val base = LocalDateTime.now().plusDays(2)
         book ! base
         book ! base.plusDays(9)
+        book ! callbackCmd(Tags.Done)
+        book ! callbackCmd(Tags.No)
         book ! LocalTime.of(7, 0)
         book ! LocalTime.of(21, 0)
         succeed
@@ -377,7 +384,6 @@ class BookSpec extends AkkaTestKit {
         book ! NoItemsFound
         book ! callbackCmd(Tags.CreateMonitoring)
         book ! Command(source, Message("1", Some("30")), None) // enter offset
-        book ! callbackCmd(Tags.No)                            // no exclusions
         book ! callbackCmd(Tags.BookByApplication)            // autobook = true
         book ! callbackCmd(Tags.Yes)                          // rebookIfExists = true
         awaitAssert(verify(monitoringService).createMonitoring(any()))
@@ -405,7 +411,6 @@ class BookSpec extends AkkaTestKit {
         book ! NoItemsFound
         book ! callbackCmd(Tags.CreateMonitoring)
         book ! callbackCmd(Tags.No)           // skip offset
-        book ! callbackCmd(Tags.No)           // no exclusions
         book ! callbackCmd(Tags.BookManually) // manual booking
         awaitAssert(verify(monitoringService).createMonitoring(any()))
       }
@@ -434,14 +439,17 @@ class BookSpec extends AkkaTestKit {
         awaitClinicContinuationPrompt(bot, "Legnicka Clinic")
         book ! callbackCmd(Tags.Continue)
         book ! IdName(50L, "Dr Smith")
-        selectDates(book)
-        book ! callbackCmd(Tags.FindTerms)
-        book ! NoItemsFound
-        book ! callbackCmd(Tags.CreateMonitoring)
-        book ! callbackCmd(Tags.Yes) // add exclusions
+        val now = LocalDateTime.now()
+        book ! now
+        book ! now.plusDays(7)
         book ! callbackCmd(Tags.WeekdayPrefix + DayOfWeek.TUESDAY.getValue)
         book ! callbackCmd(Tags.Done)
         book ! Command(source, Message("1", Some("2026-06-10")), None)
+        book ! LocalTime.of(8, 0)
+        book ! LocalTime.of(20, 0)
+        book ! callbackCmd(Tags.FindTerms)
+        book ! NoItemsFound
+        book ! callbackCmd(Tags.CreateMonitoring)
         book ! callbackCmd(Tags.BookManually)
 
         val captor = ArgumentCaptor.forClass(classOf[Monitoring])

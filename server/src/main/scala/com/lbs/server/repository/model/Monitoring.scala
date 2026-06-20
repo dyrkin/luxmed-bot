@@ -1,5 +1,9 @@
 package com.lbs.server.repository.model
 
+import io.circe.*
+import io.circe.generic.semiauto.*
+import io.circe.parser.decode
+import io.circe.syntax.*
 import jakarta.persistence.{Access, AccessType, Column, Entity}
 
 import java.time.{DayOfWeek, LocalDate, LocalTime, ZonedDateTime}
@@ -57,6 +61,10 @@ class Monitoring extends RecordId {
   @BeanProperty
   @Column(name = "clinic_names", nullable = true)
   var clinicNames: String = uninitialized
+
+  @BeanProperty
+  @Column(name = "clinic_selection", nullable = true)
+  var clinicSelection: String = uninitialized
 
   @BeanProperty
   @Column(name = "service_id", nullable = false)
@@ -135,12 +143,16 @@ class Monitoring extends RecordId {
   var excludedDates: String = uninitialized
 
   def clinics: Seq[(Option[Long], String)] = {
-    val ids = Monitoring.parseLongs(clinicIds)
-    val names = Monitoring.parseStrings(clinicNames)
-    val parsed = ids.zipAll(names, -1L, "").map { case (id, name) =>
-      Option(id).filterNot(_ == -1L) -> name
+    val selected = Monitoring.parseClinicSelection(clinicSelection)
+    if (selected.nonEmpty) selected
+    else {
+      val ids = Monitoring.parseLongs(clinicIds)
+      val names = Monitoring.parseStrings(clinicNames)
+      val parsed = ids.zipAll(names, -1L, "").map { case (id, name) =>
+        Option(id).filterNot(_ == -1L) -> name
+      }
+      if (parsed.nonEmpty) parsed else Seq(Option(clinicId).map(_.toLong) -> clinicName)
     }
-    if (parsed.nonEmpty) parsed else Seq(Option(clinicId).map(_.toLong) -> clinicName)
   }
 
   def clinicOptions: Seq[Option[Long]] = clinics.map(_._1) match {
@@ -173,6 +185,10 @@ class Monitoring extends RecordId {
 }
 
 object Monitoring {
+  private case class ClinicSelection(id: Option[Long], name: String)
+
+  private given Codec[ClinicSelection] = deriveCodec
+
   def apply(
     userId: Long,
     username: String,
@@ -219,6 +235,7 @@ object Monitoring {
     val selectedClinics = if (clinics.nonEmpty) clinics else Seq(clinicId -> clinicName)
     monitoring.clinicIds = selectedClinics.map(_._1.getOrElse(-1L)).mkString(",")
     monitoring.clinicNames = selectedClinics.map(_._2).mkString("|")
+    monitoring.clinicSelection = Monitoring.formatClinicSelection(selectedClinics)
     monitoring.serviceId = serviceId
     monitoring.serviceName = serviceName
     monitoring.doctorId = doctorId
@@ -252,4 +269,16 @@ object Monitoring {
 
   private def parseCommaStrings(value: String): Seq[String] =
     Option(value).toSeq.flatMap(_.split(",").map(_.trim).filter(_.nonEmpty))
+
+  private def parseClinicSelection(value: String): Seq[(Option[Long], String)] =
+    Option(value)
+      .map(_.trim)
+      .filter(_.nonEmpty)
+      .flatMap(json => decode[Seq[ClinicSelection]](json).toOption)
+      .toSeq
+      .flatten
+      .map(clinic => clinic.id -> clinic.name)
+
+  private def formatClinicSelection(clinics: Seq[(Option[Long], String)]): String =
+    clinics.map { case (id, name) => ClinicSelection(id, name) }.asJson.noSpaces
 }

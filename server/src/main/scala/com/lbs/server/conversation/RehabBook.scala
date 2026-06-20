@@ -204,9 +204,18 @@ class RehabBook(
         datePicker ! cmd
         stay()
       case Msg(dateRange: DateRange, data: RehabBookingData) =>
-        goto(requestTimeFrom).using(data.copy(dateFrom = dateRange.from, dateTo = capDateTo(dateRange.from, dateRange.to)))
+        goto(askExcludedWeekdays).using(data.copy(
+          dateFrom = dateRange.from,
+          dateTo = capDateTo(dateRange.from, dateRange.to),
+          excludedWeekdays = Set.empty,
+          excludedDates = Set.empty
+        ))
       case Msg(date: LocalDateTime, data: RehabBookingData) =>
-        goto(requestDateTo).using(data.copy(dateFrom = date))
+        goto(requestDateTo).using(data.copy(
+          dateFrom = date,
+          excludedWeekdays = Set.empty,
+          excludedDates = Set.empty
+        ))
     }
 
   private def requestDateTo: Step =
@@ -220,7 +229,7 @@ class RehabBook(
         stay()
       case Msg(date: LocalDateTime, data: RehabBookingData) =>
         // Enforce MaxIntervalInDays = 13
-        goto(requestTimeFrom).using(data.copy(dateTo = capDateTo(data.dateFrom, date)))
+        goto(askExcludedWeekdays).using(data.copy(dateTo = capDateTo(data.dateFrom, date)))
     }
 
   private def requestTimeFrom: Step =
@@ -263,7 +272,9 @@ class RehabBook(
       case Msg(CallbackCommand(Tags.ModifyDate), data: RehabBookingData) =>
         goto(requestDateFrom).using(data.copy(
           dateFrom = LocalDateTime.now(),
-          dateTo = LocalDateTime.now().plusDays(1L)
+          dateTo = LocalDateTime.now().plusDays(1L),
+          excludedWeekdays = Set.empty,
+          excludedDates = Set.empty
         ))
     }
 
@@ -283,6 +294,9 @@ class RehabBook(
         data.singleFacilityId,
         Option(data.physiotherapistId).flatMap(d => d.optionalId)
       ).map(filterSelectedFacilities(_, selectedFacilityIds))
+        .map(_.filterNot(term => data.excludedWeekdays.contains(term.term.dateTimeFrom.get.getDayOfWeek)))
+        .map(_.filterNot(term => data.excludedDates.contains(term.term.dateTimeFrom.get.toLocalDate)))
+        .map(_.sortBy(_.term.dateTimeFrom.get))
       termsPager.restart()
       termsPager ! availableTerms.map(new SimpleItemsProvider(_))
     } onReply {
@@ -329,7 +343,9 @@ class RehabBook(
       case Msg(CallbackCommand(Tags.ModifyDate), data: RehabBookingData) =>
         goto(requestDateFrom).using(data.copy(
           dateFrom = LocalDateTime.now(),
-          dateTo = LocalDateTime.now().plusDays(1L)
+          dateTo = LocalDateTime.now().plusDays(1L),
+          excludedWeekdays = Set.empty,
+          excludedDates = Set.empty
         ))
       case Msg(CallbackCommand(Tags.CreateMonitoring), data: RehabBookingData) =>
         val settingsMaybe = dataService.findSettings(userId.userId)
@@ -339,7 +355,7 @@ class RehabBook(
         }
         val newData = data.copy(offset = defaultOffset)
         if (askOffset) goto(askMonitoringOffsetOption).using(newData)
-        else goto(askMonitoringExclusionsOption).using(newData)
+        else goto(askMonitoringAutobookOption).using(newData)
     }
 
   private def askMonitoringOffsetOption: Step =
@@ -351,21 +367,7 @@ class RehabBook(
       )
     } onReply {
       case Msg(TextCommand(IntString(offset)), data: RehabBookingData) =>
-        goto(askMonitoringExclusionsOption).using(data.copy(offset = offset))
-      case Msg(CallbackCommand(BooleanString(false)), _) =>
-        goto(askMonitoringExclusionsOption)
-    }
-
-  private def askMonitoringExclusionsOption: Step =
-    ask { _ =>
-      bot.sendMessage(
-        userId.source,
-        lang.addMonitoringExclusions,
-        inlineKeyboard = createInlineKeyboard(Seq(Button(lang.no, Tags.No), Button(lang.yes, Tags.Yes)))
-      )
-    } onReply {
-      case Msg(CallbackCommand(BooleanString(true)), _) =>
-        goto(askExcludedWeekdays)
+        goto(askMonitoringAutobookOption).using(data.copy(offset = offset))
       case Msg(CallbackCommand(BooleanString(false)), _) =>
         goto(askMonitoringAutobookOption)
     }
@@ -396,14 +398,14 @@ class RehabBook(
       )
     } onReply {
       case Msg(CallbackCommand(BooleanString(false)), _) =>
-        goto(askMonitoringAutobookOption)
+        goto(requestTimeFrom)
       case Msg(TextCommand(text), data: RehabBookingData) =>
         parseExcludedDates(text, data.dateFrom.toLocalDate) match {
           case Left(error) =>
             bot.sendMessage(userId.source, lang.unableToParseExcludedDates(error))
             stay()
           case Right(dates) =>
-            goto(askMonitoringAutobookOption).using(data.copy(excludedDates = dates.toSet))
+            goto(requestTimeFrom).using(data.copy(excludedDates = dates.toSet))
         }
     }
 

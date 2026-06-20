@@ -26,3 +26,6 @@ databaseChangeLog:
 - include:
       file: changelog/08-add-monitoring-clinic-list-and-exclusions.yml
       relativeToChangelogFile: true
+- include:
+      file: changelog/09-add-monitoring-clinic-selection.yml
+      relativeToChangelogFile: true

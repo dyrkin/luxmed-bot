@@ -117,7 +117,7 @@ class MonitoringService extends StrictLogging {
       timeFrom = monitoring.timeFrom,
       timeTo = monitoring.timeTo
     ).map(filterSelectedClinics(_, selectedClinicIds))
-      .map(_.sortBy(_.term.dateTimeFrom.get.toString))
+      .map(_.sortBy(_.term.dateTimeFrom.get))
   }
 
   private def getAvailableRehabTerms(
@@ -138,7 +138,7 @@ class MonitoringService extends StrictLogging {
       facilityId = monitoring.singleClinicId,
       doctorId = monitoring.doctorId
     ).map(filterSelectedClinics(_, selectedClinicIds))
-      .map(_.sortBy(_.term.dateTimeFrom.get.toString))
+      .map(_.sortBy(_.term.dateTimeFrom.get))
   }
 
   private def filterSelectedClinics(terms: List[TermExt], clinicIds: Seq[Long]): List[TermExt] =

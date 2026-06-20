@@ -4,7 +4,7 @@ import com.lbs.api.json.model.*
 import com.lbs.bot.*
 import com.lbs.bot.model.{Button, Command}
 import com.lbs.server.conversation.Book.*
-import com.lbs.server.conversation.DatePicker.{DateFromMode, DateToMode}
+import com.lbs.server.conversation.DatePicker.{DateFromMode, DateRange, DateToMode}
 import com.lbs.server.conversation.Login.UserId
 import com.lbs.server.conversation.Pager.SimpleItemsProvider
 import com.lbs.server.conversation.TimePicker.{TimeFromMode, TimeToMode}
@@ -65,8 +65,19 @@ class BookWithTemplate(
       case Msg(cmd: Command, _) =>
         datePicker ! cmd
         stay()
+      case Msg(dateRange: DateRange, bookingData: BookingData) =>
+        goto(requestTimeFrom).using(bookingData.copy(
+          dateFrom = dateRange.from,
+          dateTo = dateRange.to,
+          excludedWeekdays = Set.empty,
+          excludedDates = Set.empty
+        ))
       case Msg(date: LocalDateTime, bookingData: BookingData) =>
-        goto(requestDateTo).using(bookingData.copy(dateFrom = date))
+        goto(requestDateTo).using(bookingData.copy(
+          dateFrom = date,
+          excludedWeekdays = Set.empty,
+          excludedDates = Set.empty
+        ))
     }
 
   private def requestDateTo: Step =
@@ -123,7 +134,9 @@ class BookWithTemplate(
       case Msg(CallbackCommand(Tags.ModifyDate), bookingData) =>
         goto(requestDateFrom).using(bookingData.copy(
           dateFrom = LocalDateTime.now(),
-          dateTo = LocalDateTime.now().plusDays(1L)
+          dateTo = LocalDateTime.now().plusDays(1L),
+          excludedWeekdays = Set.empty,
+          excludedDates = Set.empty
         ))
     }
 
@@ -183,7 +196,9 @@ class BookWithTemplate(
       case Msg(CallbackCommand(Tags.ModifyDate), bookingData) =>
         goto(requestDateFrom).using(bookingData.copy(
           dateFrom = LocalDateTime.now(),
-          dateTo = LocalDateTime.now().plusDays(1L)
+          dateTo = LocalDateTime.now().plusDays(1L),
+          excludedWeekdays = Set.empty,
+          excludedDates = Set.empty
         ))
       case Msg(CallbackCommand(Tags.CreateMonitoring), bookingData) =>
         val settingsMaybe = dataService.findSettings(userId.userId)
@@ -307,28 +322,28 @@ class BookWithTemplate(
     }
 
   private def getAvailableTerms(bookingData: BookingData): Either[Throwable, List[TermExt]] = {
-    bookingData.clinicOptions.foldLeft[Either[Throwable, List[TermExt]]](Right(Nil)) { (acc, clinicId) =>
-      for {
-        terms <- acc
-        next <- apiService.getAvailableTerms(
-          userId.accountId,
-          bookingData.cityId.id,
-          clinicId,
-          bookingData.serviceId.id,
-          bookingData.doctorId.optionalId,
-          bookingData.dateFrom,
-          bookingData.dateTo,
-          timeFrom = bookingData.timeFrom,
-          timeTo = bookingData.timeTo
-        )
-      } yield terms ++ next
-    }.map(terms =>
+    val selectedClinicIds = bookingData.clinicFilter
+    apiService.getAvailableTerms(
+      userId.accountId,
+      bookingData.cityId.id,
+      bookingData.singleClinicId,
+      bookingData.serviceId.id,
+      bookingData.doctorId.optionalId,
+      bookingData.dateFrom,
+      bookingData.dateTo,
+      timeFrom = bookingData.timeFrom,
+      timeTo = bookingData.timeTo
+    ).map(filterSelectedClinics(_, selectedClinicIds)).map(terms =>
       terms
         .filterNot(term => bookingData.excludedWeekdays.contains(term.term.dateTimeFrom.get.getDayOfWeek))
         .filterNot(term => bookingData.excludedDates.contains(term.term.dateTimeFrom.get.toLocalDate))
-        .sortBy(_.term.dateTimeFrom.get.toString)
+        .sortBy(_.term.dateTimeFrom.get)
     )
   }
+
+  private def filterSelectedClinics(terms: List[TermExt], clinicIds: Seq[Long]): List[TermExt] =
+    if (clinicIds.size <= 1) terms
+    else terms.filter(term => clinicIds.contains(term.term.clinicGroupId))
 
   beforeDestroy {
     datePicker.destroy()

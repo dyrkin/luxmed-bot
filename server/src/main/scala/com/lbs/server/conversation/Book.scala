@@ -126,9 +126,18 @@ class Book(
         datePicker ! cmd
         stay()
       case Msg(dateRange: DateRange, bookingData: BookingData) =>
-        goto(requestTimeFrom).using(bookingData.copy(dateFrom = dateRange.from, dateTo = dateRange.to))
+        goto(askExcludedWeekdays).using(bookingData.copy(
+          dateFrom = dateRange.from,
+          dateTo = dateRange.to,
+          excludedWeekdays = Set.empty,
+          excludedDates = Set.empty
+        ))
       case Msg(date: LocalDateTime, bookingData: BookingData) =>
-        goto(requestDateTo).using(bookingData.copy(dateFrom = date))
+        goto(requestDateTo).using(bookingData.copy(
+          dateFrom = date,
+          excludedWeekdays = Set.empty,
+          excludedDates = Set.empty
+        ))
     }
 
   private def requestDateTo: Step =
@@ -141,7 +150,7 @@ class Book(
         datePicker ! cmd
         stay()
       case Msg(date: LocalDateTime, bookingData: BookingData) =>
-        goto(requestTimeFrom).using(bookingData.copy(dateTo = date))
+        goto(askExcludedWeekdays).using(bookingData.copy(dateTo = date))
     }
 
   private def requestTimeFrom: Step =
@@ -185,7 +194,9 @@ class Book(
       case Msg(CallbackCommand(Tags.ModifyDate), bookingData) =>
         goto(requestDateFrom).using(bookingData.copy(
           dateFrom = LocalDateTime.now(),
-          dateTo = LocalDateTime.now().plusDays(1L)
+          dateTo = LocalDateTime.now().plusDays(1L),
+          excludedWeekdays = Set.empty,
+          excludedDates = Set.empty
         ))
     }
 
@@ -256,7 +267,9 @@ class Book(
       case Msg(CallbackCommand(Tags.ModifyDate), bookingData) =>
         goto(requestDateFrom).using(bookingData.copy(
           dateFrom = LocalDateTime.now(),
-          dateTo = LocalDateTime.now().plusDays(1L)
+          dateTo = LocalDateTime.now().plusDays(1L),
+          excludedWeekdays = Set.empty,
+          excludedDates = Set.empty
         ))
       case Msg(CallbackCommand(Tags.CreateMonitoring), bookingData) =>
         val settingsMaybe = dataService.findSettings(userId.userId)
@@ -266,7 +279,7 @@ class Book(
         }
         val newData = bookingData.copy(offset = defaultOffset)
         if (askOffset) goto(askMonitoringOffsetOption).using(newData)
-        else goto(askMonitoringExclusionsOption).using(newData)
+        else goto(askMonitoringAutobookOption).using(newData)
     }
 
   private def awaitRebookDecision: Step =
@@ -333,21 +346,7 @@ class Book(
       )
     } onReply {
       case Msg(TextCommand(IntString(offset)), bookingData: BookingData) =>
-        goto(askMonitoringExclusionsOption).using(bookingData.copy(offset = offset))
-      case Msg(CallbackCommand(BooleanString(false)), _) =>
-        goto(askMonitoringExclusionsOption)
-    }
-
-  private def askMonitoringExclusionsOption: Step =
-    ask { _ =>
-      bot.sendMessage(
-        userId.source,
-        lang.addMonitoringExclusions,
-        inlineKeyboard = createInlineKeyboard(Seq(Button(lang.no, Tags.No), Button(lang.yes, Tags.Yes)))
-      )
-    } onReply {
-      case Msg(CallbackCommand(BooleanString(true)), _) =>
-        goto(askExcludedWeekdays)
+        goto(askMonitoringAutobookOption).using(bookingData.copy(offset = offset))
       case Msg(CallbackCommand(BooleanString(false)), _) =>
         goto(askMonitoringAutobookOption)
     }
@@ -378,11 +377,11 @@ class Book(
       )
     } onReply {
       case Msg(CallbackCommand(BooleanString(false)), _) =>
-        goto(askMonitoringAutobookOption)
+        goto(requestTimeFrom)
       case Msg(TextCommand(text), bookingData: BookingData) =>
         parseExcludedDates(text, bookingData.dateFrom.toLocalDate) match {
           case Right(dates) =>
-            goto(askMonitoringAutobookOption).using(bookingData.copy(excludedDates = dates.toSet))
+            goto(requestTimeFrom).using(bookingData.copy(excludedDates = dates.toSet))
           case Left(error) =>
             bot.sendMessage(userId.source, lang.unableToParseExcludedDates(error))
             stay()
@@ -445,7 +444,9 @@ class Book(
     ).map { terms =>
       if (selectedClinicIds.size <= 1) terms
       else terms.filter(term => selectedClinicIds.contains(term.term.clinicGroupId))
-    }.map(_.sortBy(_.term.dateTimeFrom.get.toString))
+    }.map(_.filterNot(term => bookingData.excludedWeekdays.contains(term.term.dateTimeFrom.get.getDayOfWeek)))
+      .map(_.filterNot(term => bookingData.excludedDates.contains(term.term.dateTimeFrom.get.toLocalDate)))
+      .map(_.sortBy(_.term.dateTimeFrom.get))
   }
 
   private def excludedWeekdayKeyboard(excludedWeekdays: Set[DayOfWeek]) = {

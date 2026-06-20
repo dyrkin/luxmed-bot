@@ -56,11 +56,10 @@ class DatePicker(val userId: UserId, val bot: Bot, val localization: Localizatio
       case Msg(cmd @ CallbackCommand(Tags.Done), finalDate) =>
         val (message, updatedDate) = mode match {
           case DateFromMode =>
-            val startOfTheDay = finalDate.`with`(LocalTime.MIN)
-            val dateFrom = if (startOfTheDay.isBefore(LocalDateTime.now())) finalDate else startOfTheDay
+            val dateFrom = normalizeDateFrom(finalDate)
             lang.dateFromIs(dateFrom) -> dateFrom
           case DateToMode =>
-            val dateTo = finalDate.`with`(LocalTime.MAX).minusHours(2)
+            val dateTo = normalizeDateTo(finalDate)
             lang.dateToIs(dateTo) -> dateTo
         }
         bot.sendEditMessage(userId.source, cmd.message.messageId, message)
@@ -145,17 +144,23 @@ class DatePicker(val userId: UserId, val bot: Bot, val localization: Localizatio
   }
 
   private def normalizeDateTo(date: LocalDateTime): LocalDateTime =
-    date.`with`(LocalTime.MAX).minusHours(2)
+    date.`with`(LocalTime.MAX)
 
-  private def range(from: LocalDateTime, to: LocalDateTime): DateRange =
-    DateRange(normalizeDateFrom(from), normalizeDateTo(to))
+  private def range(from: LocalDateTime, to: LocalDateTime): DateRange = {
+    val (first, second) =
+      if (from.toLocalDate.isAfter(to.toLocalDate)) to -> from
+      else from -> to
+    val dateFrom = normalizeDateFrom(first)
+    val dateTo = normalizeDateTo(second)
+    DateRange(dateFrom, if (dateTo.isBefore(dateFrom)) dateFrom else dateTo)
+  }
 
   private def parseTextDate(text: String, initialDate: LocalDateTime): ParsedTextDate = {
     val tokens = DateToken.findAllIn(text).toSeq
     tokens match {
       case first +: second +: _ =>
         val from = parseDateToken(first, initialDate.toLocalDate)
-        val to = parseDateToken(second, from.toLocalDate)
+        val to = parseDateToken(second, initialDate.toLocalDate)
         ParsedDateRange(range(from, to))
       case Seq(single) =>
         ParsedDate(parseDateToken(single, initialDate.toLocalDate))

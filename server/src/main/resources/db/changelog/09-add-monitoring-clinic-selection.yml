@@ -1,0 +1,17 @@
+databaseChangeLog:
+- changeSet:
+    id: 1780500000000-1
+    author: community
+    preConditions:
+      onFail: MARK_RAN
+      not:
+        columnExists:
+          tableName: monitoring
+          columnName: clinic_selection
+    changes:
+    - addColumn:
+        tableName: monitoring
+        columns:
+        - column:
+            name: clinic_selection
+            type: VARCHAR(4096)
