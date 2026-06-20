@@ -68,16 +68,10 @@ class BookWithTemplate(
       case Msg(dateRange: DateRange, bookingData: BookingData) =>
         goto(requestTimeFrom).using(bookingData.copy(
           dateFrom = dateRange.from,
-          dateTo = dateRange.to,
-          excludedWeekdays = Set.empty,
-          excludedDates = Set.empty
+          dateTo = dateRange.to
         ))
       case Msg(date: LocalDateTime, bookingData: BookingData) =>
-        goto(requestDateTo).using(bookingData.copy(
-          dateFrom = date,
-          excludedWeekdays = Set.empty,
-          excludedDates = Set.empty
-        ))
+        goto(requestDateTo).using(bookingData.copy(dateFrom = date))
     }
 
   private def requestDateTo: Step =
@@ -134,9 +128,7 @@ class BookWithTemplate(
       case Msg(CallbackCommand(Tags.ModifyDate), bookingData) =>
         goto(requestDateFrom).using(bookingData.copy(
           dateFrom = LocalDateTime.now(),
-          dateTo = LocalDateTime.now().plusDays(1L),
-          excludedWeekdays = Set.empty,
-          excludedDates = Set.empty
+          dateTo = LocalDateTime.now().plusDays(1L)
         ))
     }
 
@@ -196,9 +188,7 @@ class BookWithTemplate(
       case Msg(CallbackCommand(Tags.ModifyDate), bookingData) =>
         goto(requestDateFrom).using(bookingData.copy(
           dateFrom = LocalDateTime.now(),
-          dateTo = LocalDateTime.now().plusDays(1L),
-          excludedWeekdays = Set.empty,
-          excludedDates = Set.empty
+          dateTo = LocalDateTime.now().plusDays(1L)
         ))
       case Msg(CallbackCommand(Tags.CreateMonitoring), bookingData) =>
         val settingsMaybe = dataService.findSettings(userId.userId)

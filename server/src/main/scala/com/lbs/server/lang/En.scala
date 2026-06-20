@@ -377,7 +377,7 @@ object En extends Lang {
        |${capitalize(clinic)}: ${term.term.clinic.getOrElse("")}
        |${capitalize(city)}: ${monitoring.cityName}""".stripMargin
 
-  override def maximumMonitoringsLimitExceeded: String = "Maximum monitorings per user is 10"
+  override def maximumMonitoringsLimitExceeded: String = "Maximum monitoring slots per user is 10"
 
   override def termIsOutdated: String =
     s"""❗️ Looks like the term is already booked by someone else

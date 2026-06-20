@@ -377,7 +377,7 @@ object Ua extends Lang {
        |${capitalize(clinic)}: ${term.term.clinic.getOrElse("")}
        |${capitalize(city)}: ${monitoring.cityName}""".stripMargin
 
-  override def maximumMonitoringsLimitExceeded: String = "Максимальна кількість моніторінгів 10"
+  override def maximumMonitoringsLimitExceeded: String = "Максимальна кількість слотів моніторингу 10"
 
   override def termIsOutdated: String =
     s"""❗️ Схоже, що термін вже не є доступним

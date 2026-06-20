@@ -379,7 +379,7 @@ object Pl extends Lang {
        |${capitalize(clinic)}: ${term.term.clinic.getOrElse("")}
        |${capitalize(city)}: ${monitoring.cityName}""".stripMargin
 
-  override def maximumMonitoringsLimitExceeded: String = "Maksymalna liczba monitoringów uzytkownika to 10"
+  override def maximumMonitoringsLimitExceeded: String = "Maksymalna liczba slotów monitoringu uzytkownika to 10"
 
   override def termIsOutdated: String =
     s"""❗️ Wygląda na to, ze ten termin został już zarezewowany!
