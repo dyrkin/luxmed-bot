@@ -19,6 +19,7 @@ import scala.util.Try
     implicit val BookingDataToMonitoringConverter: ObjectConverter[(UserId, BookingData), Monitoring] =
       (data: (UserId, BookingData)) => {
         val (userId, bookingData) = data
+        val primaryClinic = bookingData.selectedClinics.headOption.getOrElse(IdName(-1L, "Any"))
         Monitoring(
           userId = userId.userId,
           username = userId.username,
@@ -28,8 +29,9 @@ import scala.util.Try
           payerId = bookingData.payerId,
           cityId = bookingData.cityId.id,
           cityName = bookingData.cityId.name,
-          clinicId = bookingData.clinicId.optionalId,
-          clinicName = bookingData.clinicId.name,
+          clinicId = primaryClinic.optionalId,
+          clinicName = primaryClinic.name,
+          clinics = bookingData.selectedClinics.map(c => c.optionalId -> c.name),
           serviceId = bookingData.serviceId.id,
           serviceName = bookingData.serviceId.name,
           doctorId = bookingData.doctorId.optionalId,
@@ -40,7 +42,9 @@ import scala.util.Try
           timeTo = bookingData.timeTo,
           autobook = bookingData.autobook,
           rebookIfExists = bookingData.rebookIfExists,
-          offset = bookingData.offset
+          offset = bookingData.offset,
+          excludedWeekdays = bookingData.excludedWeekdays,
+          excludedDates = bookingData.excludedDates
         )
       }
 
@@ -142,6 +146,7 @@ import scala.util.Try
     implicit val RehabBookingDataToMonitoringConverter: ObjectConverter[(UserId, RehabBookingData), Monitoring] =
       (data: (UserId, RehabBookingData)) => {
         val (userId, d) = data
+        val primaryFacility = d.selectedFacilities.headOption.getOrElse(IdName(-1L, "Any"))
         Monitoring(
           userId = userId.userId,
           username = userId.username,
@@ -151,8 +156,9 @@ import scala.util.Try
           payerId = 0L,
           cityId = d.cityId.id,
           cityName = d.cityId.name,
-          clinicId = Option(d.facilityId).flatMap(_.optionalId),
-          clinicName = Option(d.facilityId).map(_.name).getOrElse("Any"),
+          clinicId = primaryFacility.optionalId,
+          clinicName = primaryFacility.name,
+          clinics = d.selectedFacilities.map(f => f.optionalId -> f.name),
           serviceId = d.serviceVariantId,
           serviceName = d.serviceVariantName,
           doctorId = Option(d.physiotherapistId).flatMap(_.optionalId),
@@ -167,7 +173,9 @@ import scala.util.Try
           isRehab = true,
           referralId = Some(d.referralId),
           referralTypeId = Some(d.referralTypeId),
-          serviceVariantId = Some(d.serviceVariantId)
+          serviceVariantId = Some(d.serviceVariantId),
+          excludedWeekdays = d.excludedWeekdays,
+          excludedDates = d.excludedDates
         )
       }
   }
@@ -243,4 +251,3 @@ import scala.util.Try
       LocalTime.parse(hourMinuteStr, TimeFormat)
     }
   }
-

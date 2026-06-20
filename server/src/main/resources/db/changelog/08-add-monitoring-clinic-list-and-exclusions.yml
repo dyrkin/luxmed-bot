@@ -1,0 +1,26 @@
+databaseChangeLog:
+- changeSet:
+    id: 1780400000000-1
+    author: community
+    preConditions:
+      onFail: MARK_RAN
+      not:
+        columnExists:
+          tableName: monitoring
+          columnName: clinic_ids
+    changes:
+    - addColumn:
+        tableName: monitoring
+        columns:
+        - column:
+            name: clinic_ids
+            type: VARCHAR(1024)
+        - column:
+            name: clinic_names
+            type: VARCHAR(2048)
+        - column:
+            name: excluded_weekdays
+            type: VARCHAR(32)
+        - column:
+            name: excluded_dates
+            type: VARCHAR(2048)

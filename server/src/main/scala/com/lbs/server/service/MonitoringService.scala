@@ -71,32 +71,10 @@ class MonitoringService extends StrictLogging {
     val dateFrom = optimizeDateFrom(monitoring.dateFrom.toLocalDateTime, monitoring.offset)
     val termsEither =
       if (monitoring.isRehab) {
-        apiService.getAvailableRehabTerms(
-          monitoring.accountId,
-          monitoring.cityId,
-          monitoring.serviceVariantId,
-          monitoring.referralId,
-          monitoring.referralTypeId,
-          dateFrom,
-          monitoring.dateTo.toLocalDateTime,
-          timeFrom = monitoring.timeFrom,
-          timeTo = monitoring.timeTo,
-          facilityId = Option(monitoring.clinicId).map(_.toLong),
-          doctorId = monitoring.doctorId
-        )
+        getAvailableRehabTerms(monitoring, dateFrom)
       } else {
-        apiService.getAvailableTerms(
-          monitoring.accountId,
-          monitoring.cityId,
-          monitoring.clinicId,
-          monitoring.serviceId,
-          monitoring.doctorId,
-          dateFrom,
-          monitoring.dateTo.toLocalDateTime,
-          timeFrom = monitoring.timeFrom,
-          timeTo = monitoring.timeTo
-        )
-      }
+        getAvailableTerms(monitoring, dateFrom)
+      }.map(filterExcludedDates(_, monitoring))
     termsEither match {
       case Right(terms) =>
         if (terms.nonEmpty) {
@@ -125,6 +103,50 @@ class MonitoringService extends StrictLogging {
     val nowWithOffset = LocalDateTime.now().plusHours(offset)
     if (date.isBefore(nowWithOffset)) nowWithOffset else date
   }
+
+  private def getAvailableTerms(monitoring: Monitoring, dateFrom: LocalDateTime): Either[Throwable, List[TermExt]] = {
+    val selectedClinicIds = monitoring.clinicFilter
+    apiService.getAvailableTerms(
+      monitoring.accountId,
+      monitoring.cityId,
+      monitoring.singleClinicId,
+      monitoring.serviceId,
+      monitoring.doctorId,
+      dateFrom,
+      monitoring.dateTo.toLocalDateTime,
+      timeFrom = monitoring.timeFrom,
+      timeTo = monitoring.timeTo
+    ).map(filterSelectedClinics(_, selectedClinicIds))
+      .map(_.sortBy(_.term.dateTimeFrom.get))
+  }
+
+  private def getAvailableRehabTerms(
+    monitoring: Monitoring,
+    dateFrom: LocalDateTime
+  ): Either[Throwable, List[TermExt]] = {
+    val selectedClinicIds = monitoring.clinicFilter
+    apiService.getAvailableRehabTerms(
+      monitoring.accountId,
+      monitoring.cityId,
+      monitoring.serviceVariantId,
+      monitoring.referralId,
+      monitoring.referralTypeId,
+      dateFrom,
+      monitoring.dateTo.toLocalDateTime,
+      timeFrom = monitoring.timeFrom,
+      timeTo = monitoring.timeTo,
+      facilityId = monitoring.singleClinicId,
+      doctorId = monitoring.doctorId
+    ).map(filterSelectedClinics(_, selectedClinicIds))
+      .map(_.sortBy(_.term.dateTimeFrom.get))
+  }
+
+  private def filterSelectedClinics(terms: List[TermExt], clinicIds: Seq[Long]): List[TermExt] =
+    if (clinicIds.size <= 1) terms
+    else terms.filter(term => clinicIds.contains(term.term.clinicGroupId))
+
+  private def filterExcludedDates(terms: List[TermExt], monitoring: Monitoring): List[TermExt] =
+    terms.filterNot(term => monitoring.isDateExcluded(term.term.dateTimeFrom.get.toLocalDate))
 
   private def initializeMonitorings(allMonitorings: Seq[Monitoring]): Unit = {
     allMonitorings.foreach { monitoring =>
@@ -260,8 +282,8 @@ class MonitoringService extends StrictLogging {
   }
 
   def createMonitoring(monitoring: Monitoring): Monitoring = {
-    val userMonitoringsCount = dataService.getActiveMonitoringsCount(monitoring.accountId)
-    require(userMonitoringsCount + 1 <= 10, lang(monitoring.userId).maximumMonitoringsLimitExceeded)
+    val activeMonitoringsWeight = dataService.getActiveMonitorings(monitoring.accountId).map(_.slotWeight).sum
+    require(activeMonitoringsWeight + monitoring.slotWeight <= 10, lang(monitoring.userId).maximumMonitoringsLimitExceeded)
     dataService.saveMonitoring(monitoring)
   }
 
@@ -281,17 +303,10 @@ class MonitoringService extends StrictLogging {
     val monitoringMaybe = dataService.findMonitoring(accountId, monitoringId)
     monitoringMaybe match {
       case Some(monitoring) =>
-        val termsEither = apiService.getAvailableTerms(
-          monitoring.accountId,
-          monitoring.cityId,
-          monitoring.clinicId,
-          monitoring.serviceId,
-          monitoring.doctorId,
-          monitoring.dateFrom.toLocalDateTime,
-          monitoring.dateTo.toLocalDateTime,
-          timeFrom = monitoring.timeFrom,
-          timeTo = monitoring.timeTo
-        )
+        val termsEither = (
+          if (monitoring.isRehab) getAvailableRehabTerms(monitoring, monitoring.dateFrom.toLocalDateTime)
+          else getAvailableTerms(monitoring, monitoring.dateFrom.toLocalDateTime)
+        ).map(filterExcludedDates(_, monitoring))
         termsEither match {
           case Right(terms) =>
             val termMaybe = terms.find(term =>

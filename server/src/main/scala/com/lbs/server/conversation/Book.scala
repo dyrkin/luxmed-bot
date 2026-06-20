@@ -4,7 +4,7 @@ import com.lbs.api.json.model.*
 import com.lbs.bot.*
 import com.lbs.bot.model.{Button, Command}
 import com.lbs.server.conversation.Book.*
-import com.lbs.server.conversation.DatePicker.{DateFromMode, DateToMode}
+import com.lbs.server.conversation.DatePicker.{DateFromMode, DateRange, DateToMode}
 import com.lbs.server.conversation.Login.UserId
 import com.lbs.server.conversation.Pager.SimpleItemsProvider
 import com.lbs.server.conversation.StaticData.StaticDataConfig
@@ -17,7 +17,9 @@ import com.lbs.server.util.MessageExtractors.*
 import com.lbs.server.util.ServerModelConverters.*
 import org.apache.pekko.actor.ActorSystem
 
-import java.time.{LocalDateTime, LocalTime}
+import java.time.{DayOfWeek, LocalDate, LocalDateTime, LocalTime, MonthDay}
+import java.time.format.DateTimeFormatter
+import scala.util.Try
 
 class Book(
   val userId: UserId,
@@ -65,9 +67,32 @@ class Book(
       withFunctions[IdName](
         latestOptions = dataService.getLatestClinicsByCityId(userId.accountId, bd.cityId.id),
         staticOptions = apiService.getAllFacilities(userId.accountId, bd.cityId.id, bd.serviceId.id),
-        applyId = id => bd.copy(clinicId = id)
+        applyId = id => bd.withClinic(id)
       )
-    }(requestNext = askDoctor)
+    }(requestNext = continueAfterClinic)
+
+  private def continueAfterClinic: Step =
+    process { bookingData =>
+      if (bookingData.hasAnyClinic) goto(askDoctor)
+      else goto(askAddAnotherClinic)
+    }
+
+  private def askAddAnotherClinic: Step =
+    ask { bookingData =>
+      bot.sendMessage(
+        userId.source,
+        lang.selectedClinics(bookingData),
+        inlineKeyboard =
+          createInlineKeyboard(
+            Seq(Button(lang.addAnotherClinic, Tags.AddAnotherClinic), Button(lang.continueBooking, Tags.Continue))
+          )
+      )
+    } onReply {
+      case Msg(CallbackCommand(Tags.AddAnotherClinic), _) =>
+        goto(askClinic)
+      case Msg(CallbackCommand(Tags.Continue), _) =>
+        goto(askDoctor)
+    }
 
   private def askDoctor: Step =
     staticData(doctorConfig) { (bd: BookingData) =>
@@ -75,15 +100,15 @@ class Book(
         latestOptions = dataService.getLatestDoctorsByCityIdAndClinicIdAndServiceId(
           userId.accountId,
           bd.cityId.id,
-          bd.clinicId.optionalId,
+          bd.singleClinicId,
           bd.serviceId.id
         ),
         staticOptions = apiService
           .getAllDoctors(userId.accountId, bd.cityId.id, bd.serviceId.id)
           .map(
               _.filter(doc => {
-                val clinicId = bd.clinicId.optionalId
-                clinicId.isEmpty || doc.facilityGroupIds.exists(_.contains(clinicId.get))
+                val clinicIds = bd.clinicFilter
+                clinicIds.isEmpty || doc.facilityGroupIds.exists(ids => clinicIds.exists(ids.contains))
               })
               .map(_.toIdName)
           ),
@@ -100,8 +125,19 @@ class Book(
       case Msg(cmd: Command, _) =>
         datePicker ! cmd
         stay()
+      case Msg(dateRange: DateRange, bookingData: BookingData) =>
+        goto(askExcludedWeekdays).using(bookingData.copy(
+          dateFrom = dateRange.from,
+          dateTo = dateRange.to,
+          excludedWeekdays = Set.empty,
+          excludedDates = Set.empty
+        ))
       case Msg(date: LocalDateTime, bookingData: BookingData) =>
-        goto(requestDateTo).using(bookingData.copy(dateFrom = date))
+        goto(requestDateTo).using(bookingData.copy(
+          dateFrom = date,
+          excludedWeekdays = Set.empty,
+          excludedDates = Set.empty
+        ))
     }
 
   private def requestDateTo: Step =
@@ -114,7 +150,7 @@ class Book(
         datePicker ! cmd
         stay()
       case Msg(date: LocalDateTime, bookingData: BookingData) =>
-        goto(requestTimeFrom).using(bookingData.copy(dateTo = date))
+        goto(askExcludedWeekdays).using(bookingData.copy(dateTo = date))
     }
 
   private def requestTimeFrom: Step =
@@ -158,23 +194,15 @@ class Book(
       case Msg(CallbackCommand(Tags.ModifyDate), bookingData) =>
         goto(requestDateFrom).using(bookingData.copy(
           dateFrom = LocalDateTime.now(),
-          dateTo = LocalDateTime.now().plusDays(1L)
+          dateTo = LocalDateTime.now().plusDays(1L),
+          excludedWeekdays = Set.empty,
+          excludedDates = Set.empty
         ))
     }
 
   private def requestTerm: Step =
     ask { bookingData =>
-      val availableTerms = apiService.getAvailableTerms(
-        userId.accountId,
-        bookingData.cityId.id,
-        bookingData.clinicId.optionalId,
-        bookingData.serviceId.id,
-        bookingData.doctorId.optionalId,
-        bookingData.dateFrom,
-        bookingData.dateTo,
-        timeFrom = bookingData.timeFrom,
-        timeTo = bookingData.timeTo
-      )
+      val availableTerms = getAvailableTerms(bookingData)
       termsPager.restart()
       termsPager ! availableTerms.map(new SimpleItemsProvider(_))
     } onReply {
@@ -239,7 +267,9 @@ class Book(
       case Msg(CallbackCommand(Tags.ModifyDate), bookingData) =>
         goto(requestDateFrom).using(bookingData.copy(
           dateFrom = LocalDateTime.now(),
-          dateTo = LocalDateTime.now().plusDays(1L)
+          dateTo = LocalDateTime.now().plusDays(1L),
+          excludedWeekdays = Set.empty,
+          excludedDates = Set.empty
         ))
       case Msg(CallbackCommand(Tags.CreateMonitoring), bookingData) =>
         val settingsMaybe = dataService.findSettings(userId.userId)
@@ -321,6 +351,43 @@ class Book(
         goto(askMonitoringAutobookOption)
     }
 
+  private def askExcludedWeekdays: Step =
+    ask { bookingData =>
+      bot.sendMessage(
+        userId.source,
+        lang.chooseExcludedWeekdays(bookingData.excludedWeekdays),
+        inlineKeyboard = excludedWeekdayKeyboard(bookingData.excludedWeekdays)
+      )
+    } onReply {
+      case Msg(CallbackCommand(Tags.Done), _) =>
+        goto(askExcludedDates)
+      case Msg(CallbackCommand(WeekdayTag(dayOfWeek)), bookingData: BookingData) =>
+        val weekdays =
+          if (bookingData.excludedWeekdays.contains(dayOfWeek)) bookingData.excludedWeekdays - dayOfWeek
+          else bookingData.excludedWeekdays + dayOfWeek
+        goto(askExcludedWeekdays).using(bookingData.copy(excludedWeekdays = weekdays))
+    }
+
+  private def askExcludedDates: Step =
+    ask { _ =>
+      bot.sendMessage(
+        userId.source,
+        lang.pleaseEnterExcludedDates,
+        inlineKeyboard = createInlineKeyboard(Seq(Button(lang.no, Tags.No)))
+      )
+    } onReply {
+      case Msg(CallbackCommand(BooleanString(false)), _) =>
+        goto(requestTimeFrom)
+      case Msg(TextCommand(text), bookingData: BookingData) =>
+        parseExcludedDates(text, bookingData.dateFrom.toLocalDate) match {
+          case Right(dates) =>
+            goto(requestTimeFrom).using(bookingData.copy(excludedDates = dates.toSet))
+          case Left(error) =>
+            bot.sendMessage(userId.source, lang.unableToParseExcludedDates(error))
+            stay()
+        }
+    }
+
   private def askMonitoringAutobookOption: Step =
     ask { _ =>
       bot.sendMessage(
@@ -362,6 +429,54 @@ class Book(
       end()
     }
 
+  private def getAvailableTerms(bookingData: BookingData): Either[Throwable, List[TermExt]] = {
+    val selectedClinicIds = bookingData.clinicFilter
+    apiService.getAvailableTerms(
+      userId.accountId,
+      bookingData.cityId.id,
+      bookingData.singleClinicId,
+      bookingData.serviceId.id,
+      bookingData.doctorId.optionalId,
+      bookingData.dateFrom,
+      bookingData.dateTo,
+      timeFrom = bookingData.timeFrom,
+      timeTo = bookingData.timeTo
+    ).map { terms =>
+      if (selectedClinicIds.size <= 1) terms
+      else terms.filter(term => selectedClinicIds.contains(term.term.clinicGroupId))
+    }.map(_.filterNot(term => bookingData.excludedWeekdays.contains(term.term.dateTimeFrom.get.getDayOfWeek)))
+      .map(_.filterNot(term => bookingData.excludedDates.contains(term.term.dateTimeFrom.get.toLocalDate)))
+      .map(_.sortBy(_.term.dateTimeFrom.get))
+  }
+
+  private def excludedWeekdayKeyboard(excludedWeekdays: Set[DayOfWeek]) = {
+    val weekdays = DayOfWeek.values().toSeq
+    val buttons = weekdays.map { day =>
+      val label = s"${if (excludedWeekdays.contains(day)) "✅ " else ""}${lang.weekdayName(day)}"
+      Button(label, Tags.WeekdayPrefix + day.getValue)
+    }
+    createInlineKeyboard(buttons :+ Button(lang.done, Tags.Done), columns = 2)
+  }
+
+  private def parseExcludedDates(text: String, dateFrom: LocalDate): Either[String, Seq[LocalDate]] = {
+    val parts = text.split("[,;\\s]+").map(_.trim).filter(_.nonEmpty).toSeq
+    val parsed = parts.map(parseExcludedDate(_, dateFrom))
+    parsed.collectFirst { case Left(error) => error } match {
+      case Some(error) => Left(error)
+      case None        => Right(parsed.collect { case Right(date) => date }.distinct)
+    }
+  }
+
+  private def parseExcludedDate(text: String, dateFrom: LocalDate): Either[String, LocalDate] = {
+    val iso = Try(LocalDate.parse(text)).toOption
+    val dayMonth = Try {
+      val parsed = MonthDay.parse(text, DateTimeFormatter.ofPattern("dd-MM"))
+      val date = parsed.atYear(dateFrom.getYear)
+      if (date.isBefore(dateFrom)) date.plusYears(1) else date
+    }.toOption
+    iso.orElse(dayMonth).toRight(text)
+  }
+
   private def cityConfig = StaticDataConfig(lang.city, "wro", "Wrocław", isAnyAllowed = false)
 
   private def clinicConfig = StaticDataConfig(lang.clinic, "swob", "Swobodna 1", isAnyAllowed = true)
@@ -383,6 +498,7 @@ object Book {
   case class BookingData(
     cityId: IdName = null,
     clinicId: IdName = null,
+    clinicIds: Seq[IdName] = Seq(),
     serviceId: IdName = null,
     doctorId: IdName = null,
     dateFrom: LocalDateTime = LocalDateTime.now(),
@@ -396,8 +512,36 @@ object Book {
     offset: Int = 0,
     payerId: Long = 0,
     payers: Seq[IdName] = Seq(),
-    xsrfToken: Option[XsrfToken] = None
-  )
+    xsrfToken: Option[XsrfToken] = None,
+    excludedWeekdays: Set[DayOfWeek] = Set.empty,
+    excludedDates: Set[LocalDate] = Set.empty
+  ) {
+    def selectedClinics: Seq[IdName] = {
+      if (clinicIds.nonEmpty) clinicIds
+      else Option(clinicId).toSeq
+    }
+
+    def clinicOptions: Seq[Option[Long]] = selectedClinics.map(_.optionalId) match {
+      case Nil => Seq(None)
+      case xs  => xs
+    }
+
+    def clinicFilter: Seq[Long] = clinicOptions.flatten.distinct
+
+    def singleClinicId: Option[Long] = {
+      val selected = clinicOptions.distinct
+      if (selected.size == 1) selected.head else None
+    }
+
+    def hasAnyClinic: Boolean = clinicOptions.exists(_.isEmpty)
+
+    def withClinic(clinic: IdName): BookingData = {
+      val updatedClinics =
+        if (clinic.optionalId.isEmpty) Seq(clinic)
+        else (selectedClinics.filter(_.optionalId.nonEmpty) :+ clinic).distinctBy(_.id)
+      copy(clinicId = updatedClinics.head, clinicIds = updatedClinics)
+    }
+  }
 
   object Tags {
     val Cancel = "cancel"
@@ -409,6 +553,19 @@ object Book {
     val BookByApplication = "true"
     val Yes = "true"
     val No = "false"
+    val AddAnotherClinic = "add_another_clinic"
+    val Continue = "continue"
+    val Done = "done"
+    val WeekdayPrefix = "weekday_"
+  }
+
+  object WeekdayTag {
+    def unapply(tag: String): Option[DayOfWeek] =
+      tag.stripPrefix(Tags.WeekdayPrefix) match {
+        case value if tag.startsWith(Tags.WeekdayPrefix) =>
+          Try(DayOfWeek.of(value.toInt)).toOption
+        case _ => None
+      }
   }
 
 }

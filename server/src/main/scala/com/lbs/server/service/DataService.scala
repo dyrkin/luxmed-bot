@@ -167,21 +167,26 @@ class DataService {
   def storeAppointment(accountId: Long, bookingData: BookingData): Unit = {
     val time = ZonedDateTime.now()
     val cityId = bookingData.cityId
-    val clinicId = bookingData.clinicId
+    val clinicIds = bookingData.selectedClinics
     val serviceId = bookingData.serviceId
     val doctorId = bookingData.doctorId
 
     val city = CityHistory(accountId, cityId.id, cityId.name, time)
     dataRepository.saveEntity(city)
 
-    val clinicMaybe = clinicId.optionalId.map(id => ClinicHistory(accountId, id, clinicId.name, cityId.id, time))
-    clinicMaybe.foreach(dataRepository.saveEntity)
+    clinicIds.foreach { clinicId =>
+      clinicId.optionalId
+        .map(id => ClinicHistory(accountId, id, clinicId.name, cityId.id, time))
+        .foreach(dataRepository.saveEntity)
+    }
 
-    val service = ServiceHistory(accountId, serviceId.id, serviceId.name, cityId.id, clinicId.optionalId, time)
+    val clinicIdForHistory = if (clinicIds.size == 1) clinicIds.head.optionalId else None
+
+    val service = ServiceHistory(accountId, serviceId.id, serviceId.name, cityId.id, clinicIdForHistory, time)
     dataRepository.saveEntity(service)
 
     val doctorMaybe = doctorId.optionalId.map(id =>
-      DoctorHistory(accountId, id, doctorId.name, cityId.id, clinicId.optionalId, serviceId.id, time)
+      DoctorHistory(accountId, id, doctorId.name, cityId.id, clinicIdForHistory, serviceId.id, time)
     )
     doctorMaybe.foreach(dataRepository.saveEntity)
   }

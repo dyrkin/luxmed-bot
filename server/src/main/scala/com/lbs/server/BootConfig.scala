@@ -79,8 +79,7 @@ class BootConfig {
       datePickerFactory,
       timePickerFactory,
       referralPagerFactory,
-      locationPagerFactory,
-      facilityPagerFactory,
+      staticDataFactory,
       rehabPhysiotherapistPagerFactory,
       termsPagerFactory
     )(actorSystem)
