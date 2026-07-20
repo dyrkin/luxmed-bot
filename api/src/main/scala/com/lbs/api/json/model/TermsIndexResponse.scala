@@ -138,7 +138,7 @@ case class TermsCounter(
 ) extends SerializableJsonObject
 
 case class PartialTermsCounter(
-  clinicGroupId: Long,
+  clinicGroupId: Option[Long],
   doctorId: Long,
   priority: Int,
   termsNumber: Int

@@ -41,7 +41,7 @@ steps:
       context: docker/
       platform: linux/amd64
     when:
-      branch: 104-rehab3
+      branch: master
       event: push
 
 
@@ -92,7 +92,7 @@ steps:
       context: docker/
       platform: linux/arm64
     when:
-      branch: 104-rehab3
+      branch: master
       event: push
 
   - name: deploy_and_restart
@@ -108,9 +108,9 @@ steps:
         - cd ~/luxmed-bot
         - docker-compose down || true
         - rm -f docker-compose.yml
-        - wget https://raw.githubusercontent.com/dyrkin/luxmed-booking-service/104-rehab3/docker/docker-compose-arm64.yml -O docker-compose.yml
+        - wget https://raw.githubusercontent.com/dyrkin/luxmed-booking-service/master/docker/docker-compose-arm64.yml -O docker-compose.yml
         - docker-compose pull
         - docker-compose up -d
     when:
-      branch: 104-rehab3
+      branch: master
       event: push
