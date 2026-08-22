@@ -23,3 +23,6 @@ databaseChangeLog:
 - include:
       file: changelog/07-add-rehab-columns-to-monitoring.yml
       relativeToChangelogFile: true
+- include:
+      file: changelog/08-add-service-instance-id-to-monitoring.yml
+      relativeToChangelogFile: true

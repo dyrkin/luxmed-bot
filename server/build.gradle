@@ -33,7 +33,7 @@ dependencies {
     testImplementation "com.h2database:h2"
 }
 
-task prepare(type: Copy) {
+tasks.register('prepare', Copy) {
     dependsOn assemble
     from file("${project.buildDir}/libs")
     into file("${project.rootDir}/docker")

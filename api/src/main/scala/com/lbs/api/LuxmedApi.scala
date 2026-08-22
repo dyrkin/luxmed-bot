@@ -129,9 +129,18 @@ class LuxmedApi[F[_]: ThrowableMonad] extends ApiBase {
     get[RehabFacilitiesResponse](request).map(_.body)
   }
 
+  def rehabStartSession(session: Session, serviceInstanceId: Long, serviceVariantId: Long): F[String] = {
+    val body    = s"""{"serviceInstanceId":$serviceInstanceId,"serviceVariantId":$serviceVariantId}"""
+    val request = httpNewApi("NewPortal/RehabilitationCart/StartSession", session)
+      .header(`Content-Type`, "application/json")
+    val postReq = request.method(Method.POST, request.uri).body(body)
+    postReq.invoke.map(r => r.body.trim.stripPrefix("\"").stripSuffix("\""))
+  }
+
   def rehabTermsIndex(
     session: Session,
     cityId: Long,
+    cityName: String,
     serviceVariantId: Long,
     referralId: Long,
     referralTypeId: Int = 1,
@@ -140,19 +149,22 @@ class LuxmedApi[F[_]: ThrowableMonad] extends ApiBase {
     facilitiesIds: Option[Long] = None,
     doctorId: Option[Long] = None,
     languageId: Long = 10,
-    isNextSearch: Boolean = false
+    isNextSearch: Boolean = false,
+    cartId: Option[String] = None,
+    processId: String = java.util.UUID.randomUUID.toString
   ): F[TermsIndexResponse] = {
     val request = httpNewApi("NewPortal/terms/index", session)
       .param("searchPlace.id", cityId.toString)
-      .param("searchPlace.type", "0")
+      .param("searchPlace.name", cityName)
       .param("serviceVariantId", serviceVariantId.toString)
       .param("languageId", languageId.toString)
       .param("searchDateFrom", dateFormatNewPortal.format(fromDate))
       .param("searchDateTo", dateFormatNewPortal.format(toDate))
-      .param("searchDatePreset", "6")
+      .param("searchDatePreset", "0")
       .param("referralId", referralId.toString)
       .param("referralTypeId", referralTypeId.toString)
-      .param("processId", java.util.UUID.randomUUID.toString)
+      .param("processId", processId)
+      .param("cartId", cartId)
       .param("serviceVariantSource", "3")
       .param("facilitiesIds", facilitiesIds.map(_.toString))
       .param("doctorsIds", doctorId.map(_.toString))
@@ -161,6 +173,37 @@ class LuxmedApi[F[_]: ThrowableMonad] extends ApiBase {
       .param("delocalized", "false")
       .param("locationReplaced", "false")
     get[TermsIndexResponse](request).map(_.body)
+  }
+
+  def rehabOneDayTerms(
+    session: Session,
+    cityId: Long,
+    cityName: String,
+    serviceVariantId: Long,
+    referralId: Long,
+    referralTypeId: Int = 1,
+    date: LocalDateTime,
+    processId: String,
+    cartId: String,
+    expectedTermsNumber: Int,
+    languageId: Long = 10
+  ): F[OneDayTermsResponse] = {
+    val dateStr = dateFormatNewPortal.format(date)
+    val request = httpNewApi("NewPortal/terms/oneDayTerms", session)
+      .param("searchPlace.id", cityId.toString)
+      .param("searchPlace.name", cityName)
+      .param("serviceVariantId", serviceVariantId.toString)
+      .param("languageId", languageId.toString)
+      .param("searchDateFrom", dateStr)
+      .param("searchDateTo", dateStr)
+      .param("referralId", referralId.toString)
+      .param("referralTypeId", referralTypeId.toString)
+      .param("processId", processId)
+      .param("cartId", cartId)
+      .param("searchByMedicalSpecialist", "false")
+      .param("expectedTermsNumber", expectedTermsNumber.toString)
+      .param("delocalized", "false")
+    get[OneDayTermsResponse](request).map(_.body)
   }
 
   def reservationLockterm(

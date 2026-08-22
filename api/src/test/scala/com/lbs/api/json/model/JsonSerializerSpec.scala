@@ -306,6 +306,28 @@ class JsonSerializerSpec extends AnyFunSuite with Matchers {
     result.isReferralRequired shouldBe false
   }
 
+  test("deserialize Valuation with numeric alternativePrice (rehab API returns a number, not a string)") {
+    val json =
+      """{
+        |  "alternative_price": 151.2000,
+        |  "contract_id": 555555,
+        |  "is_external_referral_allowed": false,
+        |  "is_referral_required": false,
+        |  "payer_id": 66666,
+        |  "price": 0.0,
+        |  "product_element_id": 7777777,
+        |  "product_id": 888888,
+        |  "product_in_contract_id": 9999999,
+        |  "require_referral_for_p_p": false,
+        |  "valuation_type": 1
+        |}""".stripMargin
+
+    val result = JsonSerializer.extract[Valuation](json)
+
+    result.alternativePrice shouldBe Some(151.2)
+    result.contractId       shouldBe Some(555555L)
+  }
+
   // ── LuxmedFunnyDateTime ────────────────────────────────────────────────────
 
   test("LuxmedFunnyDateTime parses local datetime") {

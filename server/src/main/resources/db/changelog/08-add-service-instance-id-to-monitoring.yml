@@ -1,0 +1,12 @@
+databaseChangeLog:
+- changeSet:
+    id: 08
+    author: dyrkin
+    changes:
+    - addColumn:
+        tableName: monitoring
+        columns:
+        - column:
+            name: service_instance_id
+            type: BIGINT
+

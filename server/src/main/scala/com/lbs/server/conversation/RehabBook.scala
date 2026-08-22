@@ -254,7 +254,9 @@ class RehabBook(
       val availableTerms = apiService.getAvailableRehabTerms(
         userId.accountId,
         data.cityId.id,
+        data.cityId.name,
         data.serviceVariantId,
+        data.sourceVisitId,
         data.referralId,
         data.referralTypeId,
         data.dateFrom,
