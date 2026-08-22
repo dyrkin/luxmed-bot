@@ -742,7 +742,7 @@ class LuxmedApiSpec extends AnyFunSuite with Matchers with BeforeAndAfterAll {
         .withHeader("Accept-Encoding", containing("gzip"))
         .withHeader("accept-language", containing("pl"))
         .withHeader("User-Agent",      equalTo("okhttp/4.9.0"))
-        .withHeader("Custom-User-Agent", containing("Patient Portal; 4.42.0"))
+        .withHeader("Custom-User-Agent", containing("Patient Portal; 5.8.0"))
         .withHeader("X-Api-Client-Identifier", equalTo("Android"))
     )
   }
@@ -765,7 +765,7 @@ class LuxmedApiSpec extends AnyFunSuite with Matchers with BeforeAndAfterAll {
         .withHeader("Accept",          containing("application/json"))
         .withHeader("Accept-Encoding", containing("gzip"))
         .withHeader("accept-language", containing("pl"))
-        .withHeader("Custom-User-Agent", containing("Patient Portal; 4.42.0"))
+        .withHeader("Custom-User-Agent", containing("Patient Portal; 5.8.0"))
         // User-Agent is set in NewApiHeaders (Mozilla/5.0) but Java's HttpClient may also
         // send its own User-Agent; exact value is not asserted here.
         .withHeader("authorization-token", equalTo("Bearer JWT_TOKEN_ABC"))
