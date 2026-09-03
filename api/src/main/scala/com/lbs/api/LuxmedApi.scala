@@ -7,16 +7,20 @@ import com.lbs.api.json.JsonSerializer.extensions.*
 import com.lbs.api.json.model.*
 import com.lbs.api.json.model.JsonCodecs.given
 import io.circe.Decoder
-import sttp.client3.{HttpClientSyncBackend, *}
+import sttp.client3.{HttpClientSyncBackend, SttpBackendOptions, *}
 import sttp.model.{Method, Uri}
 
 import java.net.HttpCookie
 import java.time.format.DateTimeFormatter
 import java.time.{LocalDateTime, ZonedDateTime}
+import scala.concurrent.duration.*
 
 class LuxmedApi[F[_]: ThrowableMonad] extends ApiBase {
 
-  private given backend: SttpBackend[Identity, Any] = HttpClientSyncBackend()
+  // Bound connection establishment time as well, so an unreachable/unresponsive host fails fast
+  // instead of blocking the calling thread (actor dispatcher / monitoring scheduler) indefinitely.
+  private given backend: SttpBackend[Identity, Any] =
+    HttpClientSyncBackend(options = SttpBackendOptions.connectionTimeout(30.seconds))
 
   private val dateFormatNewPortal = DateTimeFormatter.ofPattern("yyyy-MM-dd")
   private val dateFormatEvents    = DateTimeFormatter.ofPattern("yyyy-MM-dd'T'HH:mm:ssZ")

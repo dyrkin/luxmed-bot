@@ -6,10 +6,17 @@ import sttp.client3.*
 import sttp.model.Uri
 
 import java.net.HttpCookie
+import scala.concurrent.duration.*
 
 trait ApiBase {
   protected def oldApiBaseUrl: String = "https://portalpacjenta.luxmed.pl/PatientPortalMobileAPI/api"
   protected def newApiBaseUrl: String = "https://portalpacjenta.luxmed.pl/PatientPortal"
+
+  // Without an explicit read timeout, a stalled/unresponsive remote server would hang the
+  // calling thread forever. Since these calls run synchronously on shared thread pools
+  // (actor dispatcher / monitoring scheduler) and behind a per-account lock (SessionSupport),
+  // an indefinite hang here can starve those pools and freeze the whole bot.
+  private val RequestTimeout = 30.seconds
 
   private val CommonHeaders =
     Map(
@@ -32,7 +39,7 @@ trait ApiBase {
     )
 
   private def baseGet(url: String): Request[String, Any] =
-    basicRequest.get(Uri.unsafeParse(url)).response(asStringAlways).followRedirects(false)
+    basicRequest.get(Uri.unsafeParse(url)).response(asStringAlways).followRedirects(false).readTimeout(RequestTimeout)
 
   protected def httpUnauthorized(url: String): Request[String, Any] =
     baseGet(s"$oldApiBaseUrl/$url")
